@@ -29,7 +29,8 @@ try {
     $rating = $_POST['rating'] ?? 0;
     $badge = $_POST['badge'] ?? '';
     $origin = $_POST['origin'] ?? '';
-    $category = $_POST['category'] ?? 'hot-sauce'; // Nueva categoría
+    $supplier = $_POST['supplier'] ?? '';
+    $category = $_POST['category'] ?? 'hot-sauce';
     
     // Validar datos requeridos
     if (empty($name) || empty($price)) {
@@ -80,8 +81,8 @@ try {
     }
     
     // Insertar producto en la base de datos
-    $sql = "INSERT INTO products (name, description, price, image, image2, image3, image4, heat_level, rating, badge, origin, category) 
-            VALUES (:name, :description, :price, :image, :image2, :image3, :image4, :heat_level, :rating, :badge, :origin, :category)";
+    $sql = "INSERT INTO products (name, description, price, image, image2, image3, image4, heat_level, rating, badge, origin, supplier, category)
+            VALUES (:name, :description, :price, :image, :image2, :image3, :image4, :heat_level, :rating, :badge, :origin, :supplier, :category)";
     
     $stmt = $pdo->prepare($sql);
     $result = $stmt->execute([
@@ -96,6 +97,7 @@ try {
         ':rating' => floatval($rating),
         ':badge' => trim($badge),
         ':origin' => trim($origin),
+        ':supplier' => trim($supplier),
         ':category' => $category
     ]);
     

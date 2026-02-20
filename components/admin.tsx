@@ -22,6 +22,8 @@ import {
   X,
   AlertTriangle,
   Package2,
+  Upload,
+  FileSpreadsheet,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -96,6 +98,7 @@ interface Product {
   rating: number | string
   badge: string
   origin: string
+  supplier: string
   image_url: string
   created_at: string
 }
@@ -156,6 +159,20 @@ export function Admin({ onClose }: AdminProps) {
   const [categories, setCategories] = useState<Category[]>([])
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+
+  // Excel Import State
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [importLoading, setImportLoading] = useState(false)
+  const [importResult, setImportResult] = useState<{
+    success: boolean
+    inserted?: number
+    updated?: number
+    skipped?: number
+    deleted?: number
+    parsed?: number
+    errors?: string[]
+    error?: string
+  } | null>(null)
 
   // Filter Orders
   const [orderFilters, setOrderFilters] = useState({
@@ -486,6 +503,31 @@ export function Admin({ onClose }: AdminProps) {
     }
   }
 
+  const handleExcelImport = async () => {
+    if (!importFile) return
+    setImportLoading(true)
+    setImportResult(null)
+    try {
+      const formData = new FormData()
+      formData.append("file", importFile)
+      const response = await fetch("/api/import-products", { method: "POST", body: formData })
+      const data = await response.json()
+      setImportResult(data)
+      if (data.success) {
+        toast({ title: "Import erfolgreich", description: `${data.inserted} neu, ${data.updated} aktualisiert, ${data.deleted ?? 0} gelöscht` })
+        loadProducts()
+        if (categories.length === 0) loadCategories()
+        else loadCategories()
+      } else {
+        toast({ title: "Import fehlgeschlagen", description: data.error, variant: "destructive" })
+      }
+    } catch {
+      toast({ title: "Fehler", description: "Verbindungsfehler beim Import", variant: "destructive" })
+    } finally {
+      setImportLoading(false)
+    }
+  }
+
   const handleImageChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -669,7 +711,7 @@ export function Admin({ onClose }: AdminProps) {
                       <div>
                         <p className="text-gray-600 text-sm">Gesamtbestellungen</p>
                         <p className="text-2xl font-bold text-gray-800">
-                          {Number.parseInt(orderStats.total_orders ?? 0) || 0}
+                          {Number.parseInt(String(orderStats.total_orders ?? 0)) || 0}
                         </p>
                       </div>
                       <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -685,7 +727,7 @@ export function Admin({ onClose }: AdminProps) {
                       <div>
                         <p className="text-gray-600 text-sm">Gesamtumsatz</p>
                         <p className="text-2xl font-bold text-green-600">
-                          {(Number.parseFloat(orderStats.total_revenue ?? 0) || 0).toFixed(2)} CHF
+                          {(Number.parseFloat(String(orderStats.total_revenue ?? 0)) || 0).toFixed(2)} CHF
                         </p>
                       </div>
                       <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -701,7 +743,7 @@ export function Admin({ onClose }: AdminProps) {
                       <div>
                         <p className="text-gray-600 text-sm">Abgeschlossen</p>
                         <p className="text-2xl font-bold text-green-600">
-                          {Number.parseInt(orderStats.completed_orders ?? 0) || 0}
+                          {Number.parseInt(String(orderStats.completed_orders ?? 0)) || 0}
                         </p>
                       </div>
                       <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -717,7 +759,7 @@ export function Admin({ onClose }: AdminProps) {
                       <div>
                         <p className="text-gray-600 text-sm">Ausstehend</p>
                         <p className="text-2xl font-bold text-yellow-600">
-                          {Number.parseInt(orderStats.pending_orders ?? 0) || 0}
+                          {Number.parseInt(String(orderStats.pending_orders ?? 0)) || 0}
                         </p>
                       </div>
                       <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -934,6 +976,73 @@ export function Admin({ onClose }: AdminProps) {
                 </Card>
               </div>
             )}
+
+            {/* Excel Import */}
+            <Card className="mb-6 border-dashed border-2 border-orange-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-base">
+                  <FileSpreadsheet className="w-5 h-5 mr-2 text-green-600" />
+                  Excel-Import (Produkte synchronisieren)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <label className="flex-1 min-w-[220px] cursor-pointer">
+                    <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 bg-white hover:bg-gray-50 transition-colors">
+                      <Upload className="w-4 h-4 text-gray-500 shrink-0" />
+                      <span className="text-sm text-gray-600 truncate">
+                        {importFile ? importFile.name : ".xlsx / .xls auswählen"}
+                      </span>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      className="hidden"
+                      onChange={(e) => {
+                        setImportFile(e.target.files?.[0] ?? null)
+                        setImportResult(null)
+                      }}
+                    />
+                  </label>
+                  <Button
+                    onClick={handleExcelImport}
+                    disabled={!importFile || importLoading}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${importLoading ? "animate-spin" : ""}`} />
+                    {importLoading ? "Importiere..." : "Importieren"}
+                  </Button>
+                </div>
+
+                {importResult && (
+                  <div className={`mt-4 rounded-lg p-3 text-sm ${importResult.success ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
+                    {importResult.success ? (
+                      <div className="space-y-1">
+                        <p className="font-medium text-green-800">Import abgeschlossen ({importResult.parsed} verarbeitet)</p>
+                        <div className="flex gap-4 text-green-700 flex-wrap">
+                          <span>✅ Neu: <strong>{importResult.inserted}</strong></span>
+                          <span>🔄 Aktualisiert: <strong>{importResult.updated}</strong></span>
+                          <span>🗑 Gelöscht: <strong>{importResult.deleted ?? 0}</strong></span>
+                          <span>⏭ Übersprungen: <strong>{importResult.skipped}</strong></span>
+                        </div>
+                        {importResult.errors && importResult.errors.length > 0 && (
+                          <details className="mt-2">
+                            <summary className="cursor-pointer text-yellow-700 font-medium">
+                              {importResult.errors.length} Warnungen anzeigen
+                            </summary>
+                            <ul className="mt-1 space-y-0.5 text-yellow-700 text-xs">
+                              {importResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+                            </ul>
+                          </details>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-red-700 font-medium">Fehler: {importResult.error}</p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Products Header Actions */}
             <div className="flex items-center justify-between mb-6">
@@ -1155,7 +1264,8 @@ export function Admin({ onClose }: AdminProps) {
                         </Badge>
                       )}
 
-                      {product.origin && <p className="text-xs text-gray-500">Herkunft: {product.origin}</p>}
+                      {product.supplier && <p className="text-xs text-gray-500">Lieferant: {product.supplier}</p>}
+                      {product.origin && <p className="text-xs text-gray-500">Hersteller: {product.origin}</p>}
                     </div>
                   </CardContent>
                 </Card>
@@ -1376,17 +1486,7 @@ export function Admin({ onClose }: AdminProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="heat_level">Unterkategorie</Label>
-                  <Select name="heat_level" defaultValue={currentEditingProduct?.heat_level?.toString() || "1"}>
-                    <SelectTrigger className="bg-white border-gray-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="1">1 - Leder</SelectItem>
-                      <SelectItem value="2">2 - kunststoff</SelectItem>
-          
-                    </SelectContent>
-                  </Select>
+            
                 </div>
                 <div>
                   <Label htmlFor="rating">Bewertung (0-5)</Label>
@@ -1415,12 +1515,22 @@ export function Admin({ onClose }: AdminProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="origin">Herkunft</Label>
+                  <Label htmlFor="origin">Hersteller</Label>
                   <Input
                     id="origin"
                     name="origin"
-                    placeholder="z.B. USA, Europa"
+                    placeholder="z.B. Pohl Force, Walther"
                     defaultValue={currentEditingProduct?.origin || ""}
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="supplier">Lieferant</Label>
+                  <Input
+                    id="supplier"
+                    name="supplier"
+                    placeholder="z.B. Airsoft, Böker"
+                    defaultValue={currentEditingProduct?.supplier || ""}
                     className="bg-white"
                   />
                 </div>

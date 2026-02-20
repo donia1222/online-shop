@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Home, ShoppingBag, Package, Sparkles, Menu, X } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Home, ShoppingBag, Flame, Compass, Grid3X3, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet"
 import { AdminAuth } from "./admin-auth"
@@ -12,58 +13,8 @@ interface HeaderProps {
   onAdminOpen: () => void
 }
 
-// Componente personalizado para icono de chili
-const ChiliIcon = ({ className }: { className?: string }) => (
-  <div className={`relative ${className}`}>
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="w-full h-full"
-    >
-      <path d="M12 2c0 0 2 1 2 3" stroke="currentColor" fill="none" />
-      <path
-        d="M10 5c-2 0-4 2-4 5s1 6 2 8c1 2 3 3 4 3s3-1 4-3c1-2 2-5 2-8s-2-5-4-5c-1 0-2 0-4 0z"
-        fill="currentColor"
-        opacity="0.8"
-      />
-      <path d="M11 8c0 2 0 4 1 6" stroke="white" strokeWidth="1" opacity="0.3" />
-      <path d="M13 9c0 1.5 0 3 1 4" stroke="white" strokeWidth="1" opacity="0.2" />
-      <circle cx="16" cy="7" r="0.5" fill="orange" opacity="0.8" />
-      <circle cx="18" cy="9" r="0.3" fill="red" opacity="0.6" />
-      <circle cx="17" cy="11" r="0.4" fill="orange" opacity="0.7" />
-    </svg>
-  </div>
-)
-
-// Componente personalizado para icono de BBQ
-const BBQIcon = ({ className }: { className?: string }) => (
-  <div className={`relative ${className}`}>
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="w-full h-full"
-    >
-      <rect x="3" y="11" width="18" height="8" rx="2" />
-      <line x1="6" y1="11" x2="6" y2="19" />
-      <line x1="10" y1="11" x2="10" y2="19" />
-      <line x1="14" y1="11" x2="14" y2="19" />
-      <line x1="18" y1="11" x2="18" y2="19" />
-      <ellipse cx="12" cy="8" rx="4" ry="2" fill="currentColor" opacity="0.7" />
-      <path d="M8 5c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z" opacity="0.5" />
-      <path d="M14 4c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z" opacity="0.5" />
-    </svg>
-  </div>
-)
-
 export function Header({ onAdminOpen }: HeaderProps) {
+  const router = useRouter()
   // Estados del header y navegación
   const [showHeader, setShowHeader] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -127,24 +78,40 @@ export function Header({ onAdminOpen }: HeaderProps) {
       label: "Startseite",
       icon: Home,
       description: "Zur Hauptseite",
+      href: null,
+      color: "bg-amber-50 text-amber-700",
     },
     {
       id: "spice-discovery",
       label: "Entdecken",
-      icon: Sparkles,
+      icon: Compass,
       description: "Produkte entdecken",
+      href: null,
+      color: "bg-blue-50 text-blue-700",
+    },
+    {
+      id: "produkte",
+      label: "Produkte",
+      icon: Grid3X3,
+      description: "Alle Produkte",
+      href: "/shop",
+      color: "bg-violet-50 text-violet-700",
     },
     {
       id: "offers",
       label: "Kollektion",
       icon: ShoppingBag,
       description: "Unsere Kollektion",
+      href: "/shop",
+      color: "bg-emerald-50 text-emerald-700",
     },
     {
       id: "recipes",
       label: "Inspiration",
-      icon: Package,
-      description: "Stil & Pflege",
+      icon: Flame,
+      description: "Stil & Schärfe",
+      href: null,
+      color: "bg-red-50 text-red-600",
     },
   ]
 
@@ -270,35 +237,30 @@ export function Header({ onAdminOpen }: HeaderProps) {
                       </div>
                     </SheetHeader>
 
-                    <nav className="space-y-2 relative">
+                    <nav className="space-y-1.5 relative">
                       {navItems.map((item, index) => {
                         const IconComponent = item.icon
-                        const isActive = currentSection === item.id
+                        const isActive = item.href ? false : currentSection === item.id
 
                         return (
                           <button
                             key={item.id}
-                            onClick={() => scrollToSection(item.id)}
-                            className={`w-full group flex items-center space-x-4 px-4 py-3 rounded-xl transition-all duration-300 ${
+                            onClick={() => { item.href ? router.push(item.href) : scrollToSection(item.id); setIsMenuOpen(false) }}
+                            className={`w-full group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
                               isActive
-                                ? `bg-[#2E1F0F] text-white`
-                                : `text-[#2E1F0F] hover:bg-[#F9F7F4] hover:text-[#B8864E]`
+                                ? "bg-[#2E1F0F] text-white"
+                                : "text-[#2E1F0F] hover:bg-[#F9F7F4]"
                             }`}
-                            style={{ animationDelay: `${index * 100}ms` }}
+                            style={{ animationDelay: `${index * 60}ms` }}
                           >
-                            <div
-                              className={`p-2 flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0 ${
-                                isActive ? "bg-white/20" : "bg-[#F9F7F4] group-hover:bg-[#E8E0D5]"
-                              }`}
-                            >
-                              <div className="w-5 h-5 text-[#B8864E] transition-all duration-300">
-                                <IconComponent className="w-5 h-5" />
-                              </div>
-                            </div>
-
-                            <div className="flex-1">
-                              <span className="font-semibold tracking-wide block">{item.label}</span>
-                              <span className={`text-xs block ${isActive ? "text-white/60" : "text-[#9B9189]"}`}>
+                            <span className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                              isActive ? "bg-white/20" : item.color
+                            }`}>
+                              <IconComponent className="w-4 h-4" />
+                            </span>
+                            <div className="flex-1 text-left">
+                              <span className="font-semibold text-sm block">{item.label}</span>
+                              <span className={`text-xs ${isActive ? "text-white/60" : "text-[#9B9189]"}`}>
                                 {item.description}
                               </span>
                             </div>
@@ -327,27 +289,29 @@ export function Header({ onAdminOpen }: HeaderProps) {
               <div></div>
             </div>
 
-            {/* Navigation Desktop - Ahora centrado */}
-            <nav className="hidden lg:flex items-center space-x-2 flex-1 justify-center">
+            {/* Navigation Desktop */}
+            <nav className="hidden lg:flex items-center gap-2 flex-1 justify-center">
               {navItems.map((item) => {
                 const IconComponent = item.icon
-                const isActive = currentSection === item.id
+                const isActive = item.href ? false : currentSection === item.id
 
                 return (
                   <button
                     key={item.id}
-                    onClick={() => scrollToSection(item.id)}
-                    className={`group relative flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-all duration-300 ${
-                      isActive
-                        ? `bg-[#2E1F0F] text-white`
-                        : `text-[#2E1F0F] hover:bg-[#F9F7F4] hover:text-[#B8864E]`
-                    }`}
+                    onClick={() => item.href ? router.push(item.href) : scrollToSection(item.id)}
                     title={item.description}
+                    className={`group flex items-center gap-2.5 pl-2 pr-4 py-1.5 rounded-full border transition-all duration-200 ${
+                      isActive
+                        ? "bg-[#2E1F0F] border-[#2E1F0F] text-white shadow-md"
+                        : "bg-white border-[#E8E0D5] text-[#2E1F0F] hover:border-[#B8864E] hover:shadow-sm"
+                    }`}
                   >
-                    <div className={`w-4 h-4 transition-all duration-300 ${isActive ? "text-[#B8864E]" : "text-[#B8864E]"}`}>
-                      <IconComponent className="w-4 h-4" />
-                    </div>
-                    <span className="font-semibold text-sm tracking-wide">{item.label}</span>
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                      isActive ? "bg-white/20" : item.color
+                    }`}>
+                      <IconComponent className="w-3.5 h-3.5" />
+                    </span>
+                    <span className="text-sm font-semibold tracking-wide whitespace-nowrap">{item.label}</span>
                   </button>
                 )
               })}

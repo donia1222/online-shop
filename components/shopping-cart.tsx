@@ -1,7 +1,6 @@
 "use client"
 
-import { ShoppingCart, Plus, Minus, Shield, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ShoppingCart, Plus, Minus, X, Trash2, ArrowRight, Package } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 interface Product {
@@ -40,184 +39,139 @@ export function ShoppingCartComponent({
   onGoToCheckout,
   onClearCart,
 }: ShoppingCartProps) {
-  const MINIMUM_ORDER_AMOUNT = 0
+  const total = cart.reduce((s, i) => s + i.price * i.quantity, 0)
+  const totalItems = cart.reduce((s, i) => s + i.quantity, 0)
 
-
-  const getTotalItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0)
-  }
-
-  const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0)
-  }
-
-  const isMinimumOrderMet = () => {
-    return getTotalPrice() >= MINIMUM_ORDER_AMOUNT
-  }
-
-  const getRemainingAmount = () => {
-    return Math.max(0, MINIMUM_ORDER_AMOUNT - getTotalPrice())
-  }
-
-  // Función mejorada para manejar el checkout con scroll
   const handleGoToCheckout = () => {
-    // Primero hacer scroll a la sección de ofertas
-    const offersSection = document.getElementById('offers')
-    if (offersSection) {
-      offersSection.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      })
-    }
-    
-    // Pequeño delay para que el scroll termine antes de navegar
-    setTimeout(() => {
-      onGoToCheckout()
-    }, 500)
+    onGoToCheckout()
   }
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="bg-slate-900 border-orange-500/20 w-full sm:w-[400px] flex flex-col p-0">
-        <SheetHeader className="px-4 py-3 border-b border-orange-500/20 flex-shrink-0">
+      <SheetContent
+        className="bg-white border-l border-gray-100 w-full sm:w-[420px] flex flex-col p-0 shadow-2xl"
+      >
+        {/* Header */}
+        <SheetHeader className="px-5 py-4 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <SheetTitle className="text-orange-400 text-lg sm:text-xl">Einkaufswagen</SheetTitle>
-            <Button
-              variant="ghost"
-              size="icon"
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-blue-950 rounded-xl flex items-center justify-center">
+                <ShoppingCart className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <SheetTitle className="text-base font-black text-gray-900 leading-none">Warenkorb</SheetTitle>
+                <p className="text-xs text-gray-400 mt-0.5">{totalItems} {totalItems === 1 ? "Artikel" : "Artikel"}</p>
+              </div>
+            </div>
+            <button
               onClick={() => onOpenChange(false)}
-              className="text-gray-400 hover:text-white hover:bg-gray-800 h-8 w-8 flex-shrink-0"
+              className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
             >
-              <X className="h-4 w-4" />
-            </Button>
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
           </div>
         </SheetHeader>
 
+        {/* Items */}
         <div className="flex-1 overflow-y-auto px-4 py-4">
           {cart.length === 0 ? (
-            <div className="text-center py-12">
-              <ShoppingCart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-sm sm:text-base">Ihr Warenkorb ist leer</p>
+            <div className="flex flex-col items-center justify-center h-full text-center py-16">
+              <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
+                <Package className="w-8 h-8 text-gray-300" />
+              </div>
+              <p className="text-sm font-bold text-gray-400">Ihr Warenkorb ist leer</p>
+              <p className="text-xs text-gray-300 mt-1">Fügen Sie Produkte hinzu</p>
             </div>
           ) : (
             <div className="space-y-3">
               {cart.map((item) => {
-                // Build the proper image URL - prioritize full URL first, then build from filename
-                const imageUrl = item.image_url || 
-                  (item.image && item.image.startsWith('http') ? item.image : 
-                   (item.image ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${item.image}` : 
-                    "/placeholder.svg"));
-                
-                
+                const imageUrl =
+                  item.image_url ||
+                  (item.image && item.image.startsWith("http")
+                    ? item.image
+                    : item.image
+                    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${item.image}`
+                    : "/placeholder.svg")
+
                 return (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-3 bg-slate-800 rounded-lg border border-orange-500/20"
+                    className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100/80 rounded-2xl border border-gray-100 transition-colors group"
                   >
-                    <img
-                      src={imageUrl}
-                      alt={item.name}
-                      className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0"
-                      onError={(e) => {
-                        console.log(`❌ Image load error for ${item.name}:`, imageUrl);
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder.svg";
-                      }}
-                      onLoad={() => {
-                        console.log(`✅ Image loaded successfully for ${item.name}:`, imageUrl);
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-xs sm:text-sm text-white line-clamp-2 leading-tight">
-                        {item.name}
-                      </h3>
-                      <p className="text-orange-400 font-bold text-sm sm:text-base">{item.price.toFixed(2)} CHF</p>
+                    {/* Image */}
+                    <div className="w-14 h-14 bg-white rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
+                      <img
+                        src={imageUrl}
+                        alt={item.name}
+                        className="w-full h-full object-contain p-1"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }}
+                      />
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="w-6 h-6 sm:w-8 sm:h-8 bg-red-600 hover:bg-red-700 border-red-500 p-0"
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-gray-900 line-clamp-2 leading-tight">{item.name}</p>
+                      <p className="text-sm font-black text-blue-900 mt-1">{item.price.toFixed(2)} <span className="text-xs font-semibold text-gray-400">CHF</span></p>
+                    </div>
+
+                    {/* Qty controls */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <button
                         onClick={() => onRemoveFromCart(item.id)}
+                        className="w-7 h-7 rounded-lg bg-white border border-gray-200 hover:border-red-300 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all text-gray-500 shadow-sm"
                       >
-                        <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </Button>
-                      <span className="w-6 sm:w-8 text-center text-white font-bold text-sm">{item.quantity}</span>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 hover:bg-green-700 border-green-500 p-0"
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-6 text-center text-sm font-black text-gray-900">{item.quantity}</span>
+                      <button
                         onClick={() => onAddToCart(item)}
+                        className="w-7 h-7 rounded-lg bg-blue-950 hover:bg-blue-900 text-white flex items-center justify-center transition-all shadow-sm"
                       >
-                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </Button>
+                        <Plus className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
           )}
         </div>
 
+        {/* Footer */}
         {cart.length > 0 && (
-          <div className="border-t border-orange-500/20 p-4 bg-slate-900 flex-shrink-0">
-            <div className="flex justify-between items-center text-lg sm:text-xl font-bold mb-3">
-              <span className="text-white">Total:</span>
-              <span className="text-orange-400">{getTotalPrice().toFixed(2)} CHF</span>
+          <div className="border-t border-gray-100 p-4 bg-white flex-shrink-0 space-y-3">
+            {/* Total */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-sm font-semibold text-gray-500">Gesamt</span>
+              <div className="text-right">
+                <span className="text-2xl font-black text-gray-900 tracking-tight">{total.toFixed(2)}</span>
+                <span className="text-sm text-gray-400 ml-1">CHF</span>
+              </div>
             </div>
 
-            {/* Minimum order warning */}
-            {!isMinimumOrderMet() && (
-              <div className="bg-yellow-900/50 border border-yellow-600 rounded-lg p-3 mb-3">
-                <p className="text-yellow-300 text-xs sm:text-sm text-center font-semibold">
-                  ⚠️ Mindestbestellwert: {MINIMUM_ORDER_AMOUNT} CHF
-                </p>
-                <p className="text-yellow-200 text-xs text-center mt-1">
-                  Noch {getRemainingAmount().toFixed(2)} CHF bis zum kostenlosen Versand
-                </p>
-              </div>
-            )}
-
-            {/* Free shipping confirmation */}
-            {isMinimumOrderMet() && (
-              <div className="bg-green-900/50 border border-green-600 rounded-lg p-3 mb-3">
-                <p className="text-green-300 text-xs sm:text-sm text-center font-semibold">
-                  ✅ Kostenloser Versand aktiviert!
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Button
-                onClick={handleGoToCheckout}
-                disabled={cart.length === 0 || !isMinimumOrderMet()}
-                className={`w-full font-bold py-2.5 sm:py-3 text-sm sm:text-lg transition-all duration-300 ${
-                  isMinimumOrderMet()
-                    ? "bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white transform hover:scale-105"
-                    : "bg-gray-600 text-gray-300 cursor-not-allowed hover:bg-gray-600"
-                }`}
-              >
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                <span className="truncate">
-                  {isMinimumOrderMet() ? "Zur Kasse gehen" : `Mindestens ${MINIMUM_ORDER_AMOUNT} CHF erforderlich`}
-                </span>
-              </Button>
-
-              {/* Clear cart button */}
-              <Button
-                onClick={onClearCart}
-                variant="outline"
-                className="w-full border-gray-600 text-gray-400 hover:bg-gray-800 hover:text-white py-2 text-sm"
-              >
-                🗑️ Warenkorb leeren
-              </Button>
-
-              <p className="text-xs text-gray-400 text-center leading-tight">
-                {isMinimumOrderMet()
-                  ? "✅ Kostenloser Versand • Sichere Zahlung mit PayPal"
-                  : `Kostenloser Versand ab ${MINIMUM_ORDER_AMOUNT} CHF • Sichere Zahlung mit PayPal`}
-              </p>
+            {/* Free shipping note */}
+            <div className="bg-blue-50 rounded-xl px-3 py-2 flex items-center gap-2">
+              <span className="text-lg">🚚</span>
+              <p className="text-xs font-semibold text-blue-700">Kostenloser Versand · Sichere Zahlung</p>
             </div>
+
+            {/* Checkout button */}
+            <button
+              onClick={handleGoToCheckout}
+              className="w-full flex items-center justify-center gap-2 bg-blue-950 hover:bg-blue-900 text-white font-bold py-3.5 rounded-2xl text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-950/20"
+            >
+              Zur Kasse
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            {/* Clear */}
+            <button
+              onClick={onClearCart}
+              className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors py-1"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Warenkorb leeren
+            </button>
           </div>
         )}
       </SheetContent>

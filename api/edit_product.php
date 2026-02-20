@@ -95,6 +95,7 @@ try {
         $rating = $_POST['rating'] ?? $existing_product['rating'];
         $badge = $_POST['badge'] ?? $existing_product['badge'];
         $origin = $_POST['origin'] ?? $existing_product['origin'];
+        $supplier = $_POST['supplier'] ?? $existing_product['supplier'] ?? '';
         $category = $_POST['category'] ?? $existing_product['category'] ?? 'hot-sauce';
         
         
@@ -170,19 +171,20 @@ try {
         }
         
         // Actualizar producto en la base de datos
-        $sql = "UPDATE products SET 
-                name = :name, 
-                description = :description, 
-                price = :price, 
+        $sql = "UPDATE products SET
+                name = :name,
+                description = :description,
+                price = :price,
                 stock = :stock,
                 image = :image,
                 image2 = :image2,
                 image3 = :image3,
                 image4 = :image4,
-                heat_level = :heat_level, 
-                rating = :rating, 
-                badge = :badge, 
+                heat_level = :heat_level,
+                rating = :rating,
+                badge = :badge,
                 origin = :origin,
+                supplier = :supplier,
                 category = :category,
                 updated_at = CURRENT_TIMESTAMP
                 WHERE id = :id";
@@ -202,6 +204,7 @@ try {
             ':rating' => floatval($rating),
             ':badge' => trim($badge),
             ':origin' => trim($origin),
+            ':supplier' => trim($supplier),
             ':category' => $category
         ]);
         

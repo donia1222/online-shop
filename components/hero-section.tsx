@@ -3,8 +3,10 @@
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export function HeroSection() {
+  const router = useRouter()
   const [isVisible, setIsVisible] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
@@ -73,7 +75,7 @@ export function HeroSection() {
             {/* CTA button */}
             <div>
               <Button
-                onClick={scrollToProducts}
+                onClick={() => router.push("/shop")}
                 className="bg-[#2E1F0F] hover:bg-[#B8864E] text-white px-8 py-6 text-sm font-semibold rounded-none tracking-[0.1em] uppercase transition-colors duration-300 inline-flex items-center gap-3"
               >
                 Kollektion entdecken
