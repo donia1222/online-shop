@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect, useRef, type ChangeEvent } from "react"
 import { marked } from "marked"
 import DOMPurify from "dompurify"
-import { X, Trash2, SendHorizontal, Loader2, Flame, Plus, ChevronLeft, ChevronRight, Minus } from "lucide-react"
+import { X, Trash2, SendHorizontal, Loader2, Flame, MessageSquare, Plus, ChevronLeft, ChevronRight, Minus } from "lucide-react"
 import { systemPrompt } from "./chatPrompt"
 
 // Extendemos el tipo Message para incluir productos detectados
@@ -270,7 +270,7 @@ function DetectedProductsDisplay({ products, onCloseChat }: { products: Detected
           <div 
             key={product.id} 
             onClick={() => scrollToProducts(product.id)}
-            className="flex items-center gap-2 sm:gap-2 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 p-2 sm:p-2 rounded-lg hover:from-red-100 hover:to-orange-100 transition-all duration-200 cursor-pointer group transform hover:scale-105 active:scale-95 mobile-product-card"
+            className="flex items-center gap-2 sm:gap-2 bg-[#F9F7F4] border border-[#E8E0D5] p-2 sm:p-2 rounded-lg hover:bg-[#F9F7F4] transition-all duration-200 cursor-pointer group transform hover:scale-105 active:scale-95 mobile-product-card"
             title={`Klicken um ${product.name} im Shop zu sehen`}
           >
             {/* Imagen en miniatura con efecto hover */}
@@ -286,33 +286,33 @@ function DetectedProductsDisplay({ products, onCloseChat }: { products: Detected
                 }}
               />
               {/* Badge del producto superpuesto */}
-              <div className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs px-1 py-0.5 rounded text-[10px] sm:text-[11px] font-bold shadow-sm">
+              <div className="absolute -top-1 -right-1 bg-[#B8864E] text-white text-xs px-1 py-0.5 rounded text-[10px] sm:text-[11px] font-bold shadow-sm">
                 {product.badge}
               </div>
             </div>
             
             {/* Información del producto */}
             <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-sm font-semibold text-gray-800 line-clamp-1 group-hover:text-red-700 transition-colors duration-200">
+              <span className="text-sm font-semibold text-gray-800 line-clamp-1 group-hover:text-[#B8864E] transition-colors duration-200">
                 {product.name}
               </span>
               <div className="flex items-center gap-1">
-                <span className="text-sm text-gray-600 font-medium group-hover:text-red-600 transition-colors duration-200">
+                <span className="text-sm text-gray-600 font-medium group-hover:text-[#B8864E] transition-colors duration-200">
                   {product.price.toFixed(2)} CHF
                 </span>
                 {/* Indicador visual de nivel de picor */}
                 <div className="flex">
                   {Array.from({ length: Math.min(product.heatLevel, 3) }, (_, i) => (
-                    <Flame key={i} className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-red-500 fill-red-500 group-hover:text-red-600 transition-colors duration-200" />
+                    <Flame key={i} className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-[#B8864E] fill-[#B8864E] group-hover:text-[#B8864E] transition-colors duration-200" />
                   ))}
-                  {product.heatLevel > 3 && <span className="text-xs text-red-500 ml-0.5">+</span>}
+                  {product.heatLevel > 3 && <span className="text-xs text-[#B8864E] ml-0.5">+</span>}
                 </div>
               </div>
             </div>
             
             {/* Indicador visual de que es clickeable */}
             <div className="hidden xs:block ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
-              <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
+              <div className="w-4 h-4 rounded-full bg-[#B8864E] flex items-center justify-center">
                 <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                 </svg>
@@ -351,33 +351,28 @@ export default function SpaceChat() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [hasAutoOpened, setHasAutoOpened] = useState(false)
 
-  // Array de preguntas sobre salsas picantes
+  // Array de preguntas sobre productos de cuero
   const allQuestions = [
-
-    "Welche ist Ihre schärfste Sauce?",
-    "Was ist der Unterschied zwischen BBQ und Hot Sauce?",
-    "Welche sind Ihre meistverkauften Saucen?",
-    "Wie kann ich den richtigen Schärfegrad wählen?",
-    "Haben Sie Saucen für Anfänger?",
-    "Welche Sauce empfehlen Sie für Burger?",
-    "Woher kommen die Big Red's Saucen?",
-    "Bieten Sie kostenlosen Versand in der Schweiz?",
-    "Welche Rezepte kann ich mit Chipotle BBQ machen?",
-    "Ist die Honey BBQ wirklich süß?",
-    "Welche Sauce passt am besten zu Grillhähnchen?",
-    "Wie lange halten geöffnete Saucen?",
-    "Haben Sie vegane oder glutenfreie Saucen?",
+    "Welche Portemonnaies haben Sie für Damen?",
+    "Was ist der Unterschied zwischen den Lederarten?",
+    "Wie pflege ich mein Lederportemonnaie richtig?",
+    "Haben Sie Produkte für Herren?",
+    "Bieten Sie kostenlosen Versand?",
+    "Welches Portemonnaie empfehlen Sie als Geschenk?",
+    "Wie lange hält ein Lederportemonnaie?",
     "Welche Zahlungsmethoden akzeptieren Sie?",
-    "Was macht die Carolina-Style BBQ besonders?",
-    "Schmeckt die Coffee BBQ wirklich nach Kaffee?",
-    "Welche Sauce empfehlen Sie für Tacos?",
-    "Was ist der Unterschied zwischen Heat Wave und Habanero?",
-    "Gibt es Rabatte für große Bestellungen?",
-    "Welche Sauce ist am besten für Einsteiger?",
-    "Wie bewahre ich scharfe Saucen am besten auf?",
-    "Welche Sauce passt zu gegrilltem Fisch?",
-    "Können Sie Großhandelspreise anbieten?",
-    "Haben Sie Verkostungssets verfügbar?",
+    "Gibt es gravierbare Produkte?",
+    "Was macht GLUTWERK Produkte besonders?",
+    "Wie lange dauert die Lieferung?",
+    "Kann ich ein Portemonnaie umtauschen?",
+    "Welches Material verwenden Sie?",
+    "Haben Sie Unisex-Modelle?",
+    "Wie erkenne ich hochwertiges Leder?",
+    "Gibt es Rabatte für Großbestellungen?",
+    "Wie entferne ich Flecken vom Leder?",
+    "Was ist der Unterschied zwischen Voll- und Spaltleder?",
+    "Haben Sie limitierte Editionen?",
+    "Welches Portemonnaie passt zum Business-Look?",
   ]
 
   useEffect(() => {
@@ -501,7 +496,7 @@ export default function SpaceChat() {
   const sendContactRequest = () => {
     const whatsappNumber = "+41765608645"
 
-    const message = `Hallo, ich habe eine Anfrage zu Ihren Saucen.
+    const message = `Hallo, ich habe eine Anfrage zu Ihren Lederprodukten.
 
 Betreff: ${contactReason}
 Name: ${contactName}
@@ -618,7 +613,7 @@ ${contactMessage}`
       <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
         <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
           <button
-            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 font-medium text-xs sm:text-sm"
+            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-[#9B9189] hover:bg-[#2E1F0F] text-white rounded-lg transition-colors duration-200 font-medium text-xs sm:text-sm"
             onClick={() => {
               setContactStep(0)
             }}
@@ -640,7 +635,7 @@ ${contactMessage}`
             <p className="text-gray-700 font-medium text-sm sm:text-base">Möchten Sie uns kontaktieren?</p>
             <div className="flex gap-2 sm:gap-3 justify-center">
               <button 
-                className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-sm sm:text-base"
+                className="px-4 py-2 sm:px-6 sm:py-3 bg-[#2E1F0F] hover:bg-[#B8864E] text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-sm sm:text-base"
                 onClick={() => setContactStep(2)}
               >
                 Ja
@@ -660,7 +655,7 @@ ${contactMessage}`
             <p className="text-gray-700 font-medium text-center mb-3 sm:mb-4 text-sm sm:text-base">Worum geht es in Ihrer Anfrage?</p>
             <div className="grid grid-cols-1 gap-2 sm:gap-3">
               <button
-                className="p-3 sm:p-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-left text-sm sm:text-base"
+                className="p-3 sm:p-4 bg-[#2E1F0F] hover:bg-[#B8864E] text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-left text-sm sm:text-base"
                 onClick={() => {
                   setContactReason("Produktberatung und Empfehlungen")
                   setContactStep(3)
@@ -669,7 +664,7 @@ ${contactMessage}`
                 Produktberatung und Empfehlungen
               </button>
               <button
-                className="p-3 sm:p-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-pink-600 text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-left text-sm sm:text-base"
+                className="p-3 sm:p-4 bg-[#2E1F0F] hover:bg-[#B8864E] text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-left text-sm sm:text-base"
                 onClick={() => {
                   setContactReason("Großhandel und Mengenrabatte")
                   setContactStep(3)
@@ -678,16 +673,16 @@ ${contactMessage}`
                 Großhandel und Mengenrabatte
               </button>
               <button
-                className="p-3 sm:p-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-left text-sm sm:text-base"
+                className="p-3 sm:p-4 bg-[#2E1F0F] hover:bg-[#B8864E] text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-left text-sm sm:text-base"
                 onClick={() => {
-                  setContactReason("Verkostung und Events")
+                  setContactReason("Maßanfertigung & Gravur")
                   setContactStep(3)
                 }}
               >
-                Verkostung und Events
+                Maßanfertigung & Gravur
               </button>
               <button
-                className="p-3 sm:p-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-left text-sm sm:text-base"
+                className="p-3 sm:p-4 bg-[#2E1F0F] hover:bg-[#B8864E] text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg text-left text-sm sm:text-base"
                 onClick={() => {
                   setContactReason("Allgemeine Fragen")
                   setContactStep(3)
@@ -707,10 +702,10 @@ ${contactMessage}`
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
               placeholder="Ihr vollständiger Name"
-              className="w-full p-2.5 sm:p-3 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:outline-none transition-colors duration-200 text-sm sm:text-base"
+              className="w-full p-2.5 sm:p-3 border-2 border-gray-300 rounded-lg focus:border-[#B8864E] focus:outline-none transition-colors duration-200 text-sm sm:text-base"
             />
             <button
-              className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+              className="w-full py-2.5 sm:py-3 bg-[#2E1F0F] hover:bg-[#B8864E] text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               onClick={() => {
                 if (contactName.trim()) setContactStep(4)
               }}
@@ -729,10 +724,10 @@ ${contactMessage}`
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
               placeholder="ihre.email@beispiel.ch"
-              className="w-full p-2.5 sm:p-3 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:outline-none transition-colors duration-200 text-sm sm:text-base"
+              className="w-full p-2.5 sm:p-3 border-2 border-gray-300 rounded-lg focus:border-[#B8864E] focus:outline-none transition-colors duration-200 text-sm sm:text-base"
             />
             <button
-              className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+              className="w-full py-2.5 sm:py-3 bg-[#2E1F0F] hover:bg-[#B8864E] text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               onClick={() => {
                 if (contactEmail.trim() && contactEmail.includes('@')) setContactStep(5)
               }}
@@ -751,10 +746,10 @@ ${contactMessage}`
               onChange={(e) => setContactMessage(e.target.value)}
               placeholder="Beschreiben Sie Ihre Anfrage detailliert..."
               rows={3}
-              className="w-full p-2.5 sm:p-3 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:outline-none transition-colors duration-200 resize-none text-sm sm:text-base"
+              className="w-full p-2.5 sm:p-3 border-2 border-gray-300 rounded-lg focus:border-[#B8864E] focus:outline-none transition-colors duration-200 resize-none text-sm sm:text-base"
             />
             <button
-              className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+              className="w-full py-2.5 sm:py-3 bg-[#2E1F0F] hover:bg-[#B8864E] text-white rounded-lg transition-all duration-200 font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               onClick={() => {
                 if (contactMessage.trim()) setContactStep(6)
               }}
@@ -809,26 +804,22 @@ ${contactMessage}`
           }`}
         >
           {/* Glow effect background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-all duration-300 scale-110"></div>
+          <div className="absolute inset-0 bg-[#B8864E] rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-all duration-300 scale-110"></div>
           
           {/* Main button - Más pequeño en móvil */}
-          <div className="relative bg-gradient-to-br from-red-500 via-red-600 to-orange-600 rounded-full p-3 sm:p-4 shadow-xl border border-red-400/30 group-hover:scale-105 transition-all duration-300">
+          <div className="relative bg-[#2E1F0F] rounded-full p-3 sm:p-4 shadow-xl border border-[#B8864E]/30 group-hover:scale-105 transition-all duration-300">
             {/* Inner glow */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full"></div>
             
-            {/* Icon with flame effect - Tamaño adaptativo */}
+            {/* Icon - Tamaño adaptativo */}
             <div className="relative">
-              <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-lg" />
-              
-              {/* Floating particles effect */}
-              <div className="absolute -top-1 -right-1 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-300 rounded-full animate-bounce opacity-80"></div>
-              <div className="absolute -bottom-1 -left-1 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-orange-300 rounded-full animate-bounce opacity-60" style={{ animationDelay: "0.5s" }}></div>
+              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-lg" />
             </div>
           </div>
           
           {/* Tooltip - Oculto en móvil para ahorrar espacio */}
           <div className="hidden sm:block absolute -top-14 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap backdrop-blur-sm">
-            Saucen Chat öffnen
+            Berater öffnen
             <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-black/80 rotate-45 -mt-1"></div>
           </div>
         </button>
@@ -841,11 +832,10 @@ ${contactMessage}`
           : 'translate-y-8 opacity-0 scale-95 pointer-events-none'
       }`}>
         {/* Header del chat - Más compacto en móvil */}
-        <div className="bg-gradient-to-r from-red-500 to-orange-600 rounded-t-2xl p-3 sm:p-4 flex items-center justify-between">
+        <div className="bg-[#2E1F0F] rounded-t-2xl p-3 sm:p-4 flex items-center justify-between">
           <h2 className="flex items-center gap-1 sm:gap-2 text-white font-bold text-base sm:text-lg">
-            <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300" />
-            <span className="hidden xs:inline">Smokehouse Chat</span>
-            <span className="xs:hidden">Chat</span>
+            <span className="hidden xs:inline">GLUTWERK Berater</span>
+            <span className="xs:hidden">Berater</span>
           </h2>
           <button 
             onClick={() => setIsOpen(false)} 
@@ -866,12 +856,12 @@ ${contactMessage}`
             <div className="h-[calc(100%-120px)] sm:h-[calc(100%-140px)] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
               {messages.length === 0 ? (
                 <div className="space-y-3 sm:space-y-4">
-                  <p className="text-center text-gray-600 font-medium mb-4 sm:mb-6 text-base sm:text-lg">Wie kann ich Ihnen bei der Auswahl der perfekten Sauce helfen?</p>
+                  <p className="text-center text-gray-600 font-medium mb-4 sm:mb-6 text-base sm:text-lg">Wie kann ich Ihnen bei der Wahl Ihres perfekten Lederprodukts helfen?</p>
                   <div className="space-y-2 sm:space-y-2">
                     {visibleQuestions.map((question, index) => (
                       <button
                         key={index}
-                        className="w-full text-left p-3 sm:p-3 bg-gradient-to-r from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 border border-red-200 rounded-lg transition-all duration-200 text-sm sm:text-base text-gray-700 hover:text-gray-900 shadow-sm hover:shadow-md"
+                        className="w-full text-left p-3 sm:p-3 bg-[#F9F7F4] hover:bg-[#E8E0D5] border border-[#E8E0D5] rounded-lg transition-all duration-200 text-sm sm:text-base text-gray-700 hover:text-[#2E1F0F] shadow-sm hover:shadow-md"
                         onClick={() => handleQuestionClick(question)}
                         disabled={isLoading}
                       >
@@ -889,14 +879,14 @@ ${contactMessage}`
                     <div
                       className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 sm:p-4 ${
                         msg.role === "user" 
-                          ? "bg-gradient-to-r from-red-500 to-orange-600 text-white" 
+                          ? "bg-[#2E1F0F] text-white"
                           : "bg-gray-100 text-gray-800"
                       }`}
                     >
                       <div className={`text-sm font-medium mb-2 ${
-                        msg.role === "user" ? "text-red-100" : "text-red-600"
+                        msg.role === "user" ? "text-white/70" : "text-[#B8864E]"
                       }`}>
-                        {msg.role === "user" ? "Sie" : "Smokehouse Experte"}
+                        {msg.role === "user" ? "Sie" : "GLUTWERK Berater"}
                       </div>
                       
                       {/* Contenido del mensaje */}
@@ -933,8 +923,8 @@ ${contactMessage}`
                     name="message"
                     value={input}
                     onChange={autoResizeTextarea}
-                    className="w-full p-3 sm:p-3 border-2 border-gray-300 rounded-xl focus:border-red-500 focus:outline-none resize-none transition-colors duration-200 text-sm sm:text-base"
-                    placeholder="Fragen Sie nach Saucen..."
+                    className="w-full p-3 sm:p-3 border-2 border-gray-300 rounded-xl focus:border-[#B8864E] focus:outline-none resize-none transition-colors duration-200 text-sm sm:text-base"
+                    placeholder="Ihre Frage zu unseren Produkten..."
                     disabled={isLoading}
                     rows={1}
                     style={{ minHeight: '48px', maxHeight: '120px' }}
@@ -951,7 +941,7 @@ ${contactMessage}`
                   className={`p-3 sm:p-3 rounded-xl transition-all duration-200 ${
                     !input.trim() && !isLoading
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg"
+                      : "bg-[#2E1F0F] hover:bg-[#B8864E] text-white shadow-md hover:shadow-lg"
                   }`}
                   disabled={!input.trim() || isLoading}
                   aria-label="Senden"

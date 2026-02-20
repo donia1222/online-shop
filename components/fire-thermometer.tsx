@@ -38,60 +38,60 @@ export default function FireThermometer({
 
   // Heat level configurations
   const heatLevels = [
-    { 
-      level: 1, 
-      name: "Mild", 
-      emoji: "🌿", 
+    {
+      level: 1,
+      name: "Klassisch",
+      emoji: "🌿",
       color: "from-emerald-400 to-emerald-600",
       textColor: "text-emerald-100",
       bgColor: "bg-emerald-900/30",
       borderColor: "border-emerald-500/40",
-      temp: "0-100 SHU",
-      description: "Für Anfänger - Geschmack ohne die Schärfe"
+      temp: "Zeitloses Design",
+      description: "Für Einsteiger - klare Linien, bewährte Qualität"
     },
-    { 
-      level: 2, 
-      name: "Medium", 
-      emoji: "🌶️", 
+    {
+      level: 2,
+      name: "Modern",
+      emoji: "🌶️",
       color: "from-yellow-400 to-orange-500",
-      textColor: "text-orange-100", 
+      textColor: "text-orange-100",
       bgColor: "bg-orange-900/30",
       borderColor: "border-orange-500/40",
-      temp: "100-1K SHU",
-      description: "Ein Hauch von Wärme - perfekt für die meisten"
+      temp: "Zeitgemäßer Stil",
+      description: "Frisches Design - perfekt für den modernen Alltag"
     },
-    { 
-      level: 3, 
-      name: "Scharf", 
-      emoji: "🔥", 
+    {
+      level: 3,
+      name: "Premium",
+      emoji: "🔥",
       color: "from-orange-500 to-red-600",
       textColor: "text-red-100",
       bgColor: "bg-red-900/30",
-      borderColor: "border-red-500/40", 
-      temp: "1K-10K SHU",
-      description: "Für Mutige - du fängst an zu schwitzen"
+      borderColor: "border-red-500/40",
+      temp: "Hohe Qualität",
+      description: "Für Anspruchsvolle - erlesenes Leder, meisterhafte Verarbeitung"
     },
-    { 
-      level: 4, 
-      name: "Höllisch", 
-      emoji: "🌋", 
+    {
+      level: 4,
+      name: "Exclusiv",
+      emoji: "🌋",
       color: "from-red-600 to-red-800",
       textColor: "text-red-100",
       bgColor: "bg-red-900/40",
       borderColor: "border-red-600/50",
-      temp: "10K-100K SHU", 
-      description: "Nur für Experten - bereite dich auf das Feuer vor"
+      temp: "Exklusive Fertigung",
+      description: "Nur für Kenner - handverlesen, einzeln gefertigt"
     },
-    { 
-      level: 5, 
-      name: "Teuflisch", 
-      emoji: "👹", 
+    {
+      level: 5,
+      name: "Limitiert",
+      emoji: "👹",
       color: "from-red-800 to-purple-900",
       textColor: "text-purple-100",
       bgColor: "bg-purple-900/40",
       borderColor: "border-purple-600/50",
-      temp: "100K+ SHU",
-      description: "EXTREM - nur für die Mutigsten"
+      temp: "Limitierte Edition",
+      description: "RARITÄT - nur für die wahren Liebhaber"
     }
   ]
 

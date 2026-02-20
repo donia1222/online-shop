@@ -487,20 +487,20 @@ export default function ProductsGridCompact({
         position: relative;
         width: 80px; 
         height: 80px; 
-        background: linear-gradient(135deg, #ef4444, #f97316);
+        background: linear-gradient(135deg, #2E1F0F, #B8864E);
         border-radius: 16px;
         padding: 8px;
-        box-shadow: 0 20px 40px rgba(239, 68, 68, 0.4);
+        box-shadow: 0 20px 40px rgba(46, 31, 15, 0.4);
         border: 3px solid white;
       ">
-        <img src="${product.image_url || "/placeholder.svg"}" alt="${product.name}" 
+        <img src="${product.image_url || "/placeholder.svg"}" alt="${product.name}"
              style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />
         <div style="
           position: absolute;
           top: -8px;
           right: -8px;
-          background: linear-gradient(135deg, #fbbf24, #f59e0b);
-          color: #7c2d12;
+          background: #B8864E;
+          color: white;
           font-size: 12px;
           font-weight: 900;
           width: 24px;
@@ -540,10 +540,10 @@ export default function ProductsGridCompact({
       trail.style.top = `${rect.top + rect.height / 2 - 2}px`
       trail.style.width = "4px"
       trail.style.height = "4px"
-      trail.style.background = "linear-gradient(45deg, #ef4444, #f97316)"
+      trail.style.background = "linear-gradient(45deg, #2E1F0F, #B8864E)"
       trail.style.borderRadius = "50%"
       trail.style.zIndex = "9999"
-      trail.style.boxShadow = "0 0 20px #ef4444"
+      trail.style.boxShadow = "0 0 20px #B8864E"
       trail.style.transition = "all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
 
       document.body.appendChild(trail)
@@ -609,34 +609,24 @@ export default function ProductsGridCompact({
       }`}
     >
       {/* Glow effect background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl blur-lg opacity-30 group-hover:opacity-50 transition-all duration-300 scale-110"></div>
+      <div className="absolute inset-0 bg-[#B8864E] rounded-xl blur-lg opacity-20 group-hover:opacity-40 transition-all duration-300 scale-110"></div>
 
       {/* Main cart button */}
-      <div className="relative bg-gradient-to-br from-red-500 via-red-600 to-orange-600 rounded-xl p-3 shadow-xl border border-red-400/30 group-hover:scale-105 transition-all duration-300">
-        {/* Inner glow */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-xl"></div>
-
-        {/* Cart icon with pulse effect */}
+      <div className="relative bg-[#2E1F0F] rounded-xl p-3 shadow-xl border border-[#B8864E]/30 group-hover:scale-105 transition-all duration-300">
+        {/* Cart icon */}
         <div className="relative">
-          <ShoppingCart className="w-5 h-5 text-white drop-shadow-lg" />
+          <ShoppingCart className="w-5 h-5 text-white" />
 
           {/* Animated pulse ring when items are added */}
-          {cartCount > 0 && <div className="absolute inset-0 rounded-full border-2 border-white/50 animate-ping"></div>}
+          {cartCount > 0 && <div className="absolute inset-0 rounded-full border-2 border-[#B8864E]/50 animate-ping"></div>}
 
           {/* Count badge */}
           {cartCount > 0 && (
-            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-red-900 text-xs rounded-full w-5 h-5 flex items-center justify-center font-black shadow-lg border-2 border-white animate-pulse">
+            <div className="absolute -top-2 -right-2 bg-[#B8864E] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-black shadow-lg border-2 border-white">
               {cartCount > 99 ? "99+" : cartCount}
             </div>
           )}
         </div>
-
-        {/* Floating particles effect */}
-        <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-yellow-300 rounded-full animate-bounce opacity-80"></div>
-        <div
-          className="absolute -bottom-0.5 -left-0.5 w-1 h-1 bg-orange-300 rounded-full animate-bounce opacity-60"
-          style={{ animationDelay: "0.5s" }}
-        ></div>
       </div>
 
       {/* Tooltip */}
@@ -752,7 +742,7 @@ export default function ProductsGridCompact({
                     key={index}
                     onClick={() => handleImageSelect(index)}
                     className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                      index === modalCurrentImageIndex ? 'border-red-500 scale-105' : 'border-gray-200'
+                      index === modalCurrentImageIndex ? 'border-[#B8864E] scale-105' : 'border-gray-200'
                     }`}
                   >
                     <img
@@ -771,7 +761,7 @@ export default function ProductsGridCompact({
 
             <Badge
               className={`absolute top-2 sm:top-3 left-2 sm:left-3 text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-1 font-medium shadow-lg ${
-                product.category === "bbq-sauce" ? "bg-amber-500 text-white" : "bg-red-500 text-white"
+                product.category === "bbq-sauce" ? "bg-[#B8864E] text-white" : "bg-[#2E1F0F] text-white"
               }`}
             >
               {product.badge}
@@ -825,7 +815,7 @@ export default function ProductsGridCompact({
 
             <div className="border-t pt-3 sm:pt-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
-                <div className="text-xl sm:text-2xl font-bold text-gray-600">
+                <div className="text-xl sm:text-2xl font-bold text-[#B8864E]">
                   {(product.price * modalCurrentQuantity).toFixed(2)} CHF
                 </div>
                 <div className="text-xs sm:text-sm text-gray-500">Einzelpreis: {product.price.toFixed(2)} CHF</div>
@@ -868,8 +858,8 @@ export default function ProductsGridCompact({
                     : (product.stock || 0) === 0
                       ? "bg-gray-500 hover:bg-gray-600"
                       : product.category === "bbq-sauce"
-                        ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                        : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-pink-600"
+                        ? "bg-[#B8864E] hover:bg-[#2E1F0F]"
+                        : "bg-[#2E1F0F] hover:bg-[#B8864E]"
                 } disabled:opacity-50 disabled:cursor-not-allowed text-white`}
               >
                 <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
@@ -891,7 +881,7 @@ export default function ProductsGridCompact({
     return (
       <Card
         key={product.id}
-        className={`group relative bg-white border border-gray-200 hover:border-red-300 hover:shadow-xl transition-all duration-500 rounded-xl overflow-hidden ${
+        className={`group relative bg-white border border-[#E8E0D5] hover:border-[#B8864E] hover:shadow-lg transition-all duration-500 rounded-xl overflow-hidden ${
           visibleProducts.has(index) ? "animate-slide-in opacity-100" : "opacity-0 translate-y-4"
         } ${addedItems.has(product.id!) ? "animate-success-glow" : ""} ${
           animatingProducts.has(product.id!) ? "animate-compress" : ""
@@ -947,7 +937,7 @@ export default function ProductsGridCompact({
               
               <Badge
                 className={`absolute -top-1 -right-1 lg:-top-2 lg:-right-2 text-xs px-1.5 py-0.5 lg:px-2 lg:py-1 font-medium shadow-sm ${
-                  product.category === "bbq-sauce" ? "bg-amber-500 text-white" : "bg-red-500 text-white"
+                  product.category === "bbq-sauce" ? "bg-[#B8864E] text-white" : "bg-[#2E1F0F] text-white"
                 }`}
               >
                 {product.badge}
@@ -963,13 +953,13 @@ export default function ProductsGridCompact({
 
             {/* MEJORADO: Contenido principal con mejor espaciado */}
             <div className="flex-1 min-w-0">
-                   <h4 className="text-lg lg:text-xl xl:text-2xl font-bold text-red-800 line-clamp-1 lg:line-clamp-2 group-hover:text-red-600 transition-colors duration-300 flex-1 mr-2">
+                   <h4 className="text-lg lg:text-xl xl:text-2xl font-bold text-[#2E1F0F] line-clamp-1 lg:line-clamp-2 group-hover:text-[#B8864E] transition-colors duration-300 flex-1 mr-2">
                   {product.name}
                 </h4>
               {/* MEJORADO: Header con título y precio mejor distribuidos */}
               <div className="flex items-start justify-between mb-2 lg:mb-3">
            
-                <div className="text-lg lg:text-xl xl:text-1xl font-bold text-gray-600 flex-shrink-0">{product.price.toFixed(2)} CHF</div>
+                <div className="text-lg lg:text-xl xl:text-1xl font-bold text-[#B8864E] flex-shrink-0">{product.price.toFixed(2)} CHF</div>
               </div>
 
               {/* MEJORADO: Descripción visible en pantallas grandes */}
@@ -1013,7 +1003,7 @@ export default function ProductsGridCompact({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-auto min-w-[100px] lg:min-w-[120px] text-sm bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:text-gray-900 font-medium"
+                      className="w-auto min-w-[100px] lg:min-w-[120px] text-sm bg-white hover:bg-[#F9F7F4] border-[#E8E0D5] text-[#2E1F0F] hover:text-[#2E1F0F] font-medium"
                       onClick={() => {
                         setSelectedProduct(product)
                         setIsModalOpen(true)
@@ -1031,14 +1021,14 @@ export default function ProductsGridCompact({
                   onClick={(e) => handlePurchase(product, e)}
                   disabled={purchasedItems.has(product.id!) || animatingProducts.has(product.id!) || (product.stock || 0) === 0}
                   size="sm"
-                  className={`w-auto min-w-[120px] lg:min-w-[150px] font-semibold transition-all duration-500 shadow-md hover:shadow-lg ${
+                  className={`w-auto min-w-[120px] lg:min-w-[150px] font-semibold transition-all duration-300 ${
                     purchasedItems.has(product.id!) || addedItems.has(product.id!)
                       ? "bg-green-600 hover:bg-green-700"
                       : (product.stock || 0) === 0
-                        ? "bg-gray-500 hover:bg-gray-600"
+                        ? "bg-gray-400 hover:bg-gray-500"
                         : product.category === "bbq-sauce"
-                          ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                          : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-pink-600"
+                          ? "bg-[#B8864E] hover:bg-[#2E1F0F]"
+                          : "bg-[#2E1F0F] hover:bg-[#B8864E]"
                   } disabled:opacity-50 disabled:cursor-not-allowed text-white`}
                 >
                   <ShoppingCart className="w-4 h-4 mr-1" />
@@ -1097,7 +1087,7 @@ export default function ProductsGridCompact({
     return (
       <section className="py-12 px-4 bg-white min-h-screen">
         <div className="max-w-4xl lg:max-w-7xl mx-auto text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8864E] mx-auto"></div>
           <p className="mt-4 text-gray-600">Produkte werden geladen...</p>
         </div>
       </section>
@@ -1138,28 +1128,21 @@ export default function ProductsGridCompact({
         {/* MEJORADO: Container más ancho para pantallas grandes */}
         <div className="max-w-4xl lg:max-w-7xl mx-auto">
           {/* MEJORADO: Header con mejor tipografía */}
-          <div className="text-center mb-12 animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 bg-red-100 text-red-800 px-3 py-1.5 lg:px-4 lg:py-2 rounded-full text-sm font-medium mb-4 lg:mb-6">
-              <Award className="w-4 h-4" />
-              Premium Kollektion
-            </div>
-            <h3 className="text-4xl font-black text-gray-900 mb-3 lg:mb-4">
-              SMOKEHOUSE
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">
-                SAUCES
-              </span>
+          <div className="text-center mb-10 animate-fade-in-up">
+            <h3 className="text-5xl lg:text-6xl font-black tracking-tight mb-2">
+              <span className="text-[#2E1F0F]">UNSERE </span><span className="text-[#B8864E]">KOLLEKTION</span>
             </h3>
-            <p className="text-gray-600 text-xl max-w-2xl mx-auto">Premium Saucen für wahre Kenner ausgewählt</p>
+            <div className="w-16 h-0.5 bg-[#B8864E] mx-auto mt-4"></div>
           </div>
 
           {/* Tabs dinámicos desde la API */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8 lg:mb-10">
             <TabsList
-              className="flex flex-wrap justify-center gap-1 w-full max-w-2xl mx-auto bg-white shadow-lg lg:shadow-xl rounded-xl lg:rounded-2xl p-1 lg:p-2"
+              className="flex overflow-x-auto gap-2 w-full max-w-3xl mx-auto bg-white border border-[#E8E0D5] rounded-2xl p-2 shadow-sm scrollbar-hide"
             >
               <TabsTrigger
                 value="all"
-                className="rounded-lg lg:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white font-semibold lg:font-bold transition-all duration-300 text-sm lg:text-base px-4 py-2"
+                className="flex-shrink-0 rounded-xl data-[state=active]:bg-[#2E1F0F] data-[state=active]:text-white data-[state=active]:shadow-md font-semibold transition-all duration-300 text-sm lg:text-base px-5 py-2.5 text-[#9B9189] hover:text-[#2E1F0F] hover:bg-[#F9F7F4]"
               >
                 Alle
               </TabsTrigger>
@@ -1167,7 +1150,7 @@ export default function ProductsGridCompact({
                 <TabsTrigger
                   key={cat.slug}
                   value={cat.slug}
-                  className="rounded-lg lg:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white font-semibold lg:font-bold transition-all duration-300 text-sm lg:text-base px-4 py-2"
+                  className="flex-shrink-0 rounded-xl data-[state=active]:bg-[#B8864E] data-[state=active]:text-white data-[state=active]:shadow-md font-semibold transition-all duration-300 text-sm lg:text-base px-5 py-2.5 text-[#9B9189] hover:text-[#2E1F0F] hover:bg-[#F9F7F4]"
                 >
                   {cat.name}
                 </TabsTrigger>
@@ -1306,7 +1289,7 @@ export default function ProductsGridCompact({
 
           .flying-product-enhanced {
             transition: all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            filter: drop-shadow(0 10px 30px rgba(239, 68, 68, 0.5));
+            filter: drop-shadow(0 10px 30px rgba(184, 134, 78, 0.5));
           }
 
           .flying-trail {

@@ -12,7 +12,6 @@ import { Footer } from "@/components/footer"
 import { Admin } from "@/components/admin"
 import  Bot  from "@/components/bot"
 import { ConstructionNotice } from "./construction-notice" 
-import SpiceDiscovery from "@/components/spice-discovery" 
 interface Product {
   id: number
   name: string
@@ -315,7 +314,7 @@ export default function PremiumHotSauceStore() {
 
   // 🏪 Renderizar página principal del store
   return (
-    <div className="bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <div className="bg-[#F9F7F4]">
       {/* Construction Notice Modal */}
       <ConstructionNotice />
 
@@ -325,13 +324,53 @@ export default function PremiumHotSauceStore() {
           </div>
       <HeroSection />
 
-      {/* Spice Discovery Section */}
-      <section id="spice-discovery" className="py-16 bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <div className="container mx-auto px-4">
-          <SpiceDiscovery 
-   
-            className="max-w-7xl mx-auto"
-          />
+      {/* Brand Banner Section */}
+      <section id="spice-discovery" className="py-20 bg-[#2E1F0F]">
+        <div className="container mx-auto px-6 max-w-5xl">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <span className="text-xs font-semibold tracking-[0.25em] uppercase text-[#B8864E] mb-4 block">
+                Handwerk · Qualität · Langlebigkeit
+              </span>
+              <h2 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6">
+                Jedes Stück.<br/>
+                <span className="text-[#B8864E]">Ein Unikat.</span>
+              </h2>
+              <p className="text-white/60 text-lg leading-relaxed mb-8">
+                Unsere Lederwaren werden von Hand gefertigt — mit Sorgfalt, Präzision und Leidenschaft.
+                Echtes Leder, das mit der Zeit schöner wird.
+              </p>
+              <div className="flex gap-8">
+                <div>
+                  <div className="text-3xl font-black text-[#B8864E]">100%</div>
+                  <div className="text-white/50 text-sm mt-1">Echtes Leder</div>
+                </div>
+                <div className="w-px bg-white/10"></div>
+                <div>
+                  <div className="text-3xl font-black text-[#B8864E]">CH</div>
+                  <div className="text-white/50 text-sm mt-1">Schweizer Qualität</div>
+                </div>
+                <div className="w-px bg-white/10"></div>
+                <div>
+                  <div className="text-3xl font-black text-[#B8864E]">∞</div>
+                  <div className="text-white/50 text-sm mt-1">Langlebigkeit</div>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "Handgenäht", desc: "Jede Naht von Hand" },
+                { label: "Patina", desc: "Schöner mit der Zeit" },
+                { label: "Pflege inklusive", desc: "Tipps & Empfehlungen" },
+                { label: "Schweizer Versand", desc: "Lieferung in 2–4 Tagen" },
+              ].map((item) => (
+                <div key={item.label} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-[#B8864E]/40 transition-colors duration-300">
+                  <div className="text-[#B8864E] font-bold text-sm mb-1">{item.label}</div>
+                  <div className="text-white/50 text-xs">{item.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -340,7 +379,7 @@ export default function PremiumHotSauceStore() {
       </section>
 
       <CulinaryInspiration />
-      <PairingSuggestions />
+
 
       <ShoppingCartComponent
         isOpen={isCartOpen}

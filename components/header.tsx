@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Flame, Zap, Home, ChefHat, Heart, Menu, X, Thermometer } from "lucide-react"
+import { Home, ShoppingBag, Package, Sparkles, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet"
 import { AdminAuth } from "./admin-auth"
 import { LoginAuth } from "./login-auth"
 import { UserProfile } from "./user-profile"
+
 interface HeaderProps {
   onAdminOpen: () => void
 }
@@ -69,7 +70,7 @@ export function Header({ onAdminOpen }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [currentSection, setCurrentSection] = useState("hero")
   const [showUserProfile, setShowUserProfile] = useState(false)
-  // Secciones con fondo claro  
+  // Secciones con fondo claro
   const lightSections = ["premium-showcase", "offers"]
   // Secciones con fondo oscuro
   const darkSections = ["spice-discovery"]
@@ -129,39 +130,31 @@ export function Header({ onAdminOpen }: HeaderProps) {
     },
     {
       id: "spice-discovery",
-      label: "Scharfer Test",
-      icon: Thermometer,
-      description: "Encuentra tu nivel perfecto",
+      label: "Entdecken",
+      icon: Sparkles,
+      description: "Produkte entdecken",
     },
     {
       id: "offers",
-      label: "Scharfe Saucen",
-      icon: ChiliIcon,
-      description: "Feurige Saucen",
+      label: "Kollektion",
+      icon: ShoppingBag,
+      description: "Unsere Kollektion",
     },
     {
       id: "recipes",
-      label: "Rezepte",
-      icon: ChefHat,
-      description: "Grillrezepte",
+      label: "Inspiration",
+      icon: Package,
+      description: "Stil & Pflege",
     },
   ]
 
   // Estilos dinámicos basados en la sección actual
-  const headerStyles = isLightSection
-    ? "bg-black/80 backdrop-blur-2xl border-b border-gray-800/50 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
-    : isDarkSection
-    ? "bg-black/80 backdrop-blur-2xl border-b border-red-500/20 shadow-[0_8px_32px_rgba(239,68,68,0.2)]"
-    : "bg-white/5 backdrop-blur-2xl border-b border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+  const headerStyles = "bg-white/95 backdrop-blur-xl border-b border-[#E8E0D5] shadow-sm"
 
-  const menuStyles = isLightSection
-    ? "bg-black/90 backdrop-blur-2xl border-r border-gray-800/50 shadow-2xl"
-    : isDarkSection
-    ? "bg-black/90 backdrop-blur-2xl border-r border-red-500/20 shadow-2xl"
-    : "bg-black/40 backdrop-blur-2xl border-r border-white/10 shadow-2xl"
+  const menuStyles = "bg-white border-r border-[#E8E0D5] shadow-xl"
 
-  const textColor = (isLightSection || isDarkSection) ? "text-white" : "text-gray-300"
-  const textColorHover = (isLightSection || isDarkSection) ? "hover:text-gray-200" : "hover:text-white"
+  const textColor = "text-[#9B9189]"
+  const textColorHover = "hover:text-[#2E1F0F]"
 
   const handleLoginSuccess = (user: any) => {
     console.log("Usuario logueado en header:", user)
@@ -181,287 +174,202 @@ export function Header({ onAdminOpen }: HeaderProps) {
   const handleProfileClose = () => {
     setShowUserProfile(false)
   }
+
   return (
     <>
       <header
-      className={`
-        fixed top-0 left-0 w-full z-50
-        ${headerStyles}
-        transform transition-all duration-500 ease-out
-        ${showHeader ? "translate-y-0" : "-translate-y-full"}
-        ${
-          isLightSection
-            ? "before:absolute before:inset-0 before:bg-gradient-to-r before:from-orange-500/10 before:via-red-500/10 before:to-orange-500/10 before:pointer-events-none"
-            : "before:absolute before:inset-0 before:bg-gradient-to-r before:from-orange-500/5 before:via-red-500/5 before:to-orange-500/5 before:pointer-events-none"
-        }
-      `}
-    >
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo + Admin Button + Login Button Desktop */}
-          <div className="hidden lg:flex items-center space-x-4">
-            <div className="relative group cursor-pointer">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl blur-xl opacity-20 group-hover:opacity-40 transition-all duration-500 scale-110"></div>
-              <div className="relative bg-gradient-to-br from-orange-500 via-red-500 to-orange-600 p-4 rounded-2xl shadow-2xl border border-white/20">
-                <Flame className="w-7 h-7 text-white drop-shadow-lg" />
-                <Zap className="w-3 h-3 text-yellow-200 absolute -top-1 -right-1 animate-pulse drop-shadow-sm" />
+        className={`
+          fixed top-0 left-0 w-full z-50
+          ${headerStyles}
+          transform transition-all duration-500 ease-out
+          ${showHeader ? "translate-y-0" : "-translate-y-full"}
+        `}
+      >
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo + Admin Button + Login Button Desktop */}
+            <div className="hidden lg:flex items-center space-x-4">
+              <div className="w-10 h-10 bg-[#2E1F0F] flex items-center justify-center">
+                <span className="text-[#B8864E] font-black text-xs tracking-wider">GW</span>
+              </div>
+
+              <div className="space-y-1">
+                <h1 className="text-2xl font-black text-[#2E1F0F] tracking-tight leading-none">
+                  GLUTWERK
+                </h1>
+                <p className="text-xs font-medium tracking-[0.15em] uppercase text-[#B8864E]">
+                  Handwerk · Schärfe · Präzision
+                </p>
               </div>
             </div>
 
-            <div className="space-y-1">
-              <h1 className="text-3xl font-black bg-gradient-to-r from-orange-400 via-red-400 to-orange-500 bg-clip-text text-transparent tracking-tight leading-none">
-                Salsas.ch
-              </h1>
-              <p
-                className={`text-xs font-medium tracking-wider uppercase ${isLightSection ? "text-gray-300" : "text-gray-400"}`}
-              >
-                Authentische Grillkultur
-              </p>
-            </div>
-
-
-          </div>
-
-          {/* Mobile Layout - Todos los botones a la izquierda */}
-          <div className="lg:hidden flex items-center justify-between w-full">
-            {/* Logo + Admin Button + Login Button + Menu Button (todos a la izquierda) */}
-            <div className="flex items-center space-x-3">
-              {/* Logo Mobile */}
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl blur-lg opacity-30 group-hover:opacity-50 transition-all duration-300"></div>
-                <div className="relative bg-gradient-to-br from-orange-500 to-red-600 p-3 rounded-xl shadow-xl border border-white/20">
-                  <Flame className="w-6 h-6 text-white" />
-                  <Zap className="w-2 h-2 text-yellow-200 absolute -top-0.5 -right-0.5 animate-pulse" />
+            {/* Mobile Layout - Todos los botones a la izquierda */}
+            <div className="lg:hidden flex items-center justify-between w-full">
+              {/* Logo + Admin Button + Login Button + Menu Button (todos a la izquierda) */}
+              <div className="flex items-center space-x-3">
+                {/* Logo Mobile */}
+                <div className="w-10 h-10 bg-[#2E1F0F] flex items-center justify-center">
+                  <span className="text-[#B8864E] font-black text-xs tracking-wider">GW</span>
                 </div>
-              </div>
 
+                {/* Menu Button - Al final */}
+                <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative p-2.5 rounded-xl border transition-all duration-300 bg-[#F9F7F4] hover:bg-[#E8E0D5] text-[#2E1F0F] border-[#E8E0D5]"
+                    >
+                      <Menu className="w-4 h-4" />
+                      <span className="sr-only">Menü öffnen</span>
+                    </Button>
+                  </SheetTrigger>
 
-     
+                  <SheetContent side="left" className={`w-80 ${menuStyles}`}>
+                    {/* Background overlay */}
+                    <div className="absolute inset-0 pointer-events-none"></div>
 
-              {/* Menu Button - Al final */}
-              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`relative p-2.5 rounded-xl border transition-all duration-300 backdrop-blur-sm ${
-                      isLightSection
-                        ? "bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-orange-400/50"
-                        : "bg-white/5 hover:bg-white/10 text-white border-white/10 hover:border-orange-400/30"
-                    }`}
-                  >
-                    <Menu className="w-4 h-4" />
-                    <span className="sr-only">Menü öffnen</span>
-                  </Button>
-                </SheetTrigger>
-
-                <SheetContent side="left" className={`w-80 ${menuStyles}`}>
-                  {/* Todo el contenido del menú permanece igual */}
-                  <div
-                    className={`absolute inset-0 pointer-events-none ${
-                      isLightSection
-                        ? "bg-gradient-to-b from-orange-500/10 via-transparent to-red-500/10"
-                        : "bg-gradient-to-b from-orange-500/5 via-transparent to-red-500/5"
-                    }`}
-                  ></div>
-
-                  <SheetHeader
-                    className={`relative pb-6 mb-8 ${
-                      isLightSection ? "border-b border-gray-700/50" : "border-b border-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <div className="bg-gradient-to-br from-orange-500 to-red-600 p-3 rounded-xl shadow-xl">
-                            <Flame className="w-6 h-6 text-white" />
+                    <SheetHeader className="relative pb-6 mb-8 border-b border-[#E8E0D5]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-[#2E1F0F] flex items-center justify-center">
+                            <span className="text-[#B8864E] font-black text-xs tracking-wider">GW</span>
+                          </div>
+                          <div>
+                            <SheetTitle className="text-xl font-black text-[#2E1F0F] tracking-tight">
+                              GLUTWERK
+                            </SheetTitle>
+                            <p className="text-xs font-medium tracking-[0.15em] uppercase text-[#B8864E]">
+                              Handwerk · Schärfe · Präzision
+                            </p>
                           </div>
                         </div>
-                        <div>
-                          <SheetTitle className="text-xl font-black bg-gradient-to-r from-orange-400 via-red-400 to-orange-500 bg-clip-text text-transparent">
-                            HOT & BBQ
-                          </SheetTitle>
-                          <p className={`text-xs font-medium ${isLightSection ? "text-gray-300" : "text-gray-400"}`}>
-                            Authentische Grillkultur
+
+                        <SheetClose asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-xl transition-all duration-300 bg-[#F9F7F4] hover:bg-[#E8E0D5] text-[#9B9189] hover:text-[#2E1F0F]"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </SheetClose>
+                      </div>
+
+                      {/* Login en el menú móvil */}
+                      <div className="mt-4 pt-4 border-t border-[#E8E0D5]">
+                        <LoginAuth
+                          onLoginSuccess={handleLoginSuccess}
+                          onLogout={handleLogout}
+                          isLightSection={isLightSection}
+                          onShowProfile={handleShowProfile}
+                          variant="inline"
+                          buttonText="Anmelden"
+                          className="w-full"
+                        />
+                      </div>
+                    </SheetHeader>
+
+                    <nav className="space-y-2 relative">
+                      {navItems.map((item, index) => {
+                        const IconComponent = item.icon
+                        const isActive = currentSection === item.id
+
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => scrollToSection(item.id)}
+                            className={`w-full group flex items-center space-x-4 px-4 py-3 rounded-xl transition-all duration-300 ${
+                              isActive
+                                ? `bg-[#2E1F0F] text-white`
+                                : `text-[#2E1F0F] hover:bg-[#F9F7F4] hover:text-[#B8864E]`
+                            }`}
+                            style={{ animationDelay: `${index * 100}ms` }}
+                          >
+                            <div
+                              className={`p-2 flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0 ${
+                                isActive ? "bg-white/20" : "bg-[#F9F7F4] group-hover:bg-[#E8E0D5]"
+                              }`}
+                            >
+                              <div className="w-5 h-5 text-[#B8864E] transition-all duration-300">
+                                <IconComponent className="w-5 h-5" />
+                              </div>
+                            </div>
+
+                            <div className="flex-1">
+                              <span className="font-semibold tracking-wide block">{item.label}</span>
+                              <span className={`text-xs block ${isActive ? "text-white/60" : "text-[#9B9189]"}`}>
+                                {item.description}
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </nav>
+
+                    {/* Footer Info */}
+                    <div className="absolute bottom-8 left-6 right-6">
+                      <div className="relative rounded-none p-5 border overflow-hidden bg-[#F9F7F4] border-[#E8E0D5]">
+                        <div className="relative z-10 text-center">
+                          <p className="text-sm font-semibold text-[#2E1F0F] tracking-wider uppercase">
+                            GLUTWERK
+                          </p>
+                          <p className="text-xs mt-1 text-[#9B9189] tracking-[0.1em]">
+                            Handwerk · Schärfe · Präzision
                           </p>
                         </div>
                       </div>
-
-                      <SheetClose asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`rounded-xl transition-all duration-300 ${
-                            isLightSection
-                              ? "bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white"
-                              : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
-                          }`}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </SheetClose>
                     </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
 
-                    {/* Login en el menú móvil */}
-                    <div className="mt-4 pt-4 border-t border-white/10">
-                      <LoginAuth
-                        onLoginSuccess={handleLoginSuccess}
-                        onLogout={handleLogout}
-                        isLightSection={isLightSection}
-                        onShowProfile={handleShowProfile}
-                        variant="inline"
-                        buttonText="Anmelden"
-                        className="w-full"
-                      />
-                    </div>
-                  </SheetHeader>
-
-                  <nav className="space-y-2 relative">
-                    {navItems.map((item, index) => {
-                      const IconComponent = item.icon
-                      const isActive = currentSection === item.id
-
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => scrollToSection(item.id)}
-                          className={`w-full group relative flex items-center space-x-4 px-5 py-4 rounded-2xl transition-all duration-300 overflow-hidden ${
-                            isActive
-                              ? "text-white bg-gradient-to-r from-orange-500/20 to-red-500/20"
-                              : `${textColor} ${textColorHover}`
-                          }`}
-                          style={{ animationDelay: `${index * 100}ms` }}
-                        >
-                          <div
-                            className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-2xl ${
-                              isLightSection ? "bg-white/10" : "bg-white/5"
-                            }`}
-                          ></div>
-                          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-2xl"></div>
-
-                          <div
-                            className={`relative z-10 p-2 rounded-xl transition-all duration-300 flex items-center justify-center w-10 h-10 ${
-                              isActive
-                                ? "bg-orange-500/30"
-                                : isLightSection
-                                  ? "bg-white/10 group-hover:bg-orange-500/20"
-                                  : "bg-white/5 group-hover:bg-orange-500/20"
-                            }`}
-                          >
-                            <div className="w-5 h-5 text-orange-400 group-hover:text-orange-300 transition-all duration-300">
-                              {typeof IconComponent === "function" && IconComponent.name === "ChiliIcon" ? (
-                                <ChiliIcon className="w-5 h-5" />
-                              ) : typeof IconComponent === "function" && IconComponent.name === "BBQIcon" ? (
-                                <BBQIcon className="w-5 h-5" />
-                              ) : (
-                                <IconComponent className="w-5 h-5" />
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="relative z-10 flex-1">
-                            <span className="font-semibold tracking-wide block">{item.label}</span>
-                            <span className={`text-xs block ${isLightSection ? "text-gray-300" : "text-gray-400"}`}>
-                              {item.description}
-                            </span>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </nav>
-
-                  {/* Footer Info */}
-                  <div className="absolute bottom-8 left-6 right-6">
-                    <div
-                      className={`relative backdrop-blur-sm rounded-2xl p-5 border overflow-hidden ${
-                        isLightSection ? "bg-white/10 border-gray-700/50" : "bg-white/5 border-white/10"
-                      }`}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-red-500/10"></div>
-                      <div className="relative z-10 text-center">
-                        <div className="flex justify-center space-x-2 mb-3">
-                          <div className="w-6 h-6 text-orange-400">
-                            <BBQIcon />
-                          </div>
-                          <div className="w-6 h-6 text-red-400">
-                            <ChiliIcon />
-                          </div>
-                        </div>
-                        <p className={`text-sm font-medium ${isLightSection ? "text-gray-200" : "text-gray-300"}`}>
-                          Die besten scharfen Saucen
-                        </p>
-                        <p className={`text-xs mt-1 ${isLightSection ? "text-gray-300" : "text-gray-400"}`}>
-                          und Premium BBQ-Produkte
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
+              <div></div>
             </div>
 
-            <div></div>
-          </div>
+            {/* Navigation Desktop - Ahora centrado */}
+            <nav className="hidden lg:flex items-center space-x-2 flex-1 justify-center">
+              {navItems.map((item) => {
+                const IconComponent = item.icon
+                const isActive = currentSection === item.id
 
-          {/* Navigation Desktop - Ahora centrado */}
-          <nav className="hidden lg:flex items-center space-x-2 flex-1 justify-center">
-            {navItems.map((item) => {
-              const IconComponent = item.icon
-              const isActive = currentSection === item.id
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className={`group relative flex items-center space-x-3 px-5 py-3 rounded-2xl transition-all duration-300 overflow-hidden ${
-                    isActive
-                      ? "text-white bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/30"
-                      : `${textColor} ${textColorHover}`
-                  }`}
-                  title={item.description}
-                >
-                  <div
-                    className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-2xl ${
-                      isLightSection ? "bg-white/10" : "bg-white/5"
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    className={`group relative flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-all duration-300 ${
+                      isActive
+                        ? `bg-[#2E1F0F] text-white`
+                        : `text-[#2E1F0F] hover:bg-[#F9F7F4] hover:text-[#B8864E]`
                     }`}
-                  ></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-2xl"></div>
-
-                  <div className="w-4 h-4 text-orange-400 group-hover:text-orange-300 transition-all duration-300 relative z-10">
-                    {typeof IconComponent === "function" && IconComponent.name === "ChiliIcon" ? (
-                      <ChiliIcon className="w-4 h-4" />
-                    ) : typeof IconComponent === "function" && IconComponent.name === "BBQIcon" ? (
-                      <BBQIcon className="w-4 h-4" />
-                    ) : (
+                    title={item.description}
+                  >
+                    <div className={`w-4 h-4 transition-all duration-300 ${isActive ? "text-[#B8864E]" : "text-[#B8864E]"}`}>
                       <IconComponent className="w-4 h-4" />
-                    )}
-                  </div>
-                  <span className="font-semibold text-sm relative z-10 tracking-wide">{item.label}</span>
-                </button>
-              )
-            })}
-          </nav>
+                    </div>
+                    <span className="font-semibold text-sm tracking-wide">{item.label}</span>
+                  </button>
+                )
+              })}
+            </nav>
 
-          {/* Login button - Desktop derecha */}
-          <div className="hidden lg:flex items-center">
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl shadow-xl">
-              <LoginAuth
-                onLoginSuccess={handleLoginSuccess}
-                onLogout={handleLogout}
-                onShowProfile={handleShowProfile}
-                isLightSection={isLightSection}
-                variant="button"
-              />
+            {/* Login button - Desktop derecha */}
+            <div className="hidden lg:flex items-center">
+              <div className="bg-[#F9F7F4] border border-[#E8E0D5] shadow-sm">
+                <LoginAuth
+                  onLoginSuccess={handleLoginSuccess}
+                  onLogout={handleLogout}
+                  onShowProfile={handleShowProfile}
+                  isLightSection={isLightSection}
+                  variant="button"
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Modern Bottom Border */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent">
-        <div className="h-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
-
-      </div>
+        {/* Bottom border line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-[#E8E0D5]"></div>
       </header>
 
       {/* User Profile Modal */}

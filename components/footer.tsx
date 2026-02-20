@@ -1,6 +1,6 @@
 "use client"
 
-import { Truck, Shield, MapPin, CreditCard, Phone, Mail, Flame, Heart, ExternalLink } from "lucide-react"
+import { Truck, Shield, MapPin, CreditCard, Phone, Mail, Heart, ExternalLink } from "lucide-react"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AdminLoginButton } from "@/components/admin-auth"
@@ -85,68 +85,44 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
   }
 
   return (
-    <footer className="relative bg-gradient-to-b from-gray-900 via-gray-900 to-black text-white overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-0 left-0 w-full h-full" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ef4444' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }} />
-      </div>
-
-      {/* Floating elements for spice theme */}
-      <div className="absolute top-10 left-10 opacity-10">
-        <Flame className="w-8 h-8 text-orange-500 animate-pulse" />
-      </div>
-      <div className="absolute top-20 right-20 opacity-10">
-        <Flame className="w-6 h-6 text-red-500 animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-      <div className="absolute bottom-20 left-1/4 opacity-10">
-        <Flame className="w-4 h-4 text-yellow-500 animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
+    <footer className="relative bg-[#EDE8E0] overflow-hidden">
+      {/* Bottom accent line top */}
+      <div className="h-[2px] bg-[#B8864E]"></div>
 
       <div className="relative container mx-auto px-4 py-16">
         {/* Top Section with Brand */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-3 mb-4">
-            <div className="relative">
-              <Flame className="w-12 h-12 text-red-500" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full animate-bounce opacity-80"></div>
-            </div>
-            <h2 className="text-4xl font-bold bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">
-              Salsas.ch
+            <h2 className="text-4xl font-black text-[#2E1F0F]">
+              GLUTWERK
             </h2>
-            <div className="relative">
-              <Flame className="w-12 h-12 text-orange-500 scale-x-[-1]" />
-              <div className="absolute -top-1 -left-1 w-4 h-4 bg-red-500 rounded-full animate-bounce opacity-80" style={{ animationDelay: '0.5s' }}></div>
-            </div>
           </div>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            Ihre Quelle für die schärfsten und geschmackvollsten Saucen der Schweiz. 
-            <span className="text-red-400 font-semibold"> Handwerkliche Qualität</span> direkt zu Ihnen geliefert.
+          <p className="text-lg text-[#9B9189] max-w-2xl mx-auto">
+            Handwerkliche Saucen. Direkt zu Ihnen.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {/* Shipping Information */}
           <div className="group">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700 hover:border-red-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20 h-full">
-              <h3 className="text-xl font-bold flex items-center gap-3 mb-6 text-white group-hover:text-red-400 transition-colors">
-                <div className="p-2 bg-red-500/20 rounded-lg group-hover:bg-red-500/30 transition-colors">
-                  <Truck className="h-6 w-6 text-red-500" />
+            <div className="bg-white border border-[#E8E0D5] rounded-2xl p-6 hover:border-[#B8864E] transition-all duration-300 hover:shadow-lg h-full">
+              <h3 className="text-xl font-bold flex items-center gap-3 mb-6 text-[#2E1F0F] transition-colors">
+                <div className="p-2 bg-[#F9F7F4] rounded-lg">
+                  <Truck className="h-6 w-6 text-[#B8864E]" />
                 </div>
                 Versand
               </h3>
               <div className="space-y-4 text-sm">
-                <div className="flex items-start gap-3 text-gray-300 hover:text-white transition-colors">
-                  <MapPin className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 text-[#9B9189] hover:text-[#B8864E] transition-colors">
+                  <MapPin className="h-5 w-5 text-[#B8864E] mt-0.5 flex-shrink-0" />
                   <span>Schweizweite Lieferung mit A-Post</span>
                 </div>
-                <div className="flex items-start gap-3 text-gray-300 hover:text-white transition-colors">
-                  <Shield className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 text-[#9B9189] hover:text-[#B8864E] transition-colors">
+                  <Shield className="h-5 w-5 text-[#B8864E] mt-0.5 flex-shrink-0" />
                   <span>Kostenloser Versand ab 50 CHF</span>
                 </div>
-                <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-lg p-3 mt-4">
-                  <p className="text-red-300 font-medium text-xs">⚡ Express-Lieferung: 1-3 Werktage</p>
+                <div className="bg-[#F9F7F4] border border-[#E8E0D5] rounded-lg p-3 mt-4">
+                  <p className="text-[#B8864E] font-medium text-xs">Express-Lieferung: 1-3 Werktage</p>
                 </div>
               </div>
             </div>
@@ -154,28 +130,28 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
 
           {/* Payment Methods */}
           <div className="group">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700 hover:border-green-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/20 h-full">
-              <h3 className="text-xl font-bold flex items-center gap-3 mb-6 text-white group-hover:text-green-400 transition-colors">
-                <div className="p-2 bg-green-500/20 rounded-lg group-hover:bg-green-500/30 transition-colors">
-                  <CreditCard className="h-6 w-6 text-green-500" />
+            <div className="bg-white border border-[#E8E0D5] rounded-2xl p-6 hover:border-[#B8864E] transition-all duration-300 hover:shadow-lg h-full">
+              <h3 className="text-xl font-bold flex items-center gap-3 mb-6 text-[#2E1F0F] transition-colors">
+                <div className="p-2 bg-[#F9F7F4] rounded-lg">
+                  <CreditCard className="h-6 w-6 text-[#B8864E]" />
                 </div>
                 Sichere Zahlung
               </h3>
               <div className="space-y-4 text-sm">
-                <div className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
-                  <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-xs">PP</div>
+                <div className="flex items-center gap-3 text-[#9B9189] hover:text-[#B8864E] transition-colors">
+                  <div className="w-8 h-8 bg-[#2E1F0F] rounded flex items-center justify-center text-white font-bold text-xs">PP</div>
                   <span>PayPal - 100% sicher</span>
                 </div>
-                <div className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
-                  <CreditCard className="h-5 w-5 text-blue-400" />
+                <div className="flex items-center gap-3 text-[#9B9189] hover:text-[#B8864E] transition-colors">
+                  <CreditCard className="h-5 w-5 text-[#B8864E]" />
                   <span>Kredit- und Debitkarten</span>
                 </div>
-                <div className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
-                  <Shield className="h-5 w-5 text-purple-400" />
+                <div className="flex items-center gap-3 text-[#9B9189] hover:text-[#B8864E] transition-colors">
+                  <Shield className="h-5 w-5 text-[#B8864E]" />
                   <span>Sichere Banküberweisung</span>
                 </div>
-                <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-lg p-3 mt-4">
-                  <p className="text-green-300 font-medium text-xs">🔒 SSL-verschlüsselt & geschützt</p>
+                <div className="bg-[#F9F7F4] border border-[#E8E0D5] rounded-lg p-3 mt-4">
+                  <p className="text-[#B8864E] font-medium text-xs">SSL-verschlüsselt &amp; geschützt</p>
                 </div>
               </div>
             </div>
@@ -183,31 +159,31 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
 
           {/* Company Info */}
           <div className="group">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/20 h-full">
-              <h3 className="text-xl font-bold flex items-center gap-3 mb-6 text-white group-hover:text-orange-400 transition-colors">
-                <div className="p-2 bg-orange-500/20 rounded-lg group-hover:bg-orange-500/30 transition-colors">
-                  <Heart className="h-6 w-6 text-orange-500" />
+            <div className="bg-white border border-[#E8E0D5] rounded-2xl p-6 hover:border-[#B8864E] transition-all duration-300 hover:shadow-lg h-full">
+              <h3 className="text-xl font-bold flex items-center gap-3 mb-6 text-[#2E1F0F] transition-colors">
+                <div className="p-2 bg-[#F9F7F4] rounded-lg">
+                  <Heart className="h-6 w-6 text-[#B8864E]" />
                 </div>
                 Über Uns
               </h3>
               <div className="space-y-4 text-sm">
-                <p className="text-gray-300 leading-relaxed">Premium handwerkliche Saucen direkt aus den USA importiert</p>
+                <p className="text-[#9B9189] leading-relaxed">Premium handwerkliche Saucen direkt aus den USA importiert</p>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors group/item">
-                    <Mail className="h-4 w-4 text-blue-400 group-hover/item:text-blue-300" />
-                    <a href="mailto:info@lweb.ch" className="hover:text-blue-400 transition-colors">
+                  <div className="flex items-center gap-3 text-[#9B9189] hover:text-[#B8864E] transition-colors group/item">
+                    <Mail className="h-4 w-4 text-[#B8864E] group-hover/item:text-[#B8864E]" />
+                    <a href="mailto:info@lweb.ch" className="hover:text-[#B8864E] transition-colors">
                       info@lweb.ch
                     </a>
                   </div>
-                  <div className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors group/item">
-                    <Phone className="h-4 w-4 text-green-400 group-hover/item:text-green-300" />
-                    <a href="tel:+41765608645" className="hover:text-green-400 transition-colors">
+                  <div className="flex items-center gap-3 text-[#9B9189] hover:text-[#B8864E] transition-colors group/item">
+                    <Phone className="h-4 w-4 text-[#B8864E] group-hover/item:text-[#B8864E]" />
+                    <a href="tel:+41765608645" className="hover:text-[#B8864E] transition-colors">
                       +41 76 560 86 45
                     </a>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-500/20 rounded-lg p-3 mt-4">
-                  <p className="text-orange-300 font-medium text-xs">🌶️ Authentisch & garantiert scharf!</p>
+                <div className="bg-[#F9F7F4] border border-[#E8E0D5] rounded-lg p-3 mt-4">
+                  <p className="text-[#B8864E] font-medium text-xs">Handwerk. Schärfe. Präzision.</p>
                 </div>
               </div>
             </div>
@@ -215,27 +191,27 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
 
           {/* Legal & Support */}
           <div className="group">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700 hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 h-full">
-              <h3 className="text-xl font-bold flex items-center gap-3 mb-6 text-white group-hover:text-purple-400 transition-colors">
-                <div className="p-2 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30 transition-colors">
-                  <Shield className="h-6 w-6 text-purple-500" />
+            <div className="bg-white border border-[#E8E0D5] rounded-2xl p-6 hover:border-[#B8864E] transition-all duration-300 hover:shadow-lg h-full">
+              <h3 className="text-xl font-bold flex items-center gap-3 mb-6 text-[#2E1F0F] transition-colors">
+                <div className="p-2 bg-[#F9F7F4] rounded-lg">
+                  <Shield className="h-6 w-6 text-[#B8864E]" />
                 </div>
-                Support & Recht
+                Support &amp; Recht
               </h3>
               <div className="space-y-4 text-sm">
                 <div>
                   <Dialog open={openModal === "agb"} onOpenChange={(open) => setOpenModal(open ? "agb" : null)}>
                     <DialogTrigger asChild>
-                      <button className="flex items-center gap-2 w-full text-left text-gray-300 hover:text-purple-400 transition-colors group/btn">
+                      <button className="flex items-center gap-2 w-full text-left text-[#9B9189] hover:text-[#B8864E] transition-colors group/btn">
                         <ExternalLink className="h-4 w-4 opacity-60 group-hover/btn:opacity-100" />
                         Allgemeine Geschäftsbedingungen
                       </button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gray-900 border-gray-700">
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white border-[#E8E0D5]">
                       <DialogHeader>
-                        <DialogTitle className="text-white">{legalContent.agb.title}</DialogTitle>
+                        <DialogTitle className="text-[#2E1F0F]">{legalContent.agb.title}</DialogTitle>
                       </DialogHeader>
-                      <div className="whitespace-pre-line text-sm text-gray-200">
+                      <div className="whitespace-pre-line text-sm text-[#9B9189]">
                         {legalContent.agb.content}
                       </div>
                     </DialogContent>
@@ -248,16 +224,16 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
                     onOpenChange={(open) => setOpenModal(open ? "datenschutz" : null)}
                   >
                     <DialogTrigger asChild>
-                      <button className="flex items-center gap-2 w-full text-left text-gray-300 hover:text-purple-400 transition-colors group/btn">
+                      <button className="flex items-center gap-2 w-full text-left text-[#9B9189] hover:text-[#B8864E] transition-colors group/btn">
                         <ExternalLink className="h-4 w-4 opacity-60 group-hover/btn:opacity-100" />
                         Datenschutzrichtlinie
                       </button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gray-900 border-gray-700">
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white border-[#E8E0D5]">
                       <DialogHeader>
-                        <DialogTitle className="text-white">{legalContent.datenschutz.title}</DialogTitle>
+                        <DialogTitle className="text-[#2E1F0F]">{legalContent.datenschutz.title}</DialogTitle>
                       </DialogHeader>
-                      <div className="whitespace-pre-line text-sm text-gray-200">
+                      <div className="whitespace-pre-line text-sm text-[#9B9189]">
                         {legalContent.datenschutz.content}
                       </div>
                     </DialogContent>
@@ -270,24 +246,24 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
                     onOpenChange={(open) => setOpenModal(open ? "rueckgabe" : null)}
                   >
                     <DialogTrigger asChild>
-                      <button className="flex items-center gap-2 w-full text-left text-gray-300 hover:text-purple-400 transition-colors group/btn">
+                      <button className="flex items-center gap-2 w-full text-left text-[#9B9189] hover:text-[#B8864E] transition-colors group/btn">
                         <ExternalLink className="h-4 w-4 opacity-60 group-hover/btn:opacity-100" />
                         Rückgaberichtlinie
                       </button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gray-900 border-gray-700">
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white border-[#E8E0D5]">
                       <DialogHeader>
-                        <DialogTitle className="text-white">{legalContent.rueckgabe.title}</DialogTitle>
+                        <DialogTitle className="text-[#2E1F0F]">{legalContent.rueckgabe.title}</DialogTitle>
                       </DialogHeader>
-                      <div className="whitespace-pre-line text-sm text-gray-200">
+                      <div className="whitespace-pre-line text-sm text-[#9B9189]">
                         {legalContent.rueckgabe.content}
                       </div>
                     </DialogContent>
                   </Dialog>
                 </div>
 
-                <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-3 mt-4">
-                  <p className="text-purple-300 font-medium text-xs">💬 Schneller Kundenservice</p>
+                <div className="bg-[#F9F7F4] border border-[#E8E0D5] rounded-lg p-3 mt-4">
+                  <p className="text-[#B8864E] font-medium text-xs">Schneller Kundenservice</p>
                 </div>
               </div>
             </div>
@@ -295,23 +271,21 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
         </div>
 
         {/* Credits and Design Info */}
-        <div className="border-t border-gray-700/50 pt-8 mb-8">
+        <div className="border-t border-[#E8E0D5] pt-8 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-            <div className="bg-gradient-to-r from-gray-800/50 to-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-              <p className="text-gray-400 flex items-center gap-2">
-                <span className="text-blue-400">📸</span>
-                <strong className="text-gray-300">Bildnachweis:</strong> Einige Bilder stammen von Freepik
+            <div className="bg-white rounded-xl p-4 border border-[#E8E0D5]">
+              <p className="text-[#9B9189] flex items-center gap-2">
+                <strong className="text-[#2E1F0F]">Bildnachweis:</strong> Einige Bilder stammen von Freepik
               </p>
             </div>
-            <div className="bg-gradient-to-r from-gray-800/50 to-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-              <p className="text-gray-400 flex items-center gap-2">
-                <span className="text-red-400">🎨</span>
-                <strong className="text-gray-300">Webseite Design:</strong>{" "}
+            <div className="bg-white rounded-xl p-4 border border-[#E8E0D5]">
+              <p className="text-[#9B9189] flex items-center gap-2">
+                <strong className="text-[#2E1F0F]">Webseite Design:</strong>{" "}
                 <a
                   href="https://lweb.ch"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-red-400 hover:text-red-300 transition-colors font-medium"
+                  className="text-[#B8864E] hover:text-[#2E1F0F] transition-colors font-medium"
                 >
                   lweb.ch
                 </a>
@@ -321,26 +295,26 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-700/50 pt-8">
+        <div className="border-t border-[#E8E0D5] pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="text-center md:text-left">
-              <p className="text-gray-400 text-sm">© 2025 Salsas.ch. Alle Rechte vorbehalten.</p>
-              <p className="text-xs text-gray-500 mt-1">Mit ❤️ und 🌶️ für Sauce-Liebhaber gemacht</p>
+              <p className="text-[#9B9189] text-sm">© 2026 GLUTWERK. Alle Rechte vorbehalten.</p>
+              <p className="text-xs text-[#9B9189] mt-1">Handwerk. Schärfe. Präzision.</p>
             </div>
             <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2 text-gray-400 bg-gradient-to-r from-blue-500/10 to-red-500/10 px-4 py-2 rounded-full border border-blue-500/20">
-                <MapPin className="h-4 w-4 text-blue-400" />
+              <div className="flex items-center gap-2 bg-white border border-[#E8E0D5] px-4 py-2 rounded-full text-[#9B9189]">
+                <MapPin className="h-4 w-4 text-[#B8864E]" />
                 <span>Made in USA</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-400 bg-gradient-to-r from-green-500/10 to-blue-500/10 px-4 py-2 rounded-full border border-green-500/20">
-                <Shield className="h-4 w-4 text-green-400" />
+              <div className="flex items-center gap-2 bg-white border border-[#E8E0D5] px-4 py-2 rounded-full text-[#9B9189]">
+                <Shield className="h-4 w-4 text-[#B8864E]" />
                 <span>100% Sicher</span>
               </div>
               {/* Admin Login */}
               {onAdminOpen && (
                 <AdminLoginButton
                   onAdminOpen={onAdminOpen}
-                  className="hover:bg-gray-700/50 border border-gray-600/50"
+                  className="hover:bg-[#F9F7F4] border border-[#E8E0D5]"
                 />
               )}
             </div>
@@ -348,11 +322,8 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
         </div>
       </div>
 
-      {/* Animated background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-orange-500/5 pointer-events-none"></div>
-      
-      {/* Bottom glow effect */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 opacity-50"></div>
+      {/* Bottom accent line */}
+      <div className="h-[2px] bg-[#B8864E]"></div>
 
     </footer>
   )

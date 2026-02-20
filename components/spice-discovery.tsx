@@ -228,9 +228,9 @@ export default function SpiceDiscovery({
     const isOutOfStock = (product.stock || 0) === 0
     
     return (
-      <Card 
+      <Card
         key={product.id || index}
-        className={`group bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 hover:border-red-500/50 transition-all duration-500 overflow-hidden ${
+        className={`group bg-[#2E1F0F] border border-[#B8864E]/20 hover:border-[#B8864E]/60 transition-all duration-500 overflow-hidden ${
           showRecommendations ? 'animate-slide-up opacity-100' : 'opacity-0'
         }`}
         style={{ animationDelay: `${index * 150}ms` }}
@@ -245,9 +245,7 @@ export default function SpiceDiscovery({
                 className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
               />
               {product.badge && (
-                <Badge className={`absolute -top-2 -right-2 text-xs px-2 py-1 ${
-                  product.category === "bbq-sauce" ? "bg-amber-500" : "bg-red-500"
-                } text-white border-0`}>
+                <Badge className="absolute -top-2 -right-2 text-xs px-2 py-1 bg-[#B8864E] text-white border-0">
                   {product.badge}
                 </Badge>
               )}
@@ -255,11 +253,11 @@ export default function SpiceDiscovery({
 
             {/* Product Info */}
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold text-white text-lg line-clamp-1 group-hover:text-red-400 transition-colors">
+              <h4 className="font-bold text-white text-lg line-clamp-1 group-hover:text-[#B8864E] transition-colors">
                 {product.name}
               </h4>
               
-              <p className="text-gray-400 text-sm line-clamp-2 mb-2 leading-relaxed">
+              <p className="text-white/60 text-sm line-clamp-2 mb-2 leading-relaxed">
                 {product.description}
               </p>
               
@@ -267,13 +265,13 @@ export default function SpiceDiscovery({
         
                 <div className="flex items-center gap-1">
                   {Array.from({ length: product.heatLevel }, (_, i) => (
-                    <Flame key={i} className="w-3 h-3 text-red-500 fill-red-500" />
+                    <Flame key={i} className="w-3 h-3 text-[#B8864E] fill-[#B8864E]" />
                   ))}
                 </div>
                 
                 <Button
                   onClick={() => handleKaufenClick(product)}
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-xs px-3 py-1 h-auto font-semibold transition-all duration-300"
+                  className="bg-[#B8864E] hover:bg-white hover:text-[#2E1F0F] text-white text-xs px-3 py-1 h-auto font-semibold transition-all duration-300"
                 >
                   <ShoppingCart className="w-3 h-3 mr-1" />
     
@@ -295,29 +293,29 @@ export default function SpiceDiscovery({
     <div className={`space-y-8 ${className}`}>
       {/* Header */}
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-red-500/30 mb-4">
-          <Sparkles className="w-5 h-5 text-yellow-400" />
-          <span className="text-white font-semibold">Persönliche Entdeckung</span>
+        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-[#B8864E]/30 mb-4">
+          <Sparkles className="w-5 h-5 text-[#B8864E]" />
+          <span className="text-white font-semibold">Persönlicher Stil</span>
         </div>
         
         <h2 className="text-4xl font-black text-white mb-2">
-          Finde deine <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">perfekte Sauce</span>
+          Finde dein <span className="text-[#B8864E]">perfektes Produkt</span>
         </h2>
-        <p className="text-gray-400 text-xl max-w-2xl mx-auto">
-          Nutze unseren intelligenten Messer, um Saucen zu entdecken, die perfekt zu deiner Schärfe-Toleranz passen
+        <p className="text-white/50 text-xl max-w-2xl mx-auto">
+          Nutze unseren Produktfinder, um Lederwaren zu entdecken, die perfekt zu deinem Stil passen
         </p>
       </div>
 
       {/* Loading State */}
       {loading && (
-        <Card className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-gray-700">
+        <Card className="bg-[#2E1F0F]/80 border-[#B8864E]/30">
           <CardContent className="p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-            <h4 className="text-lg font-semibold text-gray-300 mb-2">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8864E] mx-auto mb-4"></div>
+            <h4 className="text-lg font-semibold text-white/80 mb-2">
               Lade Produkte von der API...
             </h4>
-            <p className="text-gray-500">
-              Hole die besten Saucen von {API_BASE_URL}
+            <p className="text-white/50">
+              Hole die besten Produkte von {API_BASE_URL}
             </p>
           </CardContent>
         </Card>
@@ -325,16 +323,16 @@ export default function SpiceDiscovery({
 
       {/* Error State */}
       {error && !loading && (
-        <Card className="bg-gradient-to-r from-red-900/50 via-red-800/50 to-red-900/50 border-red-700">
+        <Card className="bg-[#2E1F0F]/80 border-red-400/30">
           <CardContent className="p-8 text-center">
             <Flame className="w-12 h-12 text-red-400 mx-auto mb-4" />
             <h4 className="text-lg font-semibold text-red-300 mb-2">
               Fehler beim Laden der Produkte
             </h4>
             <p className="text-red-400 mb-4">{error}</p>
-            <button 
+            <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-[#B8864E] hover:bg-white hover:text-[#2E1F0F] text-white rounded-lg transition-colors"
             >
               Erneut versuchen
             </button>
@@ -360,11 +358,11 @@ export default function SpiceDiscovery({
           {/* Product Recommendations */}
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#B8864E] rounded-lg flex items-center justify-center">
                 <Flame className="w-5 h-5 text-white" />
               </div>
 
-              <Badge className="bg-red-500/20 text-red-400 border border-red-500/30">
+              <Badge className="bg-[#B8864E]/20 text-[#B8864E] border border-[#B8864E]/30">
                 {recommendedProducts.length} gefunden
               </Badge>
             </div>
@@ -374,13 +372,13 @@ export default function SpiceDiscovery({
                 {recommendedProducts.map((product, index) => renderProductCard(product, index))}
               </div>
             ) : (
-              <Card className="bg-gray-800/50 border-gray-700">
+              <Card className="bg-[#2E1F0F]/80 border-[#B8864E]/30">
                 <CardContent className="p-8 text-center">
-                  <Flame className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                  <h4 className="text-lg font-semibold text-gray-300 mb-2">
-                    Keine Saucen für dieses Level verfügbar
+                  <Flame className="w-12 h-12 text-[#9B9189] mx-auto mb-4" />
+                  <h4 className="text-lg font-semibold text-white/80 mb-2">
+                    Keine Produkte für diese Stilstufe verfügbar
                   </h4>
-                  <p className="text-gray-500">
+                  <p className="text-[#9B9189]">
                     Versuche ein anderes Level oder komm später wieder
                   </p>
                 </CardContent>
