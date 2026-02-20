@@ -315,8 +315,7 @@ export default function PremiumHotSauceStore() {
   // 🏪 Renderizar página principal del store
   return (
     <div className="bg-[#F9F7F4]">
-      {/* Construction Notice Modal */}
-      <ConstructionNotice />
+
 
       <Header onAdminOpen={goToAdmin} />
                <div id="Chat" className="w-full relative" data-aos="fade-up" data-aos-delay="1200">
