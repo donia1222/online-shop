@@ -260,7 +260,7 @@ export function Admin({ onClose }: AdminProps) {
         params.append("stock_status", productFilters.stock_status)
       }
 
-      const response = await fetch(`${API_BASE_URL}/get_products.php?${params}`)
+      const response = await fetch(`/api/products?${params}`)
       const data = await response.json()
 
       if (data.success) {
@@ -279,7 +279,7 @@ export function Admin({ onClose }: AdminProps) {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/get_categories.php`, { method: "POST" })
+      const response = await fetch(`/api/categories`)
       const data = await response.json()
       if (data.success) {
         setCategories(data.categories)
@@ -386,7 +386,7 @@ export function Admin({ onClose }: AdminProps) {
 
   const showEditProductModal = async (id: number) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/get_products.php?id=${id}`)
+      const response = await fetch(`/api/products?id=${id}`)
       const data = await response.json()
 
       if (data.success) {

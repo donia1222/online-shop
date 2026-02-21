@@ -82,7 +82,31 @@ export function RecommendedProducts() {
 
   const visibleProducts = products.filter(p => !failedIds.has(p.id)).slice(0, 12)
 
-  if (loading || visibleProducts.length === 0) return null
+  if (loading) return (
+    <section className="bg-white border-t border-[#E0E0E0] py-12">
+      <div className="container mx-auto px-4">
+        <div className="flex items-end justify-between mb-8">
+          <div className="space-y-2 animate-pulse">
+            <div className="h-5 w-24 bg-gray-100 rounded-full" />
+            <div className="h-6 w-52 bg-gray-200 rounded-full" />
+            <div className="h-4 w-64 bg-gray-100 rounded-full" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 animate-pulse">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i}>
+              <div className="aspect-square bg-gray-100 rounded-2xl mb-3" />
+              <div className="h-3 bg-gray-100 rounded-full w-5/6 mb-1" />
+              <div className="h-3 bg-gray-100 rounded-full w-3/4 mb-1" />
+              <div className="h-4 bg-gray-200 rounded-full w-1/2" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+
+  if (visibleProducts.length === 0) return null
 
   return (
     <section className="bg-white border-t border-[#E0E0E0] py-12">
@@ -122,7 +146,7 @@ export function RecommendedProducts() {
             return (
               <div
                 key={product.id}
-                onClick={() => router.push(`/shop?product=${product.id}`)}
+                onClick={() => router.push(`/product/${product.id}`)}
                 className="cursor-pointer group"
               >
                 {/* Image */}

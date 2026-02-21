@@ -64,7 +64,38 @@ export function CategoryPreviewSection() {
     return () => { cancelled = true }
   }, [])
 
-  if (loading) return null
+  if (loading) return (
+    <div className="bg-gradient-to-b from-[#F0F1F3] to-[#FAFAFA] border-t border-[#E0E0E0] py-12">
+      <div className="container mx-auto px-4 space-y-6">
+        {[0, 1].map(i => (
+          <div key={i} className="bg-white rounded-2xl border border-[#EBEBEB] shadow-sm overflow-hidden animate-pulse">
+            <div className="px-6 pt-5 pb-5 flex items-center justify-between border-b border-[#F3F3F3]">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-7 bg-gray-200 rounded-full" />
+                <div className="space-y-2">
+                  <div className="h-4 w-36 bg-gray-200 rounded-full" />
+                  <div className="h-3 w-24 bg-gray-100 rounded-full" />
+                </div>
+              </div>
+              <div className="h-8 w-28 bg-gray-100 rounded-full" />
+            </div>
+            <div className="p-5 grid grid-cols-3 sm:grid-cols-6 gap-4">
+              {Array.from({ length: 6 }).map((_, j) => (
+                <div key={j}>
+                  <div className="aspect-square bg-gray-100 rounded-xl" />
+                  <div className="h-3 bg-gray-100 rounded-full mt-2 w-4/5 mx-auto" />
+                  <div className="h-3 bg-gray-100 rounded-full mt-1 w-1/2 mx-auto" />
+                </div>
+              ))}
+            </div>
+            <div className="px-5 pb-5">
+              <div className="h-12 bg-gray-50 rounded-xl border border-gray-100" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 
   const sections = CATEGORY_CONFIG.flatMap(({ keyword, label, cat }) => {
     const apiCat = categories.find((c) =>
@@ -115,7 +146,7 @@ export function CategoryPreviewSection() {
                 return (
                   <div
                     key={product.id}
-                    onClick={() => router.push(`/shop?product=${product.id}`)}
+                    onClick={() => router.push(`/product/${product.id}`)}
                     className="cursor-pointer group"
                   >
                     <div className="bg-[#F8F8F8] rounded-xl overflow-hidden aspect-square border border-[#EFEFEF] group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all duration-300">

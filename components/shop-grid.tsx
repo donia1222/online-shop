@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, memo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
   ShoppingCart, ChevronLeft, ChevronRight,
-  Search, SlidersHorizontal, X, Check, MapPin,
+  Search, SlidersHorizontal, X, Check,
   ArrowUp, ChevronDown
 } from "lucide-react"
 import { ShoppingCartComponent } from "./shopping-cart"
@@ -171,7 +171,6 @@ export default function ShopGrid() {
   const [cartCount, setCartCount] = useState(0)
   const [addedIds, setAddedIds]   = useState<Set<number>>(new Set())
   const [currentView, setCurrentView] = useState<"products"|"checkout">("products")
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   useEffect(() => { loadProducts(); loadCategories(); loadCart() }, [])
   useEffect(() => { setVisibleCount(PAGE_SIZE) }, [search, activeCategory, stockFilter, sortBy])
@@ -187,14 +186,6 @@ export default function ShopGrid() {
     if (matched) setActiveCategory(matched.slug)
   }, [categories, searchParams])
 
-  // Open product detail modal from URL param (e.g. ?product=123)
-  useEffect(() => {
-    const productParam = searchParams.get("product")
-    if (!productParam || products.length === 0) return
-    const productId = parseInt(productParam, 10)
-    const found = products.find((p) => p.id === productId)
-    if (found) setSelectedProduct(found)
-  }, [products, searchParams])
   useEffect(() => {
     const onScroll = () => setShowBackTop(window.scrollY > 500)
     window.addEventListener("scroll", onScroll)
@@ -285,92 +276,8 @@ export default function ShopGrid() {
   const visibleProducts = filtered.slice(0, visibleCount)
   const hasMore = visibleCount < filtered.length
 
-  const handleSelect   = useCallback((p: Product) => setSelectedProduct(p), [])
+  const handleSelect   = useCallback((p: Product) => router.push(`/product/${p.id}`), [])
   const handleAddToCart = useCallback((p: Product) => addToCart(p), [addedIds, cart]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ─── Detail Modal ─────────────────────────────────────────────────────────
-  const DetailModal = ({ product }: { product: Product }) => {
-    const images  = getImages(product)
-    const [idx, setIdx] = useState(0)
-    const inStock = (product.stock ?? 0) > 0
-    return (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedProduct(null)}>
-        <div className="bg-white w-full sm:max-w-3xl sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-          {/* Handle bar mobile */}
-          <div className="sm:hidden flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 bg-gray-200 rounded-full" />
-          </div>
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 pr-4 line-clamp-1">{product.name}</h2>
-            <button onClick={() => setSelectedProduct(null)} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-              <X className="w-4 h-4 text-gray-600" />
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="bg-gray-50 p-6 flex flex-col items-center">
-              {images.length > 0 ? (
-                <img
-                  src={images[idx]}
-                  alt={product.name}
-                  className="w-full max-w-xs aspect-square object-contain"
-                  onError={e => { (e.target as HTMLImageElement).src = "/placeholder.svg?height=400&width=400" }}
-                />
-              ) : (
-                <ProductImage
-                  src={product.image_url}
-                  candidates={product.image_url_candidates}
-                  alt={product.name}
-                  className="w-full max-w-xs aspect-square object-contain"
-                />
-              )}
-              {images.length > 1 && (
-                <div className="flex gap-2 mt-4">
-                  {images.map((url, i) => (
-                    <button key={i} onClick={() => setIdx(i)}
-                      className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all ${i === idx ? "border-gray-900 scale-110" : "border-transparent opacity-60 hover:opacity-100"}`}>
-                      <img src={url} alt="" className="w-full h-full object-contain" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="p-6 flex flex-col gap-4">
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{product.supplier || product.origin}</p>
-              </div>
-              <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
-              {product.origin && (
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>{product.origin}</span>
-                </div>
-              )}
-              <div className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full w-fit ${inStock ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-500"}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${inStock ? "bg-emerald-500" : "bg-red-400"}`} />
-                {inStock ? `Auf Lager · ${product.stock} Stück` : "Nicht verfügbar"}
-              </div>
-              <div className="mt-auto pt-4 border-t border-gray-100">
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-3xl font-black text-gray-900 tracking-tight">{product.price.toFixed(2)}</span>
-                  <span className="text-sm text-gray-400">CHF</span>
-                </div>
-                <button
-                  onClick={() => { addToCart(product); setSelectedProduct(null) }}
-                  disabled={!inStock}
-                  className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-all duration-200 ${
-                    inStock ? "bg-[#2C5F2E] hover:bg-[#1A4520] text-white hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#2C5F2E]/20" : "bg-gray-100 text-gray-300 cursor-not-allowed"
-                  }`}
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  {inStock ? "In den Warenkorb" : "Ausverkauft"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   // ─── Views ────────────────────────────────────────────────────────────────
   if (currentView === "checkout") {
@@ -429,9 +336,8 @@ export default function ShopGrid() {
         </button>
       )}
 
-      {selectedProduct && <DetailModal product={selectedProduct} />}
 
-      <div className="min-h-screen bg-[#f7f7f8]">
+<div className="min-h-screen bg-[#f7f7f8]">
 
         {/* ── Top bar ── */}
         <div className="bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm">
