@@ -21,30 +21,58 @@ interface Category {
   name: string
 }
 
+function getImages(p: Product): string[] {
+  return (p.image_urls ?? [p.image_url]).filter((u): u is string => !!u)
+}
+
 const CATEGORY_CONFIG = [
-  { keyword: "Messer",   label: "Unsere Messer",   cat: "Messer" },
-  { keyword: "Armbrust", label: "Unsere Armbrüste", cat: "Armbrust" },
+  {
+    keyword:     "Messer",
+    label:       "Unsere Messer",
+    cat:         "Messer",
+    image:       "/images/messer/488659357_1257006842863540_6360458103650416865_n.jpg",
+    emoji:       "🔪",
+    headline:    ["Schärfer.", "Präziser."],
+    accent:      "Besser.",
+    description: "Premium Messer für jeden Einsatz — von Outdoor bis Küche, Qualität die überzeugt.",
+    accentColor: "#E8C547",
+    overlayFrom: "#1A0800",
+    stats:       [["50+", "Modelle"], ["Top", "Qualität"], ["Swiss", "Service"]],
+    ctaLabel:    "Alle Messer entdecken",
+    catParam:    "Messer",
+  },
+  {
+    keyword:     "Armbrust",
+    label:       "Unsere Armbrüste",
+    cat:         "Armbrust",
+    image:       "/images/shop/488657394_1257007002863524_6579276074813205025_n.jpg",
+    emoji:       "🏹",
+    headline:    ["Präzision auf", "den Punkt."],
+    accent:      "Gebracht.",
+    description: "Leistungsstarke Armbrüste für Sport und Freizeit — Qualität, der man vertrauen kann.",
+    accentColor: "#5BC8E8",
+    overlayFrom: "#04111f",
+    stats:       [["20+", "Modelle"], ["Top", "Präzision"], ["Gratis", "Beratung"]],
+    ctaLabel:    "Alle Armbrüste entdecken",
+    catParam:    "Armbrust",
+  },
 ]
 
 export function CategoryPreviewSection() {
   const router = useRouter()
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts]     = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
-  const [failedIds, setFailedIds] = useState<Set<number>>(new Set())
+  const [loading, setLoading]       = useState(true)
+  const [failedIds, setFailedIds]   = useState<Set<number>>(new Set())
 
   const markFailed = (id: number) =>
     setFailedIds(prev => new Set([...prev, id]))
 
   useEffect(() => {
     let cancelled = false
-
     const load = async (retries = 2): Promise<void> => {
       try {
-        const [r1, r2] = await Promise.all([
-          fetch(`/api/products`),
-          fetch(`/api/categories`),
-        ])
+        const [r1, r2] = await Promise.all([fetch("/api/products"), fetch("/api/categories")])
         if (!r1.ok || !r2.ok) throw new Error("not ok")
         const [prodData, catData] = await Promise.all([r1.json(), r2.json()])
         if (cancelled) return
@@ -59,37 +87,30 @@ export function CategoryPreviewSection() {
         if (!cancelled) setLoading(false)
       }
     }
-
     load()
     return () => { cancelled = true }
   }, [])
 
   if (loading) return (
-    <div className="bg-gradient-to-b from-[#F0F1F3] to-[#FAFAFA] border-t border-[#E0E0E0] py-12">
+    <div className="bg-[#F0F1F3] border-t border-[#E0E0E0] py-12">
       <div className="container mx-auto px-4 space-y-6">
         {[0, 1].map(i => (
-          <div key={i} className="bg-white rounded-2xl border border-[#EBEBEB] shadow-sm overflow-hidden animate-pulse">
-            <div className="px-6 pt-5 pb-5 flex items-center justify-between border-b border-[#F3F3F3]">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-7 bg-gray-200 rounded-full" />
-                <div className="space-y-2">
-                  <div className="h-4 w-36 bg-gray-200 rounded-full" />
-                  <div className="h-3 w-24 bg-gray-100 rounded-full" />
-                </div>
-              </div>
-              <div className="h-8 w-28 bg-gray-100 rounded-full" />
-            </div>
-            <div className="p-5 grid grid-cols-3 sm:grid-cols-6 gap-4">
+          <div key={i} className="rounded-3xl overflow-hidden bg-white border border-[#EBEBEB] shadow-sm animate-pulse">
+            <div className="h-[280px] bg-gray-200" />
+            <div className="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {Array.from({ length: 6 }).map((_, j) => (
-                <div key={j}>
-                  <div className="aspect-square bg-gray-100 rounded-xl" />
-                  <div className="h-3 bg-gray-100 rounded-full mt-2 w-4/5 mx-auto" />
-                  <div className="h-3 bg-gray-100 rounded-full mt-1 w-1/2 mx-auto" />
+                <div key={j} className="rounded-2xl overflow-hidden border border-gray-100">
+                  <div className="aspect-square bg-gray-100" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 bg-gray-100 rounded-full w-5/6" />
+                    <div className="h-3 bg-gray-100 rounded-full w-3/4" />
+                    <div className="h-4 bg-gray-200 rounded-full w-1/2" />
+                  </div>
                 </div>
               ))}
             </div>
             <div className="px-5 pb-5">
-              <div className="h-12 bg-gray-50 rounded-xl border border-gray-100" />
+              <div className="h-12 bg-gray-100 rounded-xl" />
             </div>
           </div>
         ))}
@@ -97,123 +118,153 @@ export function CategoryPreviewSection() {
     </div>
   )
 
-  const sections = CATEGORY_CONFIG.flatMap(({ keyword, label, cat }) => {
-    const apiCat = categories.find((c) =>
-      c.name.toLowerCase().includes(keyword.toLowerCase())
-    )
+  const sections = CATEGORY_CONFIG.flatMap(({ keyword, label, cat, image, emoji, headline, accent, description, accentColor, overlayFrom, stats, ctaLabel, catParam }) => {
+    const apiCat = categories.find(c => c.name.toLowerCase().includes(keyword.toLowerCase()))
     if (!apiCat) return []
-
-    const catProducts = products
-      .filter((p) => p.category === apiCat.slug && (p.stock ?? 1) > 0)
-      .slice(0, 20)
-
+    const catProducts = products.filter(p => p.category === apiCat.slug && (p.stock ?? 1) > 0).slice(0, 12)
     if (catProducts.length === 0) return []
-
-    return [{ label, cat, products: catProducts }]
+    return [{ label, cat, image, emoji, headline, accent, description, accentColor, overlayFrom, stats, ctaLabel, catParam, products: catProducts }]
   })
 
   if (sections.length === 0) return null
 
   return (
-    <div className="bg-gradient-to-b from-[#F0F1F3] to-[#FAFAFA] border-t border-[#E0E0E0] py-12">
+    <div className="bg-[#F0F1F3] border-t border-[#E0E0E0] py-12">
       <div className="container mx-auto px-4 space-y-6">
-        {sections.map(({ label, cat, products: catProducts }) => {
+
+        {sections.map(({ label, cat, image, emoji, headline, accent, description, accentColor, overlayFrom, stats, ctaLabel, catParam, products: catProducts }) => {
           const visible = catProducts.filter(p => !failedIds.has(p.id)).slice(0, 6)
           if (visible.length === 0) return null
           return (
-          <div key={cat} className="bg-white rounded-2xl border border-[#EBEBEB] shadow-sm overflow-hidden">
+            <div key={cat} className="rounded-3xl overflow-hidden bg-white border border-[#EBEBEB] shadow-md">
 
-            {/* Header */}
-            <div className="px-6 pt-5 pb-5 flex items-center justify-between border-b border-[#F3F3F3]">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-7 bg-[#2C5F2E] rounded-full flex-shrink-0" />
-                <div>
-                  <h2 className="text-lg font-black text-[#1A1A1A] leading-tight tracking-tight">{label}</h2>
-                  <p className="text-xs text-[#AAA] mt-0.5">Für jeden Bedarf das Richtige.</p>
+              {/* ── Banner ── */}
+              <div className="relative h-[260px] sm:h-[380px] group overflow-hidden cursor-pointer"
+                onClick={() => router.push(`/shop?cat=${encodeURIComponent(catParam)}`)}>
+
+                <img
+                  src={image}
+                  alt={label}
+                  className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none" }}
+                />
+                <div className="absolute inset-0" style={{ background: `linear-gradient(to right, ${overlayFrom} 0%, ${overlayFrom}e6 35%, ${overlayFrom}88 65%, ${overlayFrom}11 100%)` }} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+
+                <div className="relative h-full flex flex-col justify-center px-6 sm:px-14 max-w-xl gap-3 sm:gap-5 py-6 sm:py-10">
+                  <span
+                    className="inline-flex items-center gap-1.5 self-start text-[11px] font-bold uppercase tracking-[0.15em] px-3 py-1.5 rounded-full border"
+                    style={{ backgroundColor: `${accentColor}22`, color: accentColor, borderColor: `${accentColor}55` }}
+                  >
+                    {emoji} {label}
+                  </span>
+
+                  <h2 className="text-white font-black text-2xl sm:text-4xl leading-[1.1]" style={{ letterSpacing: "-0.02em" }}>
+                    {headline[0]}<br />
+                    {headline[1]} <span style={{ color: accentColor }}>{accent}</span>
+                  </h2>
+
+                  <p className="text-white/65 text-xs sm:text-sm leading-relaxed max-w-xs hidden sm:block">
+                    {description}
+                  </p>
+
+                  <div className="flex gap-5 sm:gap-7">
+                    {stats.map(([val, lbl]) => (
+                      <div key={lbl}>
+                        <p className="text-white font-black text-base sm:text-lg leading-none">{val}</p>
+                        <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">{lbl}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    className="self-start font-bold px-6 py-3 text-sm rounded-xl inline-flex items-center gap-2 shadow-xl transition-all duration-200 hover:brightness-110 hover:scale-[1.02] active:scale-[0.98]"
+                    style={{ backgroundColor: accentColor, color: overlayFrom }}
+                  >
+                    {ctaLabel} →
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={() => router.push(`/shop?cat=${encodeURIComponent(cat)}`)}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#2C5F2E] bg-[#2C5F2E]/8 hover:bg-[#2C5F2E]/15 px-4 py-2 rounded-full transition-colors whitespace-nowrap"
-              >
-                Alle anzeigen <span>→</span>
-              </button>
-            </div>
 
-            {/* 6 product cards con imagen */}
-            <div className="p-5 grid grid-cols-3 sm:grid-cols-6 gap-4">
-              {visible.map((product) => {
-                return (
-                  <div
-                    key={product.id}
-                    onClick={() => router.push(`/product/${product.id}`)}
-                    className="cursor-pointer group"
-                  >
-                    <div className="bg-[#F8F8F8] rounded-xl overflow-hidden aspect-square border border-[#EFEFEF] group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all duration-300">
-                      <ProductImage
-                        src={product.image_url}
-                        candidates={product.image_url_candidates}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        onAllFailed={() => markFailed(product.id)}
-                      />
+              {/* ── 4 Product cards ── */}
+              <div className="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {visible.map((product, i) => {
+                  const imgs = getImages(product)
+                  return (
+                    <div
+                      key={product.id}
+                      onClick={() => router.push(`/product/${product.id}`)}
+                      className={`group bg-white rounded-2xl overflow-hidden border border-[#EBEBEB] hover:border-[#D5D5D5] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer ${i >= 4 ? "hidden sm:block" : ""}`}
+                    >
+                      <div className="aspect-square bg-[#F8F8F8] overflow-hidden">
+                        {imgs.length > 0 ? (
+                          <img
+                            src={imgs[0]}
+                            alt={product.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            onError={() => markFailed(product.id)}
+                          />
+                        ) : (
+                          <ProductImage
+                            src={product.image_url}
+                            candidates={product.image_url_candidates}
+                            alt={product.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            onAllFailed={() => markFailed(product.id)}
+                          />
+                        )}
+                      </div>
+                      <div className="p-3 flex flex-col h-[72px]">
+                        <p className="text-xs font-semibold text-[#1A1A1A] line-clamp-2 leading-tight group-hover:text-[#2C5F2E] transition-colors flex-1">
+                          {product.name}
+                        </p>
+                        {product.price > 0 && (
+                          <p className="text-sm font-black text-[#1A1A1A] mt-1">
+                            CHF {product.price.toFixed(2)}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-center text-[#1A1A1A] font-semibold mt-2 leading-tight line-clamp-2 px-0.5">
-                      {product.name}
-                    </p>
-                    {product.price > 0 && (
-                      <p className="text-xs text-center text-[#2C5F2E] font-bold mt-0.5">
-                        CHF {product.price.toFixed(2)}
-                      </p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
 
-            {/* CTA footer */}
-            <div className="px-5 pb-5">
-              <button
-                onClick={() => router.push(`/shop?cat=${encodeURIComponent(cat)}`)}
-                className="w-full py-3 rounded-xl border-2 border-[#2C5F2E]/20 hover:border-[#2C5F2E] hover:bg-[#2C5F2E]/5 text-sm font-bold text-[#2C5F2E] transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                Mehr aus {label} entdecken <span className="text-base">→</span>
-              </button>
+              {/* ── Footer CTA ── */}
+              <div className="px-5 pb-5">
+                <button
+                  onClick={() => router.push(`/shop?cat=${encodeURIComponent(catParam)}`)}
+                  className="w-full py-3.5 rounded-2xl border-2 border-[#2C5F2E]/20 hover:border-[#2C5F2E] hover:bg-[#2C5F2E]/5 text-sm font-bold text-[#2C5F2E] transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  Mehr aus {label} entdecken <span className="text-base">→</span>
+                </button>
+              </div>
+
             </div>
-          </div>
           )
         })}
 
         {/* ── Angeln & Fischen Banner ── */}
-        <div className="relative rounded-2xl overflow-hidden h-[420px] group">
-
-          {/* Background image */}
+        <div className="relative rounded-3xl overflow-hidden h-[420px] group">
           <img
             src="/images/fischen/472679633_1183608080203417_7913441867178334031_n.jpg"
             alt="Angeln & Fischen"
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />
-
-          {/* Gradient overlay: dark on left, fade to transparent on right */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#04111f] via-[#04111f]/80 to-[#04111f]/20" />
-          {/* Bottom fade for thumbnails */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#04111f]/70 via-transparent to-transparent" />
-
-          {/* Text content — left side */}
           <div className="relative h-full flex flex-col justify-center px-10 max-w-lg gap-5">
             <span className="inline-flex items-center gap-1.5 self-start bg-[#5BC8E8]/20 text-[#5BC8E8] border border-[#5BC8E8]/40 text-[11px] font-bold uppercase tracking-[0.15em] px-3 py-1.5 rounded-full">
               🎣 Angeln & Fischen
             </span>
-
             <h2 className="text-white font-black text-4xl leading-[1.1]" style={{ letterSpacing: "-0.02em" }}>
               Alles für den<br />
               <span className="text-[#5BC8E8]">perfekten Angeltag</span>
             </h2>
-
             <p className="text-white/65 text-sm leading-relaxed max-w-xs">
               Ruten, Rollen, Köder und Zubehör — Top-Qualität für Angler aller Niveaus.
             </p>
-
             <div className="flex gap-7">
               {[["500+", "Produkte"], ["Top", "Qualität"], ["Gratis", "Beratung"]].map(([val, lbl]) => (
                 <div key={lbl}>
@@ -222,7 +273,6 @@ export function CategoryPreviewSection() {
                 </div>
               ))}
             </div>
-
             <button
               onClick={() => router.push("/shop")}
               className="self-start bg-[#5BC8E8] text-[#04111f] font-bold px-6 py-3 text-sm hover:bg-white transition-all duration-200 rounded-xl inline-flex items-center gap-2 shadow-xl"
@@ -230,8 +280,6 @@ export function CategoryPreviewSection() {
               Jetzt entdecken →
             </button>
           </div>
-
-
         </div>
 
       </div>
