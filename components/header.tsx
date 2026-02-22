@@ -25,7 +25,7 @@ export function Header({ onAdminOpen }: HeaderProps) {
   }, [])
 
   const categories = [
-    { label: "Alle Produkte", href: "/shop", highlight: true },
+    { label: "% Sale %", href: "/shop", highlight: true },
     { label: "Messer", href: "/shop?cat=Messer" },
     { label: "Armbrust", href: "/shop?cat=Armbrust" },
     { label: "Pfeilbogen", href: "/shop?cat=Pfeilbogen" },
