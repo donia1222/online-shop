@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import {
   ShoppingCart, ChevronLeft, ChevronRight,
   Search, X, Check,
-  ArrowUp, ChevronDown, Heart, Menu, Newspaper
+  ArrowUp, ChevronDown, Heart, Menu, Newspaper, Download
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ShoppingCartComponent } from "./shopping-cart"
@@ -185,6 +185,31 @@ export default function ShopGrid() {
   const [showBackTop, setShowBackTop]       = useState(false)
   const [navMenuOpen, setNavMenuOpen]       = useState(false)
   const [showUserProfile, setShowUserProfile] = useState(false)
+
+  const handleDownloadVCard = () => {
+    const imageUrl = "https://online-shop-seven-delta.vercel.app/Security_n.png"
+    fetch(imageUrl)
+      .then((res) => { if (!res.ok) throw new Error(res.statusText); return res.blob() })
+      .then((blob) => {
+        const reader = new FileReader()
+        reader.onloadend = function () {
+          const base64data = (reader.result as string).split(",")[1]
+          const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:US - Fishing & Huntingshop\nORG:US - Fishing & Huntingshop\nTITLE:JAGD · ANGELN · OUTDOOR\nADR:;;Bahnhofstrasse 2;Sevelen;;9475;Switzerland\nTEL:+41786066105\nEMAIL:info@usfh.ch\nURL:https://usfh.ch\nPHOTO;ENCODING=b;TYPE=PNG:${base64data}\nEND:VCARD`
+          const link = document.createElement("a")
+          link.href = URL.createObjectURL(new Blob([vcard], { type: "text/vcard;charset=utf-8" }))
+          link.download = "US-Fishing-Huntingshop.vcf"
+          document.body.appendChild(link); link.click(); document.body.removeChild(link)
+        }
+        reader.readAsDataURL(blob)
+      })
+      .catch(() => {
+        const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:US - Fishing & Huntingshop\nORG:US - Fishing & Huntingshop\nTITLE:JAGD · ANGELN · OUTDOOR\nADR:;;Bahnhofstrasse 2;Sevelen;;9475;Switzerland\nTEL:+41786066105\nEMAIL:info@usfh.ch\nURL:https://usfh.ch\nEND:VCARD`
+        const link = document.createElement("a")
+        link.href = URL.createObjectURL(new Blob([vcard], { type: "text/vcard;charset=utf-8" }))
+        link.download = "US-Fishing-Huntingshop.vcf"
+        document.body.appendChild(link); link.click(); document.body.removeChild(link)
+      })
+  }
 
   const PAGE_SIZE = 20
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
@@ -434,13 +459,20 @@ export default function ShopGrid() {
                       {cat.name.replace(/\s*\d{4}$/, "")}
                     </button>
                   ))}
-                  <div className="pt-2 mt-1 border-t border-[#E0E0E0]">
+                  <div className="pt-2 mt-1 border-t border-[#E0E0E0] space-y-0.5">
                     <button
                       onClick={() => { router.push("/blog"); setNavMenuOpen(false) }}
                       className={`w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-semibold ${pathname === "/blog" ? "bg-[#2C5F2E] text-white" : "text-[#2C5F2E]"}`}
                     >
                       <Newspaper className="w-4 h-4" />
                       Blog
+                    </button>
+                    <button
+                      onClick={() => { handleDownloadVCard(); setNavMenuOpen(false) }}
+                      className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-semibold text-[#2C5F2E]"
+                    >
+                      <Download className="w-4 h-4" />
+                      Digitale Visitenkarte
                     </button>
                   </div>
                 </nav>

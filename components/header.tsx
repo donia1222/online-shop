@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, ChevronDown, Menu, ArrowUp, Newspaper } from "lucide-react"
+import { ShoppingCart, ChevronDown, Menu, ArrowUp, Newspaper, Download } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { LoginAuth } from "./login-auth"
 import { UserProfile } from "./user-profile"
@@ -81,13 +81,44 @@ export function Header({ onAdminOpen, onCartOpen, cartCount = 0 }: HeaderProps) 
                       {cat.label}
                     </button>
                   ))}
-                  <div className="pt-2 mt-1 border-t border-[#E0E0E0]">
+                  <div className="pt-2 mt-1 border-t border-[#E0E0E0] space-y-0.5">
                     <button
                       onClick={() => { router.push("/blog"); setIsMenuOpen(false) }}
                       className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#2C5F2E] font-semibold"
                     >
                       <Newspaper className="w-4 h-4" />
                       Blog
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false)
+                        const imageUrl = "https://online-shop-seven-delta.vercel.app/Security_n.png"
+                        fetch(imageUrl)
+                          .then((res) => { if (!res.ok) throw new Error(res.statusText); return res.blob() })
+                          .then((blob) => {
+                            const reader = new FileReader()
+                            reader.onloadend = function () {
+                              const base64data = (reader.result as string).split(",")[1]
+                              const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:US - Fishing & Huntingshop\nORG:US - Fishing & Huntingshop\nTITLE:JAGD · ANGELN · OUTDOOR\nADR:;;Bahnhofstrasse 2;Sevelen;;9475;Switzerland\nTEL:+41786066105\nEMAIL:info@usfh.ch\nURL:https://usfh.ch\nPHOTO;ENCODING=b;TYPE=PNG:${base64data}\nEND:VCARD`
+                              const link = document.createElement("a")
+                              link.href = URL.createObjectURL(new Blob([vcard], { type: "text/vcard;charset=utf-8" }))
+                              link.download = "US-Fishing-Huntingshop.vcf"
+                              document.body.appendChild(link); link.click(); document.body.removeChild(link)
+                            }
+                            reader.readAsDataURL(blob)
+                          })
+                          .catch(() => {
+                            const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:US - Fishing & Huntingshop\nORG:US - Fishing & Huntingshop\nTITLE:JAGD · ANGELN · OUTDOOR\nADR:;;Bahnhofstrasse 2;Sevelen;;9475;Switzerland\nTEL:+41786066105\nEMAIL:info@usfh.ch\nURL:https://usfh.ch\nEND:VCARD`
+                            const link = document.createElement("a")
+                            link.href = URL.createObjectURL(new Blob([vcard], { type: "text/vcard;charset=utf-8" }))
+                            link.download = "US-Fishing-Huntingshop.vcf"
+                            document.body.appendChild(link); link.click(); document.body.removeChild(link)
+                          })
+                      }}
+                      className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#2C5F2E] font-semibold"
+                    >
+                      <Download className="w-4 h-4" />
+                      Digitale Visitenkarte
                     </button>
                   </div>
                 </nav>

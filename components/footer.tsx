@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AdminLoginButton } from "@/components/admin-auth"
-import { Facebook, Twitter, Instagram, Newspaper, ArrowRight } from "lucide-react"
+import { Facebook, Twitter, Instagram, Newspaper, ArrowRight, Download } from "lucide-react"
 
 interface FooterProps {
   onAdminOpen?: () => void
@@ -14,10 +14,44 @@ export function Footer({ onAdminOpen }: FooterProps = {}) {
   const router = useRouter()
   const [openModal, setOpenModal] = useState<string | null>(null)
 
+  const handleDownloadVCard = () => {
+    const imageUrl = "https://online-shop-seven-delta.vercel.app/Security_n.png"
+    fetch(imageUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error(res.statusText)
+        return res.blob()
+      })
+      .then((blob) => {
+        const reader = new FileReader()
+        reader.onloadend = function () {
+          const base64data = (reader.result as string).split(",")[1]
+          const vCardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:US - Fishing & Huntingshop\nORG:US - Fishing & Huntingshop\nTITLE:JAGD · ANGELN · OUTDOOR\nADR:;;Bahnhofstrasse 2;Sevelen;;9475;Switzerland\nTEL:+41786066105\nEMAIL:info@usfh.ch\nURL:https://usfh.ch\nPHOTO;ENCODING=b;TYPE=PNG:${base64data}\nEND:VCARD`
+          const blob2 = new Blob([vCardContent], { type: "text/vcard;charset=utf-8" })
+          const link = document.createElement("a")
+          link.href = URL.createObjectURL(blob2)
+          link.download = "US-Fishing-Huntingshop.vcf"
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }
+        reader.readAsDataURL(blob)
+      })
+      .catch(() => {
+        const vCardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:US - Fishing & Huntingshop\nORG:US - Fishing & Huntingshop\nTITLE:JAGD · ANGELN · OUTDOOR\nADR:;;Bahnhofstrasse 2;Sevelen;;9475;Switzerland\nTEL:+41786066105\nEMAIL:info@usfh.ch\nURL:https://usfh.ch\nEND:VCARD`
+        const blob2 = new Blob([vCardContent], { type: "text/vcard;charset=utf-8" })
+        const link = document.createElement("a")
+        link.href = URL.createObjectURL(blob2)
+        link.download = "US-Fishing-Huntingshop.vcf"
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      })
+  }
+
   const legalContent = {
     agb: {
       title: "Allgemeine Geschäftsbedingungen (AGB)",
-      content: `US – Fishing & Huntingshop | Bahnhofstrasse 2, 9475 Sevelen | info@lweb.ch
+      content: `US – Fishing & Huntingshop | Bahnhofstrasse 2, 9475 Sevelen | info@usfh.ch
 
 1. GELTUNGSBEREICH
 Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Bestellungen, die über den Online-Shop von US – Fishing & Huntingshop abgeschlossen werden. Abweichende Bedingungen des Käufers werden nicht anerkannt, es sei denn, wir stimmen ihrer Geltung ausdrücklich schriftlich zu.
@@ -51,7 +85,7 @@ Sollten einzelne Bestimmungen dieser AGB unwirksam sein, bleibt die Wirksamkeit 
     },
     datenschutz: {
       title: "Datenschutzerklärung",
-      content: `US – Fishing & Huntingshop | Bahnhofstrasse 2, 9475 Sevelen | info@lweb.ch
+      content: `US – Fishing & Huntingshop | Bahnhofstrasse 2, 9475 Sevelen | info@usfh.ch
 
 Diese Datenschutzerklärung informiert Sie gemäss dem Schweizer Datenschutzgesetz (DSG) sowie der EU-Datenschutz-Grundverordnung (DSGVO) über die Verarbeitung Ihrer personenbezogenen Daten.
 
@@ -59,7 +93,7 @@ Diese Datenschutzerklärung informiert Sie gemäss dem Schweizer Datenschutzgese
 US – Fishing & Huntingshop
 Bahnhofstrasse 2, 9475 Sevelen, Schweiz
 Telefon: 078 606 61 05
-E-Mail: info@lweb.ch
+E-Mail: info@usfh.ch
 
 2. WELCHE DATEN WIR ERHEBEN
 Im Rahmen der Bestellabwicklung erheben wir folgende Daten: Vor- und Nachname, Lieferadresse, E-Mail-Adresse, Telefonnummer sowie Zahlungsinformationen. Beim Besuch unserer Website werden technische Daten wie IP-Adresse, Browsertyp, Besuchsdauer und aufgerufene Seiten automatisch erfasst.
@@ -80,7 +114,7 @@ Wir setzen technische und organisatorische Sicherheitsmassnahmen ein, um Ihre Da
 Ihre Daten werden nur so lange gespeichert, wie es für den jeweiligen Zweck notwendig ist oder gesetzliche Aufbewahrungsfristen (in der Regel 10 Jahre für Buchhaltungsunterlagen) es erfordern.
 
 8. IHRE RECHTE
-Sie haben jederzeit das Recht auf: Auskunft über Ihre gespeicherten Daten, Berichtigung unrichtiger Daten, Löschung Ihrer Daten (sofern keine gesetzlichen Aufbewahrungspflichten entgegenstehen), Einschränkung der Verarbeitung sowie Datenübertragbarkeit. Zur Ausübung Ihrer Rechte wenden Sie sich an: info@lweb.ch
+Sie haben jederzeit das Recht auf: Auskunft über Ihre gespeicherten Daten, Berichtigung unrichtiger Daten, Löschung Ihrer Daten (sofern keine gesetzlichen Aufbewahrungspflichten entgegenstehen), Einschränkung der Verarbeitung sowie Datenübertragbarkeit. Zur Ausübung Ihrer Rechte wenden Sie sich an: info@usfh.ch
 
 9. COOKIES
 Unsere Website verwendet technisch notwendige Cookies, die für den Betrieb des Shops erforderlich sind. Analytische oder Marketing-Cookies werden nur mit Ihrer ausdrücklichen Einwilligung gesetzt.
@@ -107,7 +141,7 @@ Bezahlen Sie über Ihr bestehendes PayPal-Konto. PayPal bietet einen integrierte
 Allgemeine Hinweise
 — Alle Preise verstehen sich in Schweizer Franken (CHF) inkl. MwSt.
 — Der Kaufbetrag wird erst nach Versandbestätigung belastet.
-— Bei Fragen zur Zahlung erreichen Sie uns unter info@lweb.ch oder 078 606 61 05.`,
+— Bei Fragen zur Zahlung erreichen Sie uns unter info@usfh.ch oder 078 606 61 05.`,
     },
     cookies: {
       title: "Cookie Manager",
@@ -131,7 +165,7 @@ Gemäss Schweizer DSG und EU-DSGVO haben Sie das Recht, Cookies abzulehnen oder 
 — Firefox: Einstellungen → Datenschutz → Cookies
 — Safari: Einstellungen → Datenschutz → Cookies verwalten
 
-Bei Fragen: info@lweb.ch`,
+Bei Fragen: info@usfh.ch`,
     },
     ueberuns: {
       title: "Über uns",
@@ -158,7 +192,7 @@ Wir legen grössten Wert auf Schweizer Qualitätsstandards, seriöse Beratung un
 Besuchen Sie uns
 Bahnhofstrasse 2, 9475 Sevelen
 Mo – Fr: 13:30 – 18:30 | Sa: 10:00 – 16:00
-📞 078 606 61 05 | info@lweb.ch`,
+📞 078 606 61 05 | info@usfh.ch`,
     },
     impressum: {
       title: "Impressum",
@@ -172,7 +206,7 @@ Kanton St. Gallen, Schweiz
 
 KONTAKT
 Telefon: 078 606 61 05
-E-Mail: info@lweb.ch
+E-Mail: info@usfh.ch
 Website: www.usfh.ch
 
 ÖFFNUNGSZEITEN
@@ -204,13 +238,13 @@ Stand: Februar 2026`,
     },
     rueckgabe: {
       title: "Versand & Rückgabe",
-      content: `US – Fishing & Huntingshop | Bahnhofstrasse 2, 9475 Sevelen | info@lweb.ch
+      content: `US – Fishing & Huntingshop | Bahnhofstrasse 2, 9475 Sevelen | info@usfh.ch
 
 1. VERSAND
 Wir liefern ausschliesslich innerhalb der Schweiz. Bestellungen werden in der Regel innerhalb von 1–3 Werktagen nach Zahlungseingang versandt. Der Versand erfolgt mit einem zuverlässigen Schweizer Paketdienstleister. Sie erhalten nach dem Versand eine E-Mail mit Ihrer Sendungsverfolgungsnummer. Versandkosten werden transparent im Bestellprozess ausgewiesen.
 
 2. RÜCKGABERECHT
-Sie können bestellte Artikel innerhalb von 14 Tagen ab Erhalt ohne Angabe von Gründen zurückgeben. Bitte kontaktieren Sie uns vor der Rücksendung per E-Mail an info@lweb.ch oder telefonisch unter 078 606 61 05.
+Sie können bestellte Artikel innerhalb von 14 Tagen ab Erhalt ohne Angabe von Gründen zurückgeben. Bitte kontaktieren Sie uns vor der Rücksendung per E-Mail an info@usfh.ch oder telefonisch unter 078 606 61 05.
 
 3. ZUSTAND DER WARE
 Die Ware muss sich in originalem, unbenutztem Zustand befinden und in der Originalverpackung zurückgesendet werden. Bei Produkten wie Messern, Armbrüsten oder Outdoor-Ausrüstung dürfen keine Gebrauchsspuren vorhanden sein.
@@ -308,9 +342,9 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                   className="inline-flex items-center gap-2 bg-[#F5F5F5] hover:bg-[#2C5F2E] hover:text-white text-[#2C5F2E] font-semibold text-sm px-3 py-1.5 rounded-full transition-colors">
                   <span className="text-base">📞</span> 078 606 61 05
                 </a>
-                <a href="mailto:info@lweb.ch"
+                <a href="mailto:info@usfh.ch"
                   className="inline-flex items-center gap-2 bg-[#F5F5F5] hover:bg-[#2C5F2E] hover:text-white text-[#2C5F2E] font-semibold text-sm px-3 py-1.5 rounded-full transition-colors">
-                  <span className="text-base">✉️</span> info@lweb.ch
+                  <span className="text-base">✉️</span> info@usfh.ch
                 </a>
               </div>
 
@@ -337,7 +371,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
               <h3 className="font-black text-[#1A1A1A] text-base mb-5 uppercase tracking-widest">Service</h3>
               <ul className="space-y-3">
                 <li>
-                  <a href="mailto:info@lweb.ch" className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors">Kontakt</a>
+                  <a href="mailto:info@usfh.ch" className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors">Kontakt</a>
                 </li>
                 <li>
                   <Dialog open={openModal === "rueckgabe"} onOpenChange={(open) => setOpenModal(open ? "rueckgabe" : null)}>
@@ -377,6 +411,15 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                       <div className="whitespace-pre-line text-sm text-[#555]">{legalContent.cookies.content}</div>
                     </DialogContent>
                   </Dialog>
+                </li>
+                <li>
+                  <button
+                    onClick={handleDownloadVCard}
+                    className="flex items-center gap-1.5 text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Digitale Visitenkarte
+                  </button>
                 </li>
               </ul>
             </div>
