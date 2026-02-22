@@ -20,6 +20,7 @@ import {
   Search,
   Filter,
   RefreshCw,
+  Download,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -589,6 +590,150 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
     setPasswordError("")
   }
 
+  const downloadInvoicePDF = async (order: Order) => {
+    const { jsPDF } = await import("jspdf")
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
+
+    const pageW = doc.internal.pageSize.getWidth()
+    const margin = 15
+
+    // --- Logo ---
+    try {
+      const img = new window.Image()
+      img.src = "/Secuxrity_n.jpg"
+      await new Promise<void>((res) => {
+        img.onload = () => res()
+        img.onerror = () => res()
+      })
+      const canvas = document.createElement("canvas")
+      canvas.width = img.naturalWidth || 1
+      canvas.height = img.naturalHeight || 1
+      canvas.getContext("2d")?.drawImage(img, 0, 0)
+      const dataUrl = canvas.toDataURL("image/jpeg")
+      const logoH = 20
+      const logoW = img.naturalWidth ? (img.naturalWidth / img.naturalHeight) * logoH : logoH
+      doc.addImage(dataUrl, "JPEG", margin, 10, logoW, logoH)
+    } catch (_) {/* kein Logo */}
+
+    // --- Firmendaten (links, unter Logo) ---
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(13)
+    doc.setTextColor(44, 95, 46)
+    doc.text("US - Fishing & Huntingshop", margin, 36)
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(8)
+    doc.setTextColor(80, 80, 80)
+    doc.text("JAGD · ANGELN · OUTDOOR", margin, 41)
+    doc.text("Bahnhofstrasse 2, 9475 Sevelen", margin, 46)
+    doc.text("Tel: 078 606 61 05", margin, 51)
+    doc.text("info@lweb.ch", margin, 56)
+
+    // --- Titel Rechnung (rechts) ---
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(22)
+    doc.setTextColor(44, 95, 46)
+    doc.text("RECHNUNG", pageW - margin, 36, { align: "right" })
+
+    doc.setFontSize(10)
+    doc.setTextColor(100, 100, 100)
+    doc.text(`Nr: ${order.order_number}`, pageW - margin, 43, { align: "right" })
+    doc.text(`Datum: ${formatDate(order.created_at)}`, pageW - margin, 49, { align: "right" })
+
+    // --- Trennlinie ---
+    doc.setDrawColor(44, 95, 46)
+    doc.setLineWidth(0.5)
+    doc.line(margin, 62, pageW - margin, 62)
+
+    // --- Kundendaten ---
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(11)
+    doc.setTextColor(40, 40, 40)
+    doc.text("Rechnungsadresse:", margin, 70)
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(10)
+    const lines = [
+      `${order.customer_first_name} ${order.customer_last_name}`,
+      order.customer_address,
+      `${order.customer_postal_code} ${order.customer_city}`,
+      order.customer_canton,
+      order.customer_email,
+      order.customer_phone,
+    ].filter(Boolean)
+    lines.forEach((l, i) => doc.text(l, margin, 77 + i * 5.5))
+
+    // --- Bestellstatus ---
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(10)
+    doc.text(`Status: ${getStatusText(order.status)}`, pageW - margin, 70, { align: "right" })
+    doc.text(`Zahlung: ${order.payment_method}`, pageW - margin, 76, { align: "right" })
+
+    // --- Artikeltabelle ---
+    let y = 118
+    doc.setFillColor(44, 95, 46)
+    doc.setTextColor(255, 255, 255)
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(10)
+    doc.rect(margin, y, pageW - margin * 2, 8, "F")
+    doc.text("Artikel", margin + 2, y + 5.5)
+    const colQty    = 130   // Menge (links)
+    const colPrice  = 158   // Stückpreis (rechts-aligned)
+    const colTotal  = pageW - margin  // Subtotal (rechts-aligned)
+
+    doc.text("Menge", colQty, y + 5.5)
+    doc.text("Stückpreis", colPrice, y + 5.5, { align: "right" })
+    doc.text("Gesamt", colTotal, y + 5.5, { align: "right" })
+    y += 10
+
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(40, 40, 40)
+    const items = order.items || []
+    items.forEach((item, idx) => {
+      if (idx % 2 === 0) {
+        doc.setFillColor(245, 248, 245)
+        doc.rect(margin, y - 2, pageW - margin * 2, 8, "F")
+      }
+      doc.setFontSize(9)
+      doc.text(item.product_name.substring(0, 50), margin + 2, y + 4)
+      doc.text(`${item.quantity}x`, colQty, y + 4)
+      doc.text(`${(Number(item.price) || 0).toFixed(2)} CHF`, colPrice, y + 4, { align: "right" })
+      doc.text(`${(Number(item.subtotal) || 0).toFixed(2)} CHF`, colTotal, y + 4, { align: "right" })
+      y += 9
+    })
+
+    // --- Totales ---
+    y += 4
+    doc.setDrawColor(200, 200, 200)
+    doc.line(margin, y, pageW - margin, y)
+    y += 6
+    doc.setFontSize(10)
+    doc.setFont("helvetica", "normal")
+    doc.text("Versandkosten:", pageW - 55, y)
+    doc.text(`${(Number(order.shipping_cost) || 0).toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+    y += 7
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(12)
+    doc.setTextColor(44, 95, 46)
+    doc.text("TOTAL:", pageW - 55, y)
+    doc.text(`${(Number(order.total_amount) || 0).toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+
+    // --- Notas ---
+    if (order.customer_notes) {
+      y += 12
+      doc.setFont("helvetica", "italic")
+      doc.setFontSize(9)
+      doc.setTextColor(100, 100, 100)
+      doc.text(`Anmerkungen: ${order.customer_notes}`, margin, y)
+    }
+
+    // --- Footer ---
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(8)
+    doc.setTextColor(150, 150, 150)
+    doc.text("Vielen Dank für Ihren Einkauf!", pageW / 2, 285, { align: "center" })
+
+    doc.save(`Rechnung_${order.order_number}.pdf`)
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
@@ -1095,9 +1240,7 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-3">
                                       <div className="flex items-center space-x-3 sm:space-x-4">
                                         <div>
-                                                     <Badge className={getStatusColor(order.status)}>
-                                          {getStatusText(order.status)}
-                                        </Badge>
+                               
                                           <h4 className="font-semibold text-base sm:text-lg">{order.order_number}</h4>
                                           <p className="text-xs sm:text-sm text-gray-600">
                                             {formatDate(order.created_at)}
@@ -1143,20 +1286,31 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
 
                                     {/* Toggle Items Button */}
                                     <div className="flex justify-between items-center pt-3 border-t">
-                                      <Button
-                                        onClick={() => toggleOrderItems(order.id)}
-                                        variant="outline"
-                                        size="sm"
-                                        className="bg-gray-50 hover:bg-gray-100"
-                                      >
-                                        <Package className="w-4 h-4 mr-2" />
-                                        {showOrderItems[order.id] ? "Ausblenden" : "Anzeigen"}
-                                        {showOrderItems[order.id] ? (
-                                          <ChevronLeft className="w-4 h-4 ml-2" />
-                                        ) : (
-                                          <ChevronRight className="w-4 h-4 ml-2" />
-                                        )}
-                                      </Button>
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          onClick={() => toggleOrderItems(order.id)}
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-gray-50 hover:bg-gray-100"
+                                        >
+                                          <Package className="w-4 h-4 mr-2" />
+                                          {showOrderItems[order.id] ? "Ausblenden" : "Anzeigen"}
+                                          {showOrderItems[order.id] ? (
+                                            <ChevronLeft className="w-4 h-4 ml-2" />
+                                          ) : (
+                                            <ChevronRight className="w-4 h-4 ml-2" />
+                                          )}
+                                        </Button>
+                                        <Button
+                                          onClick={() => downloadInvoicePDF(order)}
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-[#2C5F2E]/10 hover:bg-[#2C5F2E]/20 text-[#2C5F2E] border-[#2C5F2E]/30"
+                                        >
+                                          <Download className="w-4 h-4 mr-2" />
+                                          PDF
+                                        </Button>
+                                      </div>
                                       <div className="text-xs text-gray-500 p-4">
                                         Bestellt am {formatDate(order.created_at)}
                                       </div>

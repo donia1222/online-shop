@@ -27,6 +27,7 @@ import {
   BookOpen,
   Calendar,
   ImageIcon,
+  Download,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -158,6 +159,11 @@ export function Admin({ onClose }: AdminProps) {
   const [currentEditingProduct, setCurrentEditingProduct] = useState<Product | null>(null)
   const [deleteProductId, setDeleteProductId] = useState<number | null>(null)
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null])
+
+  // Bulk selection
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set())
+  const [bulkStatus, setBulkStatus] = useState<string>("")
+  const [bulkLoading, setBulkLoading] = useState(false)
   const [removedImages, setRemovedImages] = useState<boolean[]>([false, false, false, false])
 
   // Categories State
@@ -499,6 +505,56 @@ export function Admin({ onClose }: AdminProps) {
     setIsDeleteModalOpen(true)
   }
 
+  const toggleProductSelection = (id: number) => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedProductIds.size === filteredProducts.length) {
+      setSelectedProductIds(new Set())
+    } else {
+      setSelectedProductIds(new Set(filteredProducts.map((p) => p.id)))
+    }
+  }
+
+  const handleBulkStatusUpdate = async () => {
+    if (!bulkStatus || selectedProductIds.size === 0) return
+    setBulkLoading(true)
+    try {
+      await Promise.all(
+        Array.from(selectedProductIds).map((id) => {
+          const product = products.find((p) => p.id === id)
+          if (!product) return Promise.resolve()
+          const formData = new FormData()
+          formData.append("id", id.toString())
+          formData.append("name", product.name)
+          formData.append("price", product.price.toString())
+          formData.append("stock_status", bulkStatus)
+          // Si se marca como disponible y el stock era 0, poner 5 por defecto
+          if (bulkStatus === "in_stock" && (Number(product.stock) === 0 || product.stock_status === "out_of_stock")) {
+            formData.append("stock", "5")
+          } else {
+            formData.append("stock", product.stock.toString())
+          }
+          formData.append("keep_image_0", "true")
+          return fetch(`${API_BASE_URL}/edit_product.php`, { method: "POST", body: formData })
+        })
+      )
+      toast({ title: "Erfolg", description: `${selectedProductIds.size} Produkte aktualisiert` })
+      setSelectedProductIds(new Set())
+      setBulkStatus("")
+      loadProducts()
+    } catch {
+      toast({ title: "Fehler", description: "Fehler beim Aktualisieren", variant: "destructive" })
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
   const handleProductSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -627,6 +683,114 @@ export function Admin({ onClose }: AdminProps) {
   }
 
   // Utility Functions
+  const downloadInvoicePDF = async (order: Order) => {
+    const { jsPDF } = await import("jspdf")
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
+    const pageW = doc.internal.pageSize.getWidth()
+    const margin = 15
+
+    // Logo
+    try {
+      const img = new window.Image()
+      img.src = "/Secuxrity_n.jpg"
+      await new Promise<void>((res) => { img.onload = () => res(); img.onerror = () => res() })
+      const canvas = document.createElement("canvas")
+      canvas.width = img.naturalWidth || 1
+      canvas.height = img.naturalHeight || 1
+      canvas.getContext("2d")?.drawImage(img, 0, 0)
+      const logoH = 20
+      const logoW = img.naturalWidth ? (img.naturalWidth / img.naturalHeight) * logoH : logoH
+      doc.addImage(canvas.toDataURL("image/jpeg"), "JPEG", margin, 10, logoW, logoH)
+    } catch (_) {/* kein Logo */}
+
+    // Firmendaten
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(44, 95, 46)
+    doc.text("US - Fishing & Huntingshop", margin, 36)
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(80, 80, 80)
+    doc.text("JAGD · ANGELN · OUTDOOR", margin, 41)
+    doc.text("Bahnhofstrasse 2, 9475 Sevelen", margin, 46)
+    doc.text("Tel: 078 606 61 05", margin, 51)
+    doc.text("info@lweb.ch", margin, 56)
+
+    // Titel Rechnung
+    doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(44, 95, 46)
+    doc.text("RECHNUNG", pageW - margin, 36, { align: "right" })
+    doc.setFontSize(10); doc.setTextColor(100, 100, 100)
+    doc.text(`Nr: ${order.order_number}`, pageW - margin, 43, { align: "right" })
+    doc.text(`Datum: ${formatDate(order.created_at)}`, pageW - margin, 49, { align: "right" })
+
+    // Trennlinie
+    doc.setDrawColor(44, 95, 46); doc.setLineWidth(0.5)
+    doc.line(margin, 62, pageW - margin, 62)
+
+    // Kundendaten
+    doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(40, 40, 40)
+    doc.text("Rechnungsadresse:", margin, 70)
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10)
+    const lines = [
+      `${order.customer_first_name} ${order.customer_last_name}`,
+      order.customer_address,
+      `${order.customer_postal_code} ${order.customer_city}`,
+      order.customer_canton,
+      order.customer_email,
+      order.customer_phone,
+    ].filter(Boolean)
+    lines.forEach((l, i) => doc.text(l, margin, 77 + i * 5.5))
+
+    // Bestellstatus
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10)
+    doc.text(`Status: ${getStatusText(order.status)}`, pageW - margin, 70, { align: "right" })
+    doc.text(`Zahlung: ${order.payment_method}`, pageW - margin, 76, { align: "right" })
+
+    // Artikeltabelle
+    let y = 118
+    const colQty   = 130
+    const colPrice = 158
+    const colTotal = pageW - margin
+
+    doc.setFillColor(44, 95, 46); doc.setTextColor(255, 255, 255)
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10)
+    doc.rect(margin, y, pageW - margin * 2, 8, "F")
+    doc.text("Artikel", margin + 2, y + 5.5)
+    doc.text("Menge", colQty, y + 5.5)
+    doc.text("Stückpreis", colPrice, y + 5.5, { align: "right" })
+    doc.text("Gesamt", colTotal, y + 5.5, { align: "right" })
+    y += 10
+
+    doc.setFont("helvetica", "normal"); doc.setTextColor(40, 40, 40)
+    const items = order.items || []
+    items.forEach((item, idx) => {
+      if (idx % 2 === 0) { doc.setFillColor(245, 248, 245); doc.rect(margin, y - 2, pageW - margin * 2, 8, "F") }
+      doc.setFontSize(9)
+      doc.text(item.product_name.substring(0, 50), margin + 2, y + 4)
+      doc.text(`${item.quantity}x`, colQty, y + 4)
+      doc.text(`${(Number(item.price) || 0).toFixed(2)} CHF`, colPrice, y + 4, { align: "right" })
+      doc.text(`${(Number(item.subtotal) || 0).toFixed(2)} CHF`, colTotal, y + 4, { align: "right" })
+      y += 9
+    })
+
+    // Totales
+    y += 4
+    doc.setDrawColor(200, 200, 200); doc.line(margin, y, pageW - margin, y); y += 6
+    doc.setFontSize(10); doc.setFont("helvetica", "normal")
+    doc.text("Versandkosten:", pageW - 55, y)
+    doc.text(`${(Number(order.shipping_cost) || 0).toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+    y += 7
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(44, 95, 46)
+    doc.text("TOTAL:", pageW - 55, y)
+    doc.text(`${(Number(order.total_amount) || 0).toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+
+    if (order.customer_notes) {
+      y += 12; doc.setFont("helvetica", "italic"); doc.setFontSize(9); doc.setTextColor(100, 100, 100)
+      doc.text(`Anmerkungen: ${order.customer_notes}`, margin, y)
+    }
+
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(150, 150, 150)
+    doc.text("Vielen Dank für Ihren Einkauf!", pageW / 2, 285, { align: "center" })
+
+    doc.save(`Rechnung_${order.order_number}.pdf`)
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
@@ -941,7 +1105,6 @@ export function Admin({ onClose }: AdminProps) {
                         <Package className="w-6 h-6 text-gray-600" />
                         <span>{order.order_number}</span>
                       </div>
-                      <Badge className={getStatusColor(order.status)}>{getStatusText(order.status)}</Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -973,12 +1136,20 @@ export function Admin({ onClose }: AdminProps) {
                         <p className="text-gray-600 text-sm">{formatDate(order.updated_at)}</p>
                       </div>
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-4 flex items-center gap-2">
                       <Button
                         onClick={() => showOrderDetail(order)}
                         className="bg-[#2C5F2E] hover:bg-[#1A4520] text-white rounded-full px-5 text-sm"
                       >
                         Details anzeigen
+                      </Button>
+                      <Button
+                        onClick={() => downloadInvoicePDF(order)}
+                        variant="outline"
+                        className="rounded-full px-4 text-sm border-[#2C5F2E] text-[#2C5F2E] hover:bg-[#2C5F2E]/10"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        PDF
                       </Button>
                     </div>
                   </CardContent>
@@ -1288,19 +1459,87 @@ export function Admin({ onClose }: AdminProps) {
               </CardContent>
             </Card>
 
+            {/* Bulk action bar */}
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectAll}
+                className="text-sm"
+              >
+                {selectedProductIds.size === filteredProducts.length && filteredProducts.length > 0
+                  ? "Alle abwählen"
+                  : "Alle auswählen"}
+              </Button>
+
+              {selectedProductIds.size > 0 && (
+                <>
+                  <span className="text-sm text-gray-600 font-medium">
+                    {selectedProductIds.size} ausgewählt
+                  </span>
+                  <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                    <SelectTrigger className="w-48 bg-white border-gray-300 text-sm">
+                      <SelectValue placeholder="Status ändern..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="in_stock">Auf Lager</SelectItem>
+                      <SelectItem value="low_stock">Geringer Bestand</SelectItem>
+                      <SelectItem value="out_of_stock">Nicht vorrätig</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    onClick={handleBulkStatusUpdate}
+                    disabled={!bulkStatus || bulkLoading}
+                    className="bg-[#2C5F2E] hover:bg-[#1A4520] text-white"
+                  >
+                    {bulkLoading ? "Speichern..." : "Anwenden"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedProductIds(new Set())}
+                  >
+                    Abbrechen
+                  </Button>
+                </>
+              )}
+            </div>
+
             {/* Products Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProducts.map((product) => (
-                <Card key={product.id} className="rounded-2xl border-[#EBEBEB] shadow-sm hover:shadow-md transition-shadow">
+                <Card
+                  key={product.id}
+                  className={`rounded-2xl border-[#EBEBEB] shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+                    selectedProductIds.has(product.id) ? "ring-2 ring-[#2C5F2E] border-[#2C5F2E]" : ""
+                  }`}
+                  onClick={() => toggleProductSelection(product.id)}
+                >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <ProductImage
-                        src={product.image_url}
-                        candidates={product.image_url_candidates}
-                        alt={product.name}
-                        className="w-20 h-20 object-cover rounded-lg"
-                      />
-                      <div className="flex space-x-2">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                            selectedProductIds.has(product.id)
+                              ? "bg-[#2C5F2E] border-[#2C5F2E]"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {selectedProductIds.has(product.id) && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <ProductImage
+                          src={product.image_url}
+                          candidates={product.image_url_candidates}
+                          alt={product.name}
+                          className="w-20 h-20 object-cover rounded-lg"
+                        />
+                      </div>
+                      <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
                         <Button
                           size="sm"
                           onClick={() => showEditProductModal(product.id)}
@@ -1340,18 +1579,6 @@ export function Admin({ onClose }: AdminProps) {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <span className="text-sm text-gray-600">Schärfe:</span>
-                          <div className="flex space-x-1">{generateHeatIcons(product.heat_level)}</div>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <div className="flex space-x-1">{generateStarIcons(product.rating)}</div>
-                          <span className="text-sm text-gray-600">
-                            {Number.parseFloat(product.rating.toString()).toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
 
                       {product.badge && (
                         <Badge variant="outline" className="text-xs">
@@ -1437,12 +1664,9 @@ export function Admin({ onClose }: AdminProps) {
           <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white">
               <DialogHeader>
-                <DialogTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Package className="w-6 h-6 text-gray-600" />
-                    <span>{selectedOrder.order_number}</span>
-                  </div>
-                  <Badge className={getStatusColor(selectedOrder.status)}>{getStatusText(selectedOrder.status)}</Badge>
+                <DialogTitle className="flex items-center space-x-2">
+                  <Package className="w-6 h-6 text-gray-600" />
+                  <span>{selectedOrder.order_number}</span>
                 </DialogTitle>
               </DialogHeader>
 
@@ -1514,42 +1738,14 @@ export function Admin({ onClose }: AdminProps) {
                     {selectedOrder.items.map((item) => (
                       <Card key={item.product_id}>
                         <CardContent className="p-4">
-                          <div className="flex items-center space-x-4">
-                            <ProductImage
-                              src={item.product_image}
-                              alt={item.product_name}
-                              className="w-15 h-15 object-cover rounded"
-                            />
-                            <div className="flex-1">
-                              <h4 className="font-medium">{item.product_name}</h4>
-                              <p className="text-sm text-gray-600">{item.product_description}</p>
-                              <div className="flex items-center space-x-4 mt-2">
-                                <span className="text-sm">Menge: {item.quantity}</span>
-                                <span className="text-sm">
-                                  Preis: {Number.parseFloat(item.price.toString()).toFixed(2)} CHF
-                                </span>
-                                <span className="text-sm font-medium">
-                                  Zwischensumme: {Number.parseFloat(item.subtotal.toString()).toFixed(2)} CHF
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-4 mt-1">
-                                <div className="flex items-center space-x-1">
-                                  <span className="text-xs text-gray-500">Schärfe:</span>
-                                  <div className="flex space-x-1">{generateHeatIcons(item.heat_level)}</div>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <div className="flex space-x-1">{generateStarIcons(item.rating)}</div>
-                                  <span className="text-xs text-gray-500">
-                                    {Number.parseFloat(item.rating.toString()).toFixed(1)}
-                                  </span>
-                                </div>
-                                {item.badge && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {item.badge}
-                                  </Badge>
-                                )}
-                                {item.origin && <span className="text-xs text-gray-500">Herkunft: {item.origin}</span>}
-                              </div>
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium">{item.product_name}</h4>
+                            <div className="flex items-center gap-6 text-sm text-gray-700">
+                              <span>{item.quantity}x</span>
+                              <span>{Number.parseFloat(item.price.toString()).toFixed(2)} CHF</span>
+                              <span className="font-semibold text-[#2C5F2E]">
+                                {Number.parseFloat(item.subtotal.toString()).toFixed(2)} CHF
+                              </span>
                             </div>
                           </div>
                         </CardContent>
@@ -1558,6 +1754,16 @@ export function Admin({ onClose }: AdminProps) {
                   </div>
                 </div>
               )}
+
+              <div className="pt-4 border-t mt-4">
+                <Button
+                  onClick={() => downloadInvoicePDF(selectedOrder)}
+                  className="bg-[#2C5F2E] hover:bg-[#1A4520] text-white rounded-full px-5 text-sm"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Rechnung als PDF herunterladen
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
         )}
