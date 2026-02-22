@@ -44,6 +44,17 @@ export default function ProductPage() {
   const [error, setError] = useState("")
   const [imgIdx, setImgIdx] = useState(0)
   const [added, setAdded] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("cantina-cart")
+      if (saved) {
+        const items: CartItem[] = JSON.parse(saved)
+        setCartCount(items.reduce((s, i) => s + i.quantity, 0))
+      }
+    } catch {}
+  }, [added])
 
   const markSimilarFailed = (id: number) =>
     setFailedSimilar(prev => new Set([...prev, id]))
@@ -96,6 +107,7 @@ export default function ProductPage() {
             id: product.id, name: product.name, price: product.price,
             image: images[0] ?? "/placeholder.svg",
             image_url: images[0],
+            image_url_candidates: product.image_url_candidates,
             description: product.description,
             heatLevel: 0, rating: 0,
             badge: product.badge, origin: product.origin, quantity: 1,
@@ -159,6 +171,17 @@ export default function ProductPage() {
           </button>
           <div className="w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
           <p className="text-sm font-semibold text-[#1A1A1A] truncate">{product.name}</p>
+          <button
+            onClick={() => router.push("/shop")}
+            className="ml-auto relative flex items-center justify-center w-10 h-10 hover:bg-[#F5F5F5] rounded-xl transition-colors flex-shrink-0"
+          >
+            <ShoppingCart className="w-5 h-5 text-[#555]" />
+            {cartCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-[#CC0000] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 

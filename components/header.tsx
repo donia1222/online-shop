@@ -9,9 +9,11 @@ import { UserProfile } from "./user-profile"
 
 interface HeaderProps {
   onAdminOpen: () => void
+  onCartOpen?: () => void
+  cartCount?: number
 }
 
-export function Header({ onAdminOpen }: HeaderProps) {
+export function Header({ onAdminOpen, onCartOpen, cartCount = 0 }: HeaderProps) {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showUserProfile, setShowUserProfile] = useState(false)
@@ -24,8 +26,9 @@ export function Header({ onAdminOpen }: HeaderProps) {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  const categories = [
-    { label: "% Sale %", href: "/shop", highlight: true },
+  const categories: { label: string; href: string; highlight?: boolean }[] = [
+    { label: "Home", href: "/" },
+    { label: "Alle Produkte", href: "/shop" },
     { label: "Messer", href: "/shop?cat=Messer" },
     { label: "Armbrust", href: "/shop?cat=Armbrust" },
     { label: "Pfeilbogen", href: "/shop?cat=Pfeilbogen" },
@@ -90,7 +93,7 @@ export function Header({ onAdminOpen }: HeaderProps) {
                     className="w-full !flex-row justify-start gap-3 px-3 py-2.5 rounded hover:bg-[#F5F5F5] min-w-0"
                   />
                   <button
-                    onClick={() => { router.push("/shop"); setIsMenuOpen(false) }}
+                    onClick={() => { onCartOpen?.(); setIsMenuOpen(false) }}
                     className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-[#333333] rounded hover:bg-[#F5F5F5]"
                   >
                     <ShoppingCart className="w-5 h-5 text-[#555]" />
@@ -129,10 +132,15 @@ export function Header({ onAdminOpen }: HeaderProps) {
               />
             </div>
             <button
-              onClick={() => router.push("/shop")}
-              className="flex items-center justify-center w-11 h-11 hover:bg-[#F5F5F5] rounded-xl transition-colors"
+              onClick={() => onCartOpen?.()}
+              className="relative flex items-center justify-center w-11 h-11 hover:bg-[#F5F5F5] rounded-xl transition-colors"
             >
               <ShoppingCart className="w-6 h-6 text-[#555]" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-[#CC0000] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
             </button>
           </div>
         </div>

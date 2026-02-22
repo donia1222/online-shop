@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback, memo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
   ShoppingCart, ChevronLeft, ChevronRight,
-  Search, SlidersHorizontal, X, Check,
-  ArrowUp, ChevronDown, Heart
+  Search, X, Check,
+  ArrowUp, ChevronDown, Heart, Menu
 } from "lucide-react"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ShoppingCartComponent } from "./shopping-cart"
 import { CheckoutPage } from "@/components/checkout-page"
 import { LoginAuth } from "./login-auth"
@@ -22,6 +23,7 @@ interface Product {
 }
 interface CartItem {
   id: number; name: string; price: number; image: string; image_url?: string
+  image_url_candidates?: string[]
   description: string; heatLevel: number; rating: number
   badge?: string; origin?: string; quantity: number
 }
@@ -178,6 +180,7 @@ export default function ShopGrid() {
   const [sortBy, setSortBy]                 = useState<"default"|"name_asc"|"name_desc"|"price_asc"|"price_desc">("default")
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [showBackTop, setShowBackTop]       = useState(false)
+  const [navMenuOpen, setNavMenuOpen]       = useState(false)
 
   const PAGE_SIZE = 20
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
@@ -265,7 +268,9 @@ export default function ShopGrid() {
         : [...prev, {
             id: product.id, name: product.name, price: product.price,
             image: getImages(product)[0] ?? "/placeholder.svg",
-            image_url: getImages(product)[0], description: product.description,
+            image_url: getImages(product)[0],
+            image_url_candidates: product.image_url_candidates,
+            description: product.description,
             heatLevel: product.heat_level, rating: product.rating,
             badge: product.badge, origin: product.origin, quantity: 1,
           }]
@@ -377,19 +382,63 @@ export default function ShopGrid() {
         <div className="bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
 
-            {/* ← Home button */}
+            {/* Mobile: Hamburger side menu */}
+            <Sheet open={navMenuOpen} onOpenChange={setNavMenuOpen}>
+              <SheetTrigger asChild>
+                <button className="lg:hidden p-2 border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] flex-shrink-0">
+                  <Menu className="w-5 h-5 text-[#333]" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 bg-white p-0">
+                <div className="flex items-center p-4 border-b border-[#E0E0E0]">
+                  <div className="flex items-center gap-2">
+                    <img src="/Security_n.png" alt="Logo" className="h-8 w-auto object-contain" />
+                    <span className="font-black text-[#1A1A1A] text-sm">US - Fishing &amp; Huntingshop</span>
+                  </div>
+                </div>
+                <nav className="p-4 space-y-1">
+                  <button
+                    onClick={() => { router.push("/"); setNavMenuOpen(false) }}
+                    className="w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#333333] font-medium"
+                  >
+                    Home
+                  </button>
+                  <button
+                    onClick={() => { setActiveCategory("all"); setNavMenuOpen(false) }}
+                    className="w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#333333] font-medium"
+                  >
+                    Alle Produkte
+                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.slug}
+                      onClick={() => { setActiveCategory(cat.slug); setNavMenuOpen(false) }}
+                      className={`w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-medium ${activeCategory === cat.slug ? "bg-[#2C5F2E] text-white" : "text-[#333333]"}`}
+                    >
+                      {cat.name.replace(/\s*\d{4}$/, "")}
+                    </button>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+
+            {/* Mobile: divider + page title (like blog header) */}
+            <div className="lg:hidden w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
+            <span className="lg:hidden text-sm font-bold text-[#555] flex-shrink-0">Unsere Produkte</span>
+
+            {/* Desktop: ← Home button */}
             <button
               onClick={() => router.push("/")}
-              className="flex items-center gap-2 text-[#555] hover:text-[#2C5F2E] transition-colors group flex-shrink-0"
+              className="hidden lg:flex items-center gap-2 text-[#555] hover:text-[#2C5F2E] transition-colors group flex-shrink-0"
             >
               <div className="w-8 h-8 rounded-full border border-[#E5E5E5] group-hover:border-[#2C5F2E]/60 group-hover:bg-[#2C5F2E]/5 flex items-center justify-center transition-all">
                 <ChevronLeft className="w-4 h-4" />
               </div>
-              <span className="text-sm font-bold hidden sm:block">Home</span>
+              <span className="text-sm font-bold">Home</span>
             </button>
 
-            {/* Divider */}
-            <div className="w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
+            {/* Divider (desktop only) */}
+            <div className="hidden lg:block w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
 
             {/* Logo */}
             <div className="hidden md:flex items-center flex-shrink-0">
@@ -418,14 +467,6 @@ export default function ShopGrid() {
             <span className="text-xs text-[#999] font-semibold hidden lg:block whitespace-nowrap">
               <span className="text-[#1A1A1A] font-black">{filtered.length}</span> Produkte
             </span>
-
-            <button
-              onClick={() => setSidebarOpen(p => !p)}
-              className="lg:hidden flex items-center gap-1.5 text-sm font-bold text-[#1A1A1A] bg-[#F3F4F6] hover:bg-[#E8E9EB] px-4 py-2 rounded-full transition-colors flex-shrink-0"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              Filter
-            </button>
 
             {/* Right group: wishlist + login + cart */}
             <div className="ml-auto flex items-center gap-1 flex-shrink-0">

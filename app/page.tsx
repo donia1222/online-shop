@@ -56,33 +56,17 @@ export default function PremiumHotSauceStore() {
   const [currentPage, setCurrentPage] = useState<"store" | "checkout" | "admin">("store")
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
-  // 💾 SIEMPRE limpiar carrito al cargar la página
+  // 💾 Cargar carrito desde localStorage al iniciar
   useEffect(() => {
-    console.log('🧹 INIT: Limpiando carrito al iniciar página')
-    // Limpiar completamente el carrito al cargar la página
-    localStorage.removeItem('cantina-cart')
-    localStorage.removeItem('cart-should-be-cleared')
-    setCart([])
-    setIsInitialLoad(false)
-
-    // 🎉 Verificar si hay un pago exitoso reciente
-    const lastPayment = localStorage.getItem("last-payment")
-    if (lastPayment) {
-      try {
-        const paymentInfo = JSON.parse(lastPayment)
-        // Si el pago fue hace menos de 5 minutos, mostrar mensaje
-        const paymentTime = new Date(paymentInfo.timestamp)
-        const now = new Date()
-        const diffMinutes = (now.getTime() - paymentTime.getTime()) / (1000 * 60)
-
-        if (diffMinutes < 5 && paymentInfo.status === "completed") {
-          // Mostrar notificación de pago exitoso
-          setTimeout(() => {}, 1000)
-        }
-      } catch (error) {
-        console.error("Error checking last payment:", error)
+    try {
+      const saved = localStorage.getItem('cantina-cart')
+      if (saved) {
+        const data: CartItem[] = JSON.parse(saved)
+        setCart(data)
       }
-    }
+    } catch {}
+    localStorage.removeItem('cart-should-be-cleared')
+    setIsInitialLoad(false)
   }, [])
 
 
@@ -317,7 +301,7 @@ export default function PremiumHotSauceStore() {
   return (
     <div className="bg-white">
 
-      <Header onAdminOpen={goToAdmin} />
+      <Header onAdminOpen={goToAdmin} onCartOpen={() => setIsCartOpen(true)} cartCount={getTotalItems()} />
 
       <HeroSection />
 

@@ -29,6 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { UserProfile } from "./user-profile"
 import { StripePayment } from "./stripe-payment"
+import { ProductImage } from "./product-image"
 
 interface Product {
   id: number
@@ -44,6 +45,8 @@ interface Product {
 
 interface CartItem extends Product {
   quantity: number
+  image_url?: string
+  image_url_candidates?: string[]
 }
 
 interface CheckoutPageProps {
@@ -1665,11 +1668,14 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                 <div className="space-y-4">
                   {cart.map((item) => (
                     <div key={item.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                      <img
-                        src={item.image || "/placeholder.svg?height=64&width=64&query=product"}
-                        alt={item.name}
-                        className="w-16 h-16 object-cover rounded-lg"
-                      />
+                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-white border border-gray-100">
+                        <ProductImage
+                          src={item.image_url || item.image}
+                          candidates={item.image_url_candidates}
+                          alt={item.name}
+                          className="w-full h-full object-contain p-1"
+                        />
+                      </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-sm line-clamp-2">{item.name}</h4>
                         <div className="flex items-center justify-between mt-2">

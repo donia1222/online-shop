@@ -2,6 +2,7 @@
 
 import { ShoppingCart, Plus, Minus, X, Trash2, ArrowRight, Package } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { ProductImage } from "./product-image"
 
 interface Product {
   id: number
@@ -18,6 +19,7 @@ interface Product {
 interface CartItem extends Product {
   quantity: number
   image_url?: string
+  image_url_candidates?: string[]
 }
 
 interface ShoppingCartProps {
@@ -79,14 +81,6 @@ export function ShoppingCartComponent({
           ) : (
             <div className="space-y-3">
               {cart.map((item) => {
-                const imageUrl =
-                  item.image_url ||
-                  (item.image && item.image.startsWith("http")
-                    ? item.image
-                    : item.image
-                    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${item.image}`
-                    : "/placeholder.svg")
-
                 return (
                   <div
                     key={item.id}
@@ -94,11 +88,11 @@ export function ShoppingCartComponent({
                   >
                     {/* Image */}
                     <div className="w-14 h-14 bg-white rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
-                      <img
-                        src={imageUrl}
+                      <ProductImage
+                        src={item.image_url || item.image}
+                        candidates={item.image_url_candidates}
                         alt={item.name}
                         className="w-full h-full object-contain p-1"
-                        onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg" }}
                       />
                     </div>
 
