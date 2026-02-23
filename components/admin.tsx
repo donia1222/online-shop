@@ -349,6 +349,7 @@ export function Admin({ onClose }: AdminProps) {
         params.append("stock_status", productFilters.stock_status)
       }
 
+      params.append("_", Date.now().toString())
       const response = await fetch(`/api/products?${params}`)
       const data = await response.json()
 
@@ -475,7 +476,7 @@ export function Admin({ onClose }: AdminProps) {
 
   const showEditProductModal = async (id: number) => {
     try {
-      const response = await fetch(`/api/products?id=${id}`)
+      const response = await fetch(`/api/products?id=${id}&_=${Date.now()}`)
       const data = await response.json()
 
       if (data.success) {
@@ -534,8 +535,9 @@ export function Admin({ onClose }: AdminProps) {
           formData.append("name", product.name)
           formData.append("price", product.price.toString())
           formData.append("stock_status", bulkStatus)
-          // Si se marca como disponible y el stock era 0, poner 5 por defecto
-          if (bulkStatus === "in_stock" && (Number(product.stock) === 0 || product.stock_status === "out_of_stock")) {
+          if (bulkStatus === "out_of_stock") {
+            formData.append("stock", "0")
+          } else if (bulkStatus === "in_stock" && Number(product.stock) === 0) {
             formData.append("stock", "5")
           } else {
             formData.append("stock", product.stock.toString())
@@ -779,11 +781,6 @@ export function Admin({ onClose }: AdminProps) {
     doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(44, 95, 46)
     doc.text("TOTAL:", pageW - 55, y)
     doc.text(`${(Number(order.total_amount) || 0).toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
-
-    if (order.customer_notes) {
-      y += 12; doc.setFont("helvetica", "italic"); doc.setFontSize(9); doc.setTextColor(100, 100, 100)
-      doc.text(`Anmerkungen: ${order.customer_notes}`, margin, y)
-    }
 
     doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(150, 150, 150)
     doc.text("Vielen Dank für Ihren Einkauf!", pageW / 2, 285, { align: "center" })

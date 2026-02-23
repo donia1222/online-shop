@@ -590,6 +590,18 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
     setPasswordError("")
   }
 
+  const getVisibleNotes = (notes: string) =>
+    notes
+      .split("\n")
+      .filter(
+        (l) =>
+          !l.startsWith("Kauf auf Rechnung") &&
+          !l.startsWith("Stock actualizado") &&
+          !l.startsWith("PayPal Payer ID")
+      )
+      .join("\n")
+      .trim()
+
   const downloadInvoicePDF = async (order: Order) => {
     const { jsPDF } = await import("jspdf")
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
@@ -715,15 +727,6 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
     doc.setTextColor(44, 95, 46)
     doc.text("TOTAL:", pageW - 55, y)
     doc.text(`${(Number(order.total_amount) || 0).toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
-
-    // --- Notas ---
-    if (order.customer_notes) {
-      y += 12
-      doc.setFont("helvetica", "italic")
-      doc.setFontSize(9)
-      doc.setTextColor(100, 100, 100)
-      doc.text(`Anmerkungen: ${order.customer_notes}`, margin, y)
-    }
 
     // --- Footer ---
     doc.setFont("helvetica", "normal")
@@ -1275,11 +1278,11 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
                                       </div>
                                     </div>
 
-                                    {order.customer_notes && (
+                                    {getVisibleNotes(order.customer_notes || "") && (
                                       <div className="mb-3">
                                         <span className="font-medium text-sm text-gray-600">Anmerkungen:</span>
                                         <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded mt-1">
-                                          {order.customer_notes}
+                                          {getVisibleNotes(order.customer_notes || "")}
                                         </p>
                                       </div>
                                     )}
