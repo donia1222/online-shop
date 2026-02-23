@@ -1361,8 +1361,10 @@ export function Admin({ onClose }: AdminProps) {
               </div>
             )}
 
+            {/* Products Filters + Bulk action bar — sticky below header */}
+            <div className="sticky top-16 z-20 bg-[#e8f5e9] pb-2 rounded-2xl px-3 pt-3 mb-4 border border-[#c8e6c9]">
             {/* Products Filters */}
-            <Card className="mb-8 rounded-2xl border-[#EBEBEB] shadow-sm">
+            <Card className="mb-2 rounded-2xl border-[#c8e6c9] shadow-sm bg-transparent">
               <CardHeader>
                 <CardTitle className="flex items-center text-base">
                   <Filter className="w-4 h-4 mr-2 text-[#2C5F2E]" />
@@ -1457,7 +1459,7 @@ export function Admin({ onClose }: AdminProps) {
             </Card>
 
             {/* Bulk action bar */}
-            <div className="flex flex-wrap items-center gap-3 mb-2">
+            <div className="flex flex-wrap items-center gap-3 py-2 px-1">
               <Button
                 variant="outline"
                 size="sm"
@@ -1502,6 +1504,7 @@ export function Admin({ onClose }: AdminProps) {
                 </>
               )}
             </div>
+            </div>{/* end sticky wrapper */}
 
             {/* Products Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -312,12 +312,13 @@ export default function ProductPage() {
 
               {/* Price + CTA */}
               <div className="mt-auto pt-5 border-t border-[#F0F0F0]">
-                <div className="flex items-baseline gap-1 mb-4">
+                <div className="flex items-baseline gap-1 mb-1">
                   <span className="text-3xl font-black text-[#1A1A1A] tracking-tight">
                     {product.price.toFixed(2)}
                   </span>
                   <span className="text-base text-[#999] font-medium">CHF</span>
                 </div>
+                <p className="text-xs text-[#999] mb-4">* Preise inkl. MwSt., zzgl. Versandkosten</p>
                 <button
                   onClick={addToCart}
                   disabled={!inStock}
@@ -415,6 +416,30 @@ export default function ProductPage() {
               <span className="text-xs font-semibold text-[#333]">{feat}</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Payment methods */}
+      <div className="max-w-5xl mx-auto px-4 pb-12">
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex items-center gap-1.5 pr-4 border-r border-[#E0E0E0]">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#2C5F2E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span className="text-[11px] font-semibold text-[#555] tracking-widest uppercase">Sichere Zahlung</span>
+          </div>
+          <div className="h-8 px-3 rounded-lg bg-black flex items-center shadow-sm">
+            <img src="/twint-logo.svg" alt="TWINT" className="h-5 w-auto" />
+          </div>
+          <div className="h-8 px-3 rounded-lg bg-[#FFCC00] flex items-center shadow-sm">
+            <span className="font-black text-black text-xs tracking-tight">Post<span className="font-normal">Finance</span></span>
+          </div>
+          <div className="h-8 px-4 rounded-lg bg-[#1A1F71] flex items-center shadow-sm">
+            <span className="font-black text-white text-base italic tracking-tight">VISA</span>
+          </div>
+          <div className="h-8 px-3 rounded-lg bg-white border border-[#E0E0E0] flex items-center gap-1 shadow-sm">
+            <div className="w-4 h-4 rounded-full bg-[#EB001B]" />
+            <div className="w-4 h-4 rounded-full bg-[#F79E1B] -ml-2" />
+            <span className="text-[11px] font-bold text-[#333] ml-1.5">Mastercard</span>
+          </div>
         </div>
       </div>
 

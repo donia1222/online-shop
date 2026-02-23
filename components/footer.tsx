@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AdminLoginButton } from "@/components/admin-auth"
-import { Facebook, Twitter, Instagram, Newspaper, ArrowRight, Download } from "lucide-react"
+import { Facebook, Twitter, Instagram, Newspaper, ArrowRight, Download, ShieldCheck } from "lucide-react"
 
 interface FooterProps {
   onAdminOpen?: () => void
@@ -272,25 +272,32 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
     <footer className="bg-white mt-0">
 
       {/* ── Payment icons strip ── */}
-      <div className="border-t border-b border-[#E0E0E0] py-6 bg-[#F9F9F9]">
+      <div className="border-t border-b border-[#E0E0E0] py-5 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            {[
-              { name: "TWINT", bg: "#000", text: "#fff", style: "font-black text-sm" },
-              { name: "PostFinance", bg: "#FFCC00", text: "#000", style: "font-bold text-xs" },
-              { name: "VISA", bg: "#1A1F71", text: "#fff", style: "font-black text-sm italic" },
-              { name: "Mastercard", bg: "#EB001B", text: "#fff", style: "font-bold text-xs" },
-              { name: "Amex", bg: "#2E77BC", text: "#fff", style: "font-bold text-xs" },
-              { name: "PayPal", bg: "#003087", text: "#009CDE", style: "font-black text-sm" },
-            ].map((p) => (
-              <div
-                key={p.name}
-                className="px-4 py-2 rounded"
-                style={{ backgroundColor: p.bg }}
-              >
-                <span className={p.style} style={{ color: p.text }}>{p.name}</span>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* Sichere Zahlung */}
+            <div className="flex items-center gap-1.5 pr-4 border-r border-[#E0E0E0]">
+              <ShieldCheck className="w-4 h-4 text-[#2C5F2E]" />
+              <span className="text-[11px] font-semibold text-[#555] tracking-widest uppercase">Sichere Zahlung</span>
+            </div>
+            {/* TWINT */}
+            <div className="h-9 px-3 rounded-lg bg-black flex items-center shadow-sm">
+              <img src="/twint-logo.svg" alt="TWINT" className="h-7 w-auto" />
+            </div>
+            {/* PostFinance */}
+            <div className="h-9 px-4 rounded-lg bg-[#FFCC00] flex items-center shadow-sm">
+              <span className="font-black text-black text-xs tracking-tight">Post<span className="font-normal">Finance</span></span>
+            </div>
+            {/* VISA */}
+            <div className="h-9 px-5 rounded-lg bg-[#1A1F71] flex items-center shadow-sm">
+              <span className="font-black text-white text-base italic tracking-tight">VISA</span>
+            </div>
+            {/* Mastercard */}
+            <div className="h-9 px-4 rounded-lg bg-white border border-[#E0E0E0] flex items-center gap-1 shadow-sm">
+              <div className="w-5 h-5 rounded-full bg-[#EB001B] opacity-90" />
+              <div className="w-5 h-5 rounded-full bg-[#F79E1B] opacity-90 -ml-2" />
+              <span className="text-[11px] font-bold text-[#333] ml-1.5 tracking-tight">Mastercard</span>
+            </div>
           </div>
         </div>
       </div>
@@ -507,6 +514,20 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                   </Dialog>
                 </li>
               </ul>
+
+              {/* INOTEC-ENGINEERING */}
+              <div className="mt-6 pt-5 border-t border-[#E8E8E8]">
+                <p className="text-xs text-[#999] mb-1 uppercase tracking-wider font-semibold">Schwesterunternehmen</p>
+                <a
+                  href="https://inotecengineering.ch"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col gap-0.5 group"
+                >
+                  <span className="text-sm font-black tracking-tight"><span className="text-red-600">INOTEC-</span><span className="text-gray-400">ENGINEERING</span></span>
+                  <span className="text-xs text-[#888] group-hover:text-[#2C5F2E] transition-colors italic">Von der Idee zum Produkt.</span>
+                </a>
+              </div>
             </div>
 
           </div>
@@ -518,7 +539,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-[#888]">
             <span>* Alle Preise inkl. MwSt., zzgl. Versandkosten</span>
-            <span className="font-semibold text-sm text-[#555]">Copyright © 2026 US - Fishing &amp; Huntingshop. Alle Rechte vorbehalten.</span>
+            <span className="font-semibold text-xs text-[#555]">Copyright © 2026 US - Fishing &amp; Huntingshop. Alle Rechte vorbehalten.</span>
             <span className="flex items-center gap-2">
               Design:&nbsp;<a href="https://lweb.ch" target="_blank" rel="noopener noreferrer" className="text-[#2C5F2E] font-semibold hover:underline">lweb.ch</a>
               {onAdminOpen && (
