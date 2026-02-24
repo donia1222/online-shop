@@ -188,14 +188,21 @@ export function Header({ onAdminOpen, onCartOpen, cartCount = 0 }: HeaderProps) 
 
       {/* ── TIER 3: Category navigation bar ── */}
       <div className="bg-white border-b border-[#E0E0E0] hidden lg:block sticky top-20 z-40">
-        <div className="container mx-auto px-4">
-          <nav className="flex items-center justify-center gap-0">
+        <div className="relative">
+          {/* fade edges para indicar scroll */}
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-white to-transparent z-10" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white to-transparent z-10" />
+          <nav
+            className="overflow-x-auto [&::-webkit-scrollbar]:hidden"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            <div className="flex items-center justify-center min-w-max mx-auto px-4">
             {categories.filter(cat => cat.label !== "Home").map((cat, i) => (
               <button
                 key={i}
                 onClick={() => router.push(cat.href)}
                 className={`
-                  flex items-center gap-1 px-4 py-3.5 text-[15px] font-medium whitespace-nowrap border-b-2 border-transparent
+                  flex items-center gap-1 px-4 py-3.5 text-[15px] font-medium whitespace-nowrap border-b-2 border-transparent flex-shrink-0
                   hover:border-[#2C5F2E] hover:text-[#2C5F2E] transition-colors
                   ${cat.highlight ? "text-[#CC0000] font-bold hover:border-[#CC0000] hover:text-[#CC0000]" : "text-[#333333]"}
                 `}
@@ -204,6 +211,7 @@ export function Header({ onAdminOpen, onCartOpen, cartCount = 0 }: HeaderProps) 
                 <ChevronDown className="w-3.5 h-3.5 opacity-40" />
               </button>
             ))}
+            </div>
           </nav>
         </div>
       </div>

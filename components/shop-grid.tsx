@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, memo } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import {
   ShoppingCart, ChevronLeft, ChevronRight,
-  Search, X, Check,
+  Search, X, Check, LayoutGrid,
   ArrowUp, ChevronDown, Heart, Menu, Newspaper, Download
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -164,6 +164,111 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
     </div>
   )
 })
+
+// ─── MobileCatCard: smaller version for mobile scroll ─────────────────────────
+
+function MobileCatCard({ srcs, displayName, isActive, onClick }: {
+  srcs: string[]
+  displayName: string
+  isActive: boolean
+  onClick: () => void
+}) {
+  const [idx, setIdx] = useState(0)
+  const img = srcs[idx] ?? null
+  return (
+    <button
+      onClick={onClick}
+      className="relative overflow-hidden rounded-xl flex-shrink-0 text-left transition-all duration-200"
+      style={{
+        width: "110px", height: "120px",
+        backgroundColor: "#111",
+        border: isActive ? "2px solid #2C5F2E" : "2px solid transparent",
+        boxShadow: isActive ? "0 4px 16px rgba(44,95,46,0.3)" : "none",
+      }}
+    >
+      {img && (
+        <img
+          src={img}
+          alt={displayName}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ transform: isActive ? "scale(1.05)" : undefined, transition: "transform 0.4s ease" }}
+          onError={() => setIdx(i => i + 1)}
+        />
+      )}
+      <div className="absolute inset-0" style={{
+        background: isActive
+          ? "linear-gradient(to top, rgba(44,95,46,0.8) 0%, transparent 55%)"
+          : "linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 55%)"
+      }} />
+      {isActive && (
+        <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#2C5F2E] rounded-full flex items-center justify-center">
+          <Check className="w-2.5 h-2.5 text-white" />
+        </div>
+      )}
+      <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2">
+        <span className="text-white font-black text-[11px] leading-tight block truncate drop-shadow-md">
+          {displayName}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+// ─── CatCard: category card with image fallback chain ─────────────────────────
+
+function CatCard({ srcs, displayName, isActive, onClick }: {
+  srcs: string[]
+  displayName: string
+  isActive: boolean
+  onClick: () => void
+}) {
+  const [idx, setIdx] = useState(0)
+  const img = srcs[idx] ?? null
+
+  return (
+    <button
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-2xl group text-left transition-all duration-300`}
+      style={{
+        height: "180px", minWidth: "210px", width: "210px", flexShrink: 0,
+        backgroundColor: "#f5f5f5",
+        border: isActive ? "2px solid #2C5F2E" : "2px solid #E0E0E0",
+        boxShadow: isActive ? "0 8px 32px rgba(44,95,46,0.3)" : "none",
+      }}
+    >
+      {/* Image */}
+      {img && (
+        <img
+          src={img}
+          alt={displayName}
+          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          onError={() => setIdx(i => i + 1)}
+        />
+      )}
+
+      {/* Gradient — solo en la parte inferior para el texto */}
+      <div className="absolute inset-0" style={{
+        background: isActive
+          ? "linear-gradient(to top, rgba(44,95,46,0.75) 0%, transparent 50%)"
+          : "linear-gradient(to top, rgba(0,0,0,0.60) 0%, transparent 50%)"
+      }} />
+
+      {/* Active check */}
+      {isActive && (
+        <div className="absolute top-3 right-3 w-6 h-6 bg-[#2C5F2E] rounded-full flex items-center justify-center shadow-lg">
+          <Check className="w-3.5 h-3.5 text-white" />
+        </div>
+      )}
+
+      {/* Name */}
+      <div className="absolute bottom-0 left-0 right-0 px-3.5 pb-3.5">
+        <span className="text-white font-black text-sm leading-tight block tracking-wide drop-shadow-lg">
+          {displayName}
+        </span>
+      </div>
+    </button>
+  )
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -686,152 +791,181 @@ export default function ShopGrid() {
             <div className="hidden lg:flex items-start gap-3 mb-3">
               <div className="w-1 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
               <div>
-                <p className="font-black text-[#1A1A1A] text-base leading-tight">Unsere Kategorien</p>
-                <p className="text-xs text-[#999] mt-0.5">Jagd, Angeln & Outdoor-Ausrüstung</p>
+                <p className="font-black text-[#2C5F2E] text-2xl leading-tight">Unsere Kategorien</p>
+                <p className="text-sm text-[#888] mt-1">Jagd, Angeln & Outdoor-Ausrüstung</p>
               </div>
             </div>
 
             {/* ── Category image banners — desktop only ── */}
-            {(() => {
-              const CAT_IMAGES: Record<string, string> = {
-                "zubeh":     "/images/categories/Armbrust%20Zubeh%C3%B6r026.jpg",
-                "armbrust":  "/images/categories/Armbrust.jpg",
-                "messer":    "/images/categories/m%20esser2026_n.jpg",
-                "beil":      "/images/categories/Beil.jpg",
-                "lampen":    "/images/categories/Lampen2026.jpg",
-                "schleuder": "/images/categories/Schleuder.png",
-                "security":  "/images/categories/Security.jpg",
-                "pfeilbogen":"https://www.bogensportwelt.ch/media/image/product/174716/lg/drake-black-raven-58-zoll-30-lbs-take-down-recurvebogen.webp",
-                "rauch":     "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=240&fit=crop&auto=format",
-                "grill":     "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=240&fit=crop&auto=format",
-              }
-              const getCatImg = (name: string, slug: string) => {
-                const key = Object.keys(CAT_IMAGES).find(k =>
-                  name.toLowerCase().includes(k) || slug.toLowerCase().includes(k)
-                )
-                return key ? CAT_IMAGES[key] : null
-              }
-              return (
-                <div className="hidden lg:grid grid-cols-3 gap-2 mb-6">
-                  {/* Category image cards */}
-                  {categories.map(cat => {
-                    const img = getCatImg(cat.name, cat.slug)
-                    const isActive = activeCategory === cat.slug
-                    const displayName = cat.name.replace(/\s*\d{4}$/, "")
-                    return (
-                      <button
-                        key={cat.slug}
-                        onClick={() => setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug)}
-                        className={`relative overflow-hidden rounded-xl group transition-all duration-300 ${isActive ? "ring-2 ring-[#2C5F2E] ring-offset-1 shadow-lg" : "hover:shadow-md"}`}
-                        style={{ height: "90px", backgroundColor: "#1a1a1a" }}
-                      >
-                        {img && (
-                          <img
-                            src={img}
-                            alt={displayName}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            onError={e => { (e.target as HTMLImageElement).style.display = "none" }}
-                          />
-                        )}
-                        <div className={`absolute inset-0 transition-all duration-300 ${isActive ? "bg-[#2C5F2E]/60" : "bg-black/55 group-hover:bg-black/40"}`} />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="bg-white/90 backdrop-blur-md text-[#1A1A1A] font-black text-sm leading-none px-4 py-2 rounded-full shadow-lg border border-white/60 group-hover:bg-white transition-colors duration-200">
-                            {displayName}
-                          </span>
-                        </div>
-                        {isActive && (
-                          <div className="absolute top-2 right-2 w-5 h-5 bg-[#2C5F2E] rounded-full flex items-center justify-center shadow-md">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-            })()}
+            <div className="hidden lg:block mb-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="flex gap-3" style={{ flexWrap: "nowrap" }}>
+              {/* Alle — default card */}
+              <button
+                onClick={() => setActiveCategory("all")}
+                className="relative overflow-hidden rounded-2xl group text-left transition-all duration-300 flex flex-col justify-between p-4"
+                style={{
+                  height: "180px", minWidth: "210px", width: "210px", flexShrink: 0,
+                  backgroundColor: "#ffffff",
+                  border: activeCategory === "all" ? "2px solid #2C5F2E" : "2px solid #E0E0E0",
+                  boxShadow: activeCategory === "all" ? "0 8px 32px rgba(44,95,46,0.2)" : "none",
+                }}
+              >
+                {/* Decorative circles */}
+                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.08)" }} />
+                <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.06)" }} />
+                <div className="absolute top-1/2 right-6 -translate-y-1/2 w-14 h-14 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.05)" }} />
 
-            {/* ── Category pills — mobile only ── */}
-            <div className="lg:hidden overflow-x-auto mb-3 -mx-1 px-1">
-              <div className="flex gap-2 min-w-max pb-1">
-                {[{ slug: "all", name: "Alle" }, ...categories].map(cat => {
+                {/* Icon */}
+                <div className="relative w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: "#2C5F2E1A" }}>
+                  <LayoutGrid className="w-6 h-6" style={{ color: "#2C5F2E" }} />
+                </div>
+                {/* Text */}
+                <div className="relative">
+                  {activeCategory === "all" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#2C5F2E" }}>
+                      <Check className="w-3 h-3" /> Aktiv
+                    </span>
+                  )}
+                  <p className="font-black text-base leading-tight tracking-tight" style={{ color: "#2C5F2E" }}>Alle Kategorien</p>
+                  <p className="text-[11px] mt-0.5 font-medium text-[#999]">Alles anzeigen →</p>
+                </div>
+              </button>
+              {categories.map(cat => {
+                const catProds = products.filter(p =>
+                  p.category === cat.slug || p.category === cat.name
+                )
+                // collect all image sources with fallbacks
+                const srcs: string[] = []
+                for (const p of catProds) {
+                  const fromUrls = (p.image_urls ?? []).filter((u): u is string => !!u)
+                  srcs.push(...fromUrls)
+                  if (p.image_url) srcs.push(p.image_url)
+                  if (p.image_url_candidates?.length) srcs.push(...p.image_url_candidates)
+                }
+                const uniqueSrcs = [...new Set(srcs)]
+                const isActive = activeCategory === cat.slug
+                const displayName = cat.name.replace(/\s*\d{4}$/, "")
+                return (
+                  <CatCard
+                    key={cat.slug}
+                    srcs={uniqueSrcs}
+                    displayName={displayName}
+                    isActive={isActive}
+                    onClick={() => setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug)}
+                  />
+                )
+              })}
+              </div>
+            </div>
+
+            {/* ── Category cards — mobile only ── */}
+            <div className="lg:hidden overflow-x-auto mb-3 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="flex gap-2.5 pb-1" style={{ flexWrap: "nowrap" }}>
+
+                {/* Alle card — mobile */}
+                <button
+                  onClick={() => setActiveCategory("all")}
+                  className="relative overflow-hidden rounded-xl flex-shrink-0 flex flex-col justify-between p-3 transition-all duration-200"
+                  style={{
+                    width: "110px", height: "120px",
+                    backgroundColor: "#fff",
+                    border: activeCategory === "all" ? "2px solid #2C5F2E" : "2px solid #E0E0E0",
+                    boxShadow: activeCategory === "all" ? "0 4px 16px rgba(44,95,46,0.2)" : "none",
+                  }}
+                >
+                  <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.07)" }} />
+                  <div className="absolute -bottom-3 -left-3 w-12 h-12 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.05)" }} />
+                  <div className="relative w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(44,95,46,0.12)" }}>
+                    <LayoutGrid className="w-4 h-4" style={{ color: "#2C5F2E" }} />
+                  </div>
+                  <div className="relative">
+                    <p className="font-black text-[11px] leading-tight" style={{ color: "#2C5F2E" }}>Alle</p>
+                    <p className="text-[10px] text-[#999] mt-0.5">Anzeigen</p>
+                  </div>
+                </button>
+
+                {categories.map(cat => {
+                  const catProds = products.filter(p => p.category === cat.slug || p.category === cat.name)
+                  const srcs: string[] = []
+                  for (const p of catProds) {
+                    const fromUrls = (p.image_urls ?? []).filter((u): u is string => !!u)
+                    srcs.push(...fromUrls)
+                    if (p.image_url) srcs.push(p.image_url)
+                    if (p.image_url_candidates?.length) srcs.push(...p.image_url_candidates)
+                  }
+                  const uniqueSrcs = [...new Set(srcs)]
                   const isActive = activeCategory === cat.slug
                   const displayName = cat.name.replace(/\s*\d{4}$/, "")
                   return (
-                    <button
+                    <MobileCatCard
                       key={cat.slug}
+                      srcs={uniqueSrcs}
+                      displayName={displayName}
+                      isActive={isActive}
                       onClick={() => setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug)}
-                      className={`px-4 py-2 text-sm font-semibold rounded-full transition-all whitespace-nowrap ${
-                        isActive
-                          ? "bg-[#2C5F2E] text-white shadow-md shadow-[#2C5F2E]/25"
-                          : "bg-white text-[#555] hover:bg-[#F5F5F5] border border-[#E5E5E5] hover:border-[#CCC]"
-                      }`}
-                    >
-                      {displayName}
-                    </button>
+                    />
                   )
                 })}
               </div>
             </div>
 
-            {/* ── Supplier section title ── */}
+            {/* ── Supplier section ── */}
             {suppliers.length > 0 && (
-              <div className="hidden lg:flex items-start gap-3 mb-3">
-                <div className="w-1 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
-                <div>
-                  <p className="font-black text-[#1A1A1A] text-base leading-tight">Unsere Lieferanten</p>
-                  <p className="text-xs text-[#999] mt-0.5">Qualitätsmarken aus aller Welt</p>
+              <div className="border-t border-[#E0E0E0] mt-6 pt-6">
+                <div className="flex items-start gap-2.5 mb-2.5">
+                  <div className="w-0.5 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
+                  <div>
+                    <p className="font-black text-[#2C5F2E] text-xl lg:text-2xl leading-tight">Unsere Lieferanten</p>
+                    <p className="text-sm text-[#888] mt-1">Qualitätsmarken aus aller Welt</p>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* ── Supplier badges — scroll horizontal ── */}
-            {suppliers.length > 0 && (
-              <div className="overflow-x-auto mb-3 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <div className="flex items-center gap-1.5 min-w-max pb-1">
-                  <button
-                    onClick={() => setActiveSupplier("all")}
-                    className={`px-2 py-0.5 transition-all whitespace-nowrap ${
-                      activeSupplier === "all"
-                        ? "underline underline-offset-2"
-                        : "opacity-50 hover:opacity-100"
-                    }`}
-                  >
-                    <span className="text-[10px] sm:text-sm uppercase text-[#555] font-black tracking-wider">ALLE</span>
-                  </button>
-                  {suppliers.map(supplier => {
-                    const isActive = activeSupplier === supplier
-                    const STYLES: Record<string, string> = {
-                      "AIRSOFT":      "text-[#1A1A1A] font-black tracking-widest",
-                      "BLACK FLASH":  "text-[#333] font-black tracking-wide",
-                      "BLACKFLASH":   "text-[#1A1A1A] font-black tracking-widest",
-                      "BÖKER":        "text-[#8B0000] font-black tracking-wide",
-                      "FISHERMAN'S":  "text-[#1A5276] font-black",
-                      "HALLER":       "text-[#2C5F2E] font-black tracking-wide",
-                      "JENZI":        "text-[#FF6600] font-black",
-                      "LINDER":       "text-[#333] font-black tracking-wide",
-                      "NATURZONE":    "text-[#2C5F2E] font-bold tracking-wide",
-                      "POHLFORCE":    "text-[#CC0000] font-black",
-                      "SMOKI":        "text-[#8B6914] font-black",
-                      "STEAMBOW":     "text-[#1A1A8C] font-black tracking-wider",
-                      "SYTONG":       "text-[#003087] font-black tracking-wider",
-                      "WILTEC":       "text-[#555] font-black tracking-wide",
-                    }
-                    const textStyle = STYLES[supplier.toUpperCase()] ?? STYLES[supplier] ?? "text-[#333] font-bold"
-                    return (
-                      <button
-                        key={supplier}
-                        onClick={() => setActiveSupplier(prev => prev === supplier ? "all" : supplier)}
-                        className={`px-2 py-0.5 transition-all whitespace-nowrap ${
-                          isActive ? "underline underline-offset-2" : "opacity-50 hover:opacity-100"
-                        }`}
-                      >
-                        <span className={`text-[10px] sm:text-sm uppercase ${textStyle}`}>
+                <div className="overflow-x-auto mb-3 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  <div className="flex items-center gap-1.5 min-w-max pb-1">
+                    <button
+                      onClick={() => setActiveSupplier("all")}
+                      className={`px-2.5 py-1 rounded-full border transition-all whitespace-nowrap text-[11px] font-black uppercase tracking-wider ${
+                        activeSupplier === "all"
+                          ? "bg-[#1A1A1A] text-white border-[#1A1A1A]"
+                          : "border-[#E0E0E0] text-[#555] hover:border-[#555]"
+                      }`}
+                    >
+                      Alle
+                    </button>
+                    {suppliers.map(supplier => {
+                      const isActive = activeSupplier === supplier
+                      const COLORS: Record<string, string> = {
+                        "AIRSOFT":      "#1A1A1A",
+                        "BLACK FLASH":  "#333",
+                        "BLACKFLASH":   "#1A1A1A",
+                        "BÖKER":        "#8B0000",
+                        "FISHERMAN'S":  "#1A5276",
+                        "HALLER":       "#2C5F2E",
+                        "JENZI":        "#FF6600",
+                        "LINDER":       "#333",
+                        "NATURZONE":    "#2C5F2E",
+                        "POHLFORCE":    "#CC0000",
+                        "SMOKI":        "#8B6914",
+                        "STEAMBOW":     "#1A1A8C",
+                        "SYTONG":       "#003087",
+                        "WILTEC":       "#555",
+                      }
+                      const color = COLORS[supplier.toUpperCase()] ?? "#333"
+                      return (
+                        <button
+                          key={supplier}
+                          onClick={() => setActiveSupplier(prev => prev === supplier ? "all" : supplier)}
+                          className="px-2.5 py-1 rounded-full border transition-all whitespace-nowrap text-[11px] font-black uppercase tracking-wider"
+                          style={isActive
+                            ? { backgroundColor: color, color: "#fff", borderColor: color }
+                            : { borderColor: "#E0E0E0", color, opacity: 0.65 }
+                          }
+                        >
                           {supplier}
-                        </span>
-                      </button>
-                    )
-                  })}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             )}
