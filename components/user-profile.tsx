@@ -1096,21 +1096,8 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
                       </div>
 
                       <Separator />
-
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
-                          {(Number(orderStats?.total_spent) || 0).toFixed(2)} CHF
-                        </div>
-                        <p className="text-sm text-gray-600">Gesamtausgaben</p>
-                      </div>
-
-                      <Separator />
-
-           
-            
-
                       {orderStats?.last_order_date && (
-                        <div className="space-y-2">
+                   <div className="space-y-2">
                           <div className="flex items-center space-x-2">
                             <Package className="w-4 h-4 text-gray-500" />
                             <span className="text-sm text-gray-600">Letzte Bestellung</span>
