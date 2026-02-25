@@ -14,6 +14,20 @@ import { ShoppingCartComponent } from "@/components/shopping-cart"
 import { CheckoutPage } from "@/components/checkout-page"
 import { Footer } from "@/components/footer"
 import  Bot  from "@/components/bot"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { X } from "lucide-react"
+
+interface Announcement {
+  id: number
+  type: 'general' | 'product'
+  title: string
+  subtitle: string | null
+  image1_url: string | null
+  image2_url: string | null
+  product_url: string | null
+  is_active: boolean
+  show_once: boolean
+}
 interface Product {
   id: number
   name: string
@@ -56,6 +70,8 @@ function PremiumHotSauceStoreInner() {
   const [purchasedCombos, setPurchasedCombos] = useState<Set<string>>(new Set())
   const [currentPage, setCurrentPage] = useState<"store" | "checkout">("store")
   const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [announcement, setAnnouncement] = useState<Announcement | null>(null)
+  const [isAnnOpen, setIsAnnOpen] = useState(false)
 
   const searchParams = useSearchParams()
 
@@ -79,6 +95,26 @@ function PremiumHotSauceStoreInner() {
     }
   }, [])
 
+
+  // 📢 Cargar anuncio activo
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      try {
+        const res = await fetch("/api/announcement?active=1")
+        const d = await res.json()
+        if (d.success && d.announcement) {
+          const ann: Announcement = d.announcement
+          if (ann.show_once) {
+            const key = `seen-announcement-${ann.id}`
+            if (localStorage.getItem(key)) return
+          }
+          setAnnouncement(ann)
+          setIsAnnOpen(true)
+        }
+      } catch {}
+    }
+    fetchAnnouncement()
+  }, [])
 
   // 🔄 Guardar carrito en localStorage cada vez que cambie (pero no durante la carga inicial)
   useEffect(() => {
@@ -296,9 +332,65 @@ function PremiumHotSauceStoreInner() {
     )
   }
 
+  const handleCloseAnnouncement = () => {
+    if (announcement?.show_once) {
+      localStorage.setItem(`seen-announcement-${announcement.id}`, "1")
+    }
+    setIsAnnOpen(false)
+  }
+
   // 🏪 Renderizar página principal del store
   return (
     <div className="bg-white">
+
+      {/* 📢 Announcement modal */}
+      {announcement && (
+        <Dialog open={isAnnOpen} onOpenChange={open => { if (!open) handleCloseAnnouncement() }}>
+          <DialogContent hideClose className="max-w-md bg-white p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+            {/* Close button */}
+            <button
+              onClick={handleCloseAnnouncement}
+              className="absolute top-3 right-3 z-10 w-8 h-8 bg-black/20 hover:bg-black/40 rounded-full flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4 text-white" />
+            </button>
+
+            {/* Image(s) */}
+            {announcement.image1_url && (
+              <div className="relative w-full">
+                {announcement.type === 'general' && announcement.image2_url ? (
+                  <div className="grid grid-cols-2">
+                    <img src={announcement.image1_url} alt="" className="w-full h-48 object-cover" />
+                    <img src={announcement.image2_url} alt="" className="w-full h-48 object-cover" />
+                  </div>
+                ) : (
+                  <img src={announcement.image1_url} alt="" className="w-full h-52 object-cover" />
+                )}
+              </div>
+            )}
+
+            {/* Content */}
+            <div className="p-6">
+              <h2 className="text-xl font-black text-[#1A1A1A] leading-tight">{announcement.title}</h2>
+              {announcement.subtitle && (
+                <p className="text-[#666] mt-2 text-sm leading-relaxed">{announcement.subtitle}</p>
+              )}
+
+              {announcement.type === 'product' && announcement.product_url && (
+                <a
+                  href={announcement.product_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleCloseAnnouncement}
+                  className="mt-4 w-full flex items-center justify-center gap-2 bg-[#2C5F2E] hover:bg-[#1A4520] text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                >
+                  Produkt ansehen →
+                </a>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <Header onCartOpen={() => setIsCartOpen(true)} cartCount={getTotalItems()} />
 

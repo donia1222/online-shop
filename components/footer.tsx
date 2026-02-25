@@ -200,6 +200,9 @@ Bahnhofstrasse 2
 9475 Sevelen
 Kanton St. Gallen, Schweiz
 
+INHABER
+Urs Schwendener
+
 KONTAKT
 Telefon: 078 606 61 05
 E-Mail: info@usfh.ch
@@ -534,11 +537,19 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
       <div className="bg-[#F5F5F5] border-t border-[#E0E0E0] py-5">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-[#888]">
-            <span>* Alle Preise inkl. MwSt., zzgl. Versandkosten</span>
+            <span className="flex items-center gap-3">
+              <span>* Alle Preise inkl. MwSt., zzgl. Versandkosten</span>
+              <span className="text-[#DDD] hidden md:inline">·</span>
+              <span className="hidden md:flex items-center gap-1 text-[#AAA] text-xs">
+                Design by&nbsp;<a href="https://lweb.ch" target="_blank" rel="noopener noreferrer" className="font-black tracking-tight text-[#555] hover:text-[#2C5F2E] transition-colors uppercase text-[11px]">lweb.ch</a>
+              </span>
+            </span>
             <span className="font-semibold text-xs text-[#555]">Copyright © 2026 US - Fishing &amp; Huntingshop. Alle Rechte vorbehalten.</span>
             <span className="flex items-center gap-2">
-              Design:&nbsp;<a href="https://lweb.ch" target="_blank" rel="noopener noreferrer" className="text-[#2C5F2E] font-semibold hover:underline">lweb.ch</a>
-              <AdminLoginButton className="text-[#CCC] hover:text-[#888] ml-2" />
+              <span className="flex md:hidden items-center gap-1 text-[#AAA] text-xs">
+                Design by&nbsp;<a href="https://lweb.ch" target="_blank" rel="noopener noreferrer" className="font-black tracking-tight text-[#555] hover:text-[#2C5F2E] transition-colors uppercase text-[11px]">lweb.ch</a>
+              </span>
+              <AdminLoginButton subtle />
             </span>
           </div>
         </div>

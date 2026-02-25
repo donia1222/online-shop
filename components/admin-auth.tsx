@@ -18,24 +18,28 @@ import {
 
 interface AdminAuthProps {
   isLightSection?: boolean
+  subtle?: boolean
 }
 
 // Exportable Admin Login Button Component (simplified version for footer)
 export function AdminLoginButton({
   isLightSection = false,
+  subtle = false,
   className = "",
 }: {
   isLightSection?: boolean
+  subtle?: boolean
   className?: string
 }) {
   return (
     <AdminAuth
       isLightSection={isLightSection}
+      subtle={subtle}
     />
   )
 }
 
-export function AdminAuth({ isLightSection = false }: AdminAuthProps) {
+export function AdminAuth({ isLightSection = false, subtle = false }: AdminAuthProps) {
   const router = useRouter()
   // Estados del sistema de admin
   const [isLoginOpen, setIsLoginOpen] = useState(false)
@@ -388,7 +392,9 @@ export function AdminAuth({ isLightSection = false }: AdminAuthProps) {
               variant="ghost"
               size="icon"
               className={`relative p-2.5 rounded-xl border transition-all duration-300 backdrop-blur-sm ${
-                isLightSection
+                subtle
+                  ? "bg-transparent text-[#BBB] border-[#DDD] hover:text-[#666] hover:border-[#999]"
+                  : isLightSection
                   ? "bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-[#2C5F2E]/50"
                   : "bg-white/5 hover:bg-white/10 text-white border-white/10 hover:border-[#2C5F2E]/30"
               }`}

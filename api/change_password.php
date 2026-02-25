@@ -14,6 +14,7 @@ $allowedOrigins = [
     'https://www.your-domain.com'
 ];
 
+
 // Si el origen está en la lista permitida, usarlo; sino usar *
 if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
