@@ -29,6 +29,8 @@ import {
   ImageIcon,
   Download,
   Images,
+  Landmark,
+  CreditCard,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -256,7 +258,7 @@ export function Admin({ onClose }: AdminProps) {
 
   // Payment Settings State
   const [paySettings, setPaySettings] = useState({
-    paypal_email: "", stripe_publishable_key: "", stripe_secret_key: "", twint_phone: "",
+    paypal_email: "", stripe_publishable_key: "", stripe_secret_key: "", stripe_pmc_id: "", twint_phone: "",
     bank_iban: "", bank_holder: "", bank_name: "",
     enable_paypal: false, enable_stripe: false, enable_twint: false, enable_invoice: true,
   })
@@ -1019,6 +1021,11 @@ export function Admin({ onClose }: AdminProps) {
     doc.setFont("helvetica", "bold"); doc.setFontSize(10)
     doc.text(`Status: ${getStatusText(order.status)}`, pageW - margin, 70, { align: "right" })
     doc.text(`Zahlung: ${order.payment_method}`, pageW - margin, 76, { align: "right" })
+    const payStatusLabel = order.payment_status === "completed" ? "Bezahlt" : order.payment_status === "pending" ? "Ausstehend" : order.payment_status === "failed" ? "Fehlgeschlagen" : order.payment_status
+    const payStatusColor: [number, number, number] = order.payment_status === "completed" ? [44, 95, 46] : order.payment_status === "failed" ? [180, 0, 0] : [180, 130, 0]
+    doc.setTextColor(...payStatusColor)
+    doc.text(`Zahlungsstatus: ${payStatusLabel}`, pageW - margin, 82, { align: "right" })
+    doc.setTextColor(40, 40, 40)
 
     // Artikeltabelle
     let y = 118
@@ -2207,7 +2214,9 @@ export function Admin({ onClose }: AdminProps) {
                 <div className="bg-white border border-[#EBEBEB] rounded-2xl shadow-sm p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">🧾</span>
+                      <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center">
+                        <Landmark className="w-5 h-5 text-[#555]" />
+                      </div>
                       <div>
                         <p className="font-bold text-[#1A1A1A]">Rechnung</p>
                         <p className="text-xs text-[#AAA]">Zahlung per Banküberweisung</p>
@@ -2247,7 +2256,9 @@ export function Admin({ onClose }: AdminProps) {
                 <div className="bg-white border border-[#EBEBEB] rounded-2xl shadow-sm p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">💳</span>
+                      <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center overflow-hidden">
+                        <img src="/0014294_paypal-express-payment-plugin.png" alt="PayPal" className="w-8 h-8 object-contain" />
+                      </div>
                       <div>
                         <p className="font-bold text-[#1A1A1A]">PayPal</p>
                         <p className="text-xs text-[#AAA]">Zahlung via PayPal</p>
@@ -2275,7 +2286,21 @@ export function Admin({ onClose }: AdminProps) {
                 <div className="bg-white border border-[#EBEBEB] rounded-2xl shadow-sm p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">💜</span>
+                      <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center gap-0.5 px-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 471" width="18" height="12">
+                          <rect width="750" height="471" rx="40" fill="#fff" stroke="#ddd" strokeWidth="20"/>
+                          <path d="M278 333L313 141h56L334 333z" fill="#00579F"/>
+                          <path d="M524 146c-11-4-28-9-50-9-55 0-93 29-94 71-1 31 28 48 49 58 22 11 29 18 29 27 0 15-17 22-33 22-22 0-34-3-52-11l-7-4-8 47c13 6 37 11 62 11 58 0 96-28 96-73 0-25-15-43-47-59-20-10-32-17-32-27 0-9 10-19 33-19 18 0 32 4 43 8l5 3 8-46z" fill="#00579F"/>
+                          <path d="M616 141h-43c-13 0-23 4-29 18l-82 174h58l12-32h71l7 32h51L616 141zm-68 116l22-59 12 59h-34z" fill="#00579F"/>
+                          <path d="M222 141l-54 131-6-29-18-93c-3-13-12-17-23-18h-88l-1 4c21 5 40 13 55 22l47 178h59l90-195h-61z" fill="#00579F"/>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 471" width="18" height="12">
+                          <rect width="750" height="471" rx="40" fill="#fff" stroke="#ddd" strokeWidth="20"/>
+                          <circle cx="280" cy="235" r="140" fill="#EB001B"/>
+                          <circle cx="470" cy="235" r="140" fill="#F79E1B"/>
+                          <path d="M375 103a140 140 0 0 1 0 265 140 140 0 0 1 0-265z" fill="#FF5F00"/>
+                        </svg>
+                      </div>
                       <div>
                         <p className="font-bold text-[#1A1A1A]">Stripe (Kreditkarte)</p>
                         <p className="text-xs text-[#AAA]">Zahlung per Karte via Stripe</p>
@@ -2301,6 +2326,11 @@ export function Admin({ onClose }: AdminProps) {
                         <Label className="text-xs text-[#888]">Secret Key (sk_live_...)</Label>
                         <Input type="password" value={paySettings.stripe_secret_key} onChange={e => setPaySettings(p => ({ ...p, stripe_secret_key: e.target.value }))} placeholder="sk_live_..." className="bg-white mt-1 font-mono text-xs" />
                       </div>
+                      <div>
+                        <Label className="text-xs text-[#888]">Payment Method Config ID — TWINT QR (pmc_...)</Label>
+                        <Input value={paySettings.stripe_pmc_id} onChange={e => setPaySettings(p => ({ ...p, stripe_pmc_id: e.target.value }))} placeholder="pmc_..." className="bg-white mt-1 font-mono text-xs" />
+                        <p className="text-[10px] text-[#AAA] mt-1">Stripe Dashboard → Products → Payment method configurations</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2309,7 +2339,9 @@ export function Admin({ onClose }: AdminProps) {
                 <div className="bg-white border border-[#EBEBEB] rounded-2xl shadow-sm p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">📱</span>
+                      <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center overflow-hidden px-1">
+                        <img src="/twint-logo.svg" alt="TWINT" className="w-8 h-auto object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
+                      </div>
                       <div>
                         <p className="font-bold text-[#1A1A1A]">TWINT</p>
                         <p className="text-xs text-[#AAA]">Zahlung per TWINT (Schweiz)</p>

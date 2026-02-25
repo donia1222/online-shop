@@ -678,6 +678,11 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
     doc.setFontSize(10)
     doc.text(`Status: ${getStatusText(order.status)}`, pageW - margin, 70, { align: "right" })
     doc.text(`Zahlung: ${order.payment_method}`, pageW - margin, 76, { align: "right" })
+    const payStatusLabel = order.payment_status === "completed" ? "Bezahlt" : order.payment_status === "pending" ? "Ausstehend" : order.payment_status === "failed" ? "Fehlgeschlagen" : order.payment_status
+    const payStatusColor: [number, number, number] = order.payment_status === "completed" ? [44, 95, 46] : order.payment_status === "failed" ? [180, 0, 0] : [180, 130, 0]
+    doc.setTextColor(...payStatusColor)
+    doc.text(`Zahlungsstatus: ${payStatusLabel}`, pageW - margin, 82, { align: "right" })
+    doc.setTextColor(40, 40, 40)
 
     // --- Artikeltabelle ---
     let y = 118
@@ -1249,16 +1254,26 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
                                         <p className="capitalize">{order.payment_method}</p>
                                       </div>
                                       <div>
+                                        <span className="font-medium">Zahlungsstatus:</span>
+                                        <p>
+                                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                            order.payment_status === "completed"
+                                              ? "bg-green-100 text-green-700"
+                                              : order.payment_status === "failed"
+                                              ? "bg-red-100 text-red-700"
+                                              : "bg-yellow-100 text-yellow-700"
+                                          }`}>
+                                            {order.payment_status === "completed" ? "Bezahlt" : order.payment_status === "failed" ? "Fehlgeschlagen" : "Ausstehend"}
+                                          </span>
+                                        </p>
+                                      </div>
+                                      <div>
                                         <span className="font-medium">Versand:</span>
                                         <p>{(Number(order.shipping_cost) || 0).toFixed(2)} CHF</p>
                                       </div>
                                       <div>
                                         <span className="font-medium">Stadt:</span>
                                         <p>{order.customer_city}</p>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium">PLZ:</span>
-                                        <p>{order.customer_postal_code}</p>
                                       </div>
                                     </div>
 

@@ -283,10 +283,13 @@ try {
         if ($paymentMethod === 'invoice') {
             $emailResponse = sendInvoiceConfirmationEmail($emailData);
             error_log("Invoice email sent: " . json_encode($emailResponse));
-        } else {
-            // PayPal - llamar al endpoint de confirmación existente
+        } elseif ($paymentMethod === 'paypal') {
             $emailResponse = sendPayPalConfirmationEmail($emailData);
             error_log("PayPal email sent: " . json_encode($emailResponse));
+        } else {
+            // stripe, stripe_twint, twint — email genérico de confirmación
+            $emailResponse = sendOrderConfirmationEmail($emailData);
+            error_log("Order confirmation email sent [$paymentMethod]: " . json_encode($emailResponse));
         }
     } catch (Exception $emailError) {
         error_log("Error sending confirmation email: " . $emailError->getMessage());

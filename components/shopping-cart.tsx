@@ -99,7 +99,7 @@ export function ShoppingCartComponent({
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-gray-900 line-clamp-2 leading-tight">{item.name}</p>
-                      <p className="text-sm font-black text-blue-900 mt-1">{item.price.toFixed(2)} <span className="text-xs font-semibold text-gray-400">CHF</span></p>
+                      <p className="text-sm font-black text-[#2C5F2E] mt-1">{item.price.toFixed(2)} <span className="text-xs font-semibold text-gray-400">CHF</span></p>
                     </div>
 
                     {/* Qty controls */}
@@ -113,7 +113,7 @@ export function ShoppingCartComponent({
                       <span className="w-6 text-center text-sm font-black text-gray-900">{item.quantity}</span>
                       <button
                         onClick={() => onAddToCart(item)}
-                        className="w-7 h-7 rounded-lg bg-blue-950 hover:bg-blue-900 text-white flex items-center justify-center transition-all shadow-sm"
+                        className="w-7 h-7 rounded-lg bg-[#2C5F2E] hover:bg-[#1e4220] text-white flex items-center justify-center transition-all shadow-sm"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
@@ -138,15 +138,15 @@ export function ShoppingCartComponent({
             </div>
 
             {/* Free shipping note */}
-            <div className="bg-blue-50 rounded-xl px-3 py-2 flex items-center gap-2">
+            <div className="bg-[#2C5F2E]/10 rounded-xl px-3 py-2 flex items-center gap-2">
               <span className="text-lg">🚚</span>
-              <p className="text-xs font-semibold text-blue-700">Kostenloser Versand · Sichere Zahlung</p>
+              <p className="text-xs font-semibold text-[#2C5F2E]">Kostenloser Versand · Sichere Zahlung</p>
             </div>
 
             {/* Checkout button */}
             <button
               onClick={handleGoToCheckout}
-              className="w-full flex items-center justify-center gap-2 bg-blue-950 hover:bg-blue-900 text-white font-bold py-3.5 rounded-2xl text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-950/20"
+              className="w-full flex items-center justify-center gap-2 bg-[#2C5F2E] hover:bg-[#1e4220] text-white font-bold py-3.5 rounded-2xl text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#2C5F2E]/30"
             >
               Zur Kasse
               <ArrowRight className="w-4 h-4" />

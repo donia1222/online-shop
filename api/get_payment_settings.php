@@ -29,7 +29,7 @@ try {
 
     // Safe column migrations
     $cols = ['paypal_email','stripe_secret_key','stripe_publishable_key','stripe_webhook_secret',
-             'twint_phone','bank_iban','bank_holder','bank_name',
+             'stripe_pmc_id','twint_phone','bank_iban','bank_holder','bank_name',
              'enable_paypal','enable_stripe','enable_twint','enable_invoice'];
     foreach ($cols as $col) {
         try { $pdo->exec("ALTER TABLE payment_settings ADD COLUMN $col VARCHAR(255) NOT NULL DEFAULT ''"); } catch (Exception $e) {}
@@ -48,6 +48,7 @@ try {
             'paypal_email'           => $row['paypal_email'] ?? '',
             'stripe_publishable_key' => $row['stripe_publishable_key'] ?? '',
             'stripe_secret_key'      => $row['stripe_secret_key'] ?? '',
+            'stripe_pmc_id'          => $row['stripe_pmc_id'] ?? '',
             'twint_phone'            => $row['twint_phone'] ?? '',
             'bank_iban'              => $row['bank_iban'] ?? '',
             'bank_holder'            => $row['bank_holder'] ?? '',

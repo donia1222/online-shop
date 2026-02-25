@@ -200,8 +200,9 @@ function generateCustomerInvoiceEmail($customerInfo, $billingAddress, $cart, $to
     </head>
     <body>
         <div class='header'>
-            <img src='https://online-shop-seven-delta.vercel.app/Security_n.png' alt='US - Fishing &amp; Huntingshop' />
-            <h1>🎣 US - Fishing &amp; Huntingshop</h1>
+            <img src='https://online-shop-seven-delta.vercel.app/Security_n.png' alt='US - Fishing &amp; Huntingshop' style='height:60px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;' />
+            <h1 style='margin:0'>US - Fishing &amp; Huntingshop</h1>
+            <p style='margin:4px 0;font-size:12px;letter-spacing:1px;opacity:0.85'>JAGD · ANGELN · OUTDOOR</p>
             <p>Bestellbestätigung — Kauf auf Rechnung &amp; Vorkasse</p>
         </div>
 
@@ -349,7 +350,9 @@ function generateStorePayPalEmail($customerInfo, $billingAddress, $cart, $total,
     </head>
     <body>
         <div class='header'>
-            <h1>🎣 NEUE BESTELLUNG - US Fishing &amp; Huntingshop</h1>
+            <img src='https://online-shop-seven-delta.vercel.app/Security_n.png' alt='US - Fishing &amp; Huntingshop' style='height:60px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;' />
+            <h1>US - Fishing &amp; Huntingshop</h1>
+            <p style='font-size:13px;letter-spacing:1px;opacity:0.85'>JAGD · ANGELN · OUTDOOR</p>
             <p>Zahlung erfolgreich über PayPal verarbeitet!</p>
         </div>
         
@@ -466,8 +469,9 @@ function generateCustomerPayPalEmail($customerInfo, $billingAddress, $cart, $tot
     </head>
     <body>
         <div class='header'>
-            <img src='https://online-shop-seven-delta.vercel.app/Security_n.png' alt='US - Fishing &amp; Huntingshop' style='max-height:60px; margin-bottom:10px;' />
-            <h1>🎣 US - Fishing &amp; Huntingshop</h1>
+            <img src='https://online-shop-seven-delta.vercel.app/Security_n.png' alt='US - Fishing &amp; Huntingshop' style='height:60px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;' />
+            <h1 style='margin:0'>US - Fishing &amp; Huntingshop</h1>
+            <p style='margin:4px 0;font-size:12px;letter-spacing:1px;opacity:0.85'>JAGD · ANGELN · OUTDOOR</p>
             <p>Vielen Dank für Ihre Bestellung!</p>
         </div>
 
@@ -549,7 +553,109 @@ function generateCustomerPayPalEmail($customerInfo, $billingAddress, $cart, $tot
         </div>
     </body>
     </html>";
-    
+
     return $content;
+}
+
+// Email genérico para Stripe (tarjeta), Stripe TWINT y TWINT manual
+function sendOrderConfirmationEmail($data) {
+    $customerInfo  = $data['customerInfo'];
+    $cart          = $data['cart'];
+    $total         = $data['total'];
+    $orderNumber   = $data['orderNumber'];
+    $paymentMethod = $data['paymentMethod'] ?? 'stripe';
+
+    $toStore    = 'info@lweb.ch';
+    $toCustomer = $customerInfo['email'];
+    $fromEmail  = 'info@lweb.ch';
+
+    $methodLabel = match($paymentMethod) {
+        'stripe'       => 'Kreditkarte (Stripe)',
+        'stripe_twint' => 'TWINT (Stripe QR)',
+        'twint'        => 'TWINT (Manuell)',
+        default        => ucfirst($paymentMethod),
+    };
+
+    $subtotal = 0;
+    $itemsHtml = '';
+    foreach ($cart as $item) {
+        $lineTotal  = $item['price'] * $item['quantity'];
+        $subtotal  += $lineTotal;
+        $itemsHtml .= "<tr>
+            <td style='padding:8px;border-bottom:1px solid #eee'>" . htmlspecialchars($item['name']) . "</td>
+            <td style='padding:8px;border-bottom:1px solid #eee;text-align:center'>{$item['quantity']}</td>
+            <td style='padding:8px;border-bottom:1px solid #eee;text-align:right'>CHF " . number_format($lineTotal, 2) . "</td>
+        </tr>";
+    }
+    $timestamp = date('Y-m-d H:i:s');
+
+    // === EMAIL TIENDA ===
+    $storeSubject = "NEUE BESTELLUNG #{$orderNumber} - {$methodLabel}";
+    $storeHtml = "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body style='font-family:Arial,sans-serif;color:#333'>
+        <div style='background:#1A1A1A;color:white;padding:24px 20px;text-align:center'>
+            <img src='https://online-shop-seven-delta.vercel.app/Security_n.png' alt='US - Fishing &amp; Huntingshop' style='height:60px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;' />
+            <h1 style='margin:0;color:#DAA520;font-size:20px'>US - Fishing &amp; Huntingshop</h1>
+            <p style='margin:4px 0;font-size:12px;letter-spacing:1px;color:#aaa'>JAGD &middot; ANGELN &middot; OUTDOOR</p>
+            <p style='margin:10px 0 0'>NEUE BESTELLUNG <strong>#{$orderNumber}</strong></p>
+            <p style='margin:4px 0;font-size:13px'>Zahlungsmethode: <strong>{$methodLabel}</strong> &mdash; {$timestamp}</p>
+        </div>
+        <div style='padding:20px'>
+            <h3>Kundendaten</h3>
+            <p>" . htmlspecialchars($customerInfo['firstName'] . ' ' . $customerInfo['lastName']) . "<br>
+               " . htmlspecialchars($customerInfo['email']) . "<br>
+               " . htmlspecialchars($customerInfo['phone']) . "<br>
+               " . htmlspecialchars($customerInfo['address'] . ', ' . $customerInfo['postalCode'] . ' ' . $customerInfo['city']) . "</p>
+            <h3>Bestellte Artikel</h3>
+            <table width='100%' style='border-collapse:collapse'>
+                <tr style='background:#f5f5f5'>
+                    <th style='padding:8px;text-align:left'>Artikel</th>
+                    <th style='padding:8px;text-align:center'>Menge</th>
+                    <th style='padding:8px;text-align:right'>Preis</th>
+                </tr>
+                {$itemsHtml}
+                <tr><td colspan='2' style='padding:8px;text-align:right;font-weight:bold'>TOTAL</td>
+                    <td style='padding:8px;text-align:right;font-weight:bold;font-size:18px;color:#2C5F2E'>CHF " . number_format($total, 2) . "</td></tr>
+            </table>
+        </div>
+    </body></html>";
+
+    // === EMAIL CLIENTE ===
+    $customerSubject = "Bestellbestätigung #{$orderNumber}";
+    $customerHtml = "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body style='font-family:Arial,sans-serif;color:#333'>
+        <div style='background:#2C5F2E;color:white;padding:24px 20px;text-align:center'>
+            <img src='https://online-shop-seven-delta.vercel.app/Security_n.png' alt='US - Fishing &amp; Huntingshop' style='height:60px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;' />
+            <h1 style='margin:0;font-size:20px'>US - Fishing &amp; Huntingshop</h1>
+            <p style='margin:4px 0;font-size:12px;letter-spacing:1px;color:#90EE90'>JAGD &middot; ANGELN &middot; OUTDOOR</p>
+            <p style='margin:10px 0 0'>Vielen Dank für Ihre Bestellung!</p>
+            <p style='margin:4px 0;font-size:13px'>Bestellnummer: <strong>#{$orderNumber}</strong></p>
+        </div>
+        <div style='padding:20px'>
+            <p>Hallo " . htmlspecialchars($customerInfo['firstName']) . ",</p>
+            <p>Wir haben Ihre Bestellung erhalten. Zahlungsmethode: <strong>{$methodLabel}</strong></p>
+            <h3>Ihre Bestellung</h3>
+            <table width='100%' style='border-collapse:collapse'>
+                <tr style='background:#f5f5f5'>
+                    <th style='padding:8px;text-align:left'>Artikel</th>
+                    <th style='padding:8px;text-align:center'>Menge</th>
+                    <th style='padding:8px;text-align:right'>Preis</th>
+                </tr>
+                {$itemsHtml}
+                <tr><td colspan='2' style='padding:8px;text-align:right;font-weight:bold'>TOTAL</td>
+                    <td style='padding:8px;text-align:right;font-weight:bold;font-size:18px;color:#2C5F2E'>CHF " . number_format($total, 2) . "</td></tr>
+            </table>
+            <p style='margin-top:20px'>Ihre Bestellung wird innerhalb von 2&ndash;3 Werktagen versandt.</p>
+            <p>Mit freundlichen Grüßen,<br>Ihr Team</p>
+        </div>
+    </body></html>";
+
+    $headers = "MIME-Version: 1.0\r\nContent-type: text/html; charset=UTF-8\r\nFrom: {$fromEmail}\r\n";
+    $storeEmailSent    = mail($toStore,    $storeSubject,    $storeHtml,    $headers . "Reply-To: {$customerInfo['email']}\r\n");
+    $customerEmailSent = mail($toCustomer, $customerSubject, $customerHtml, $headers . "Reply-To: {$fromEmail}\r\n");
+
+    return [
+        'success'           => ($storeEmailSent && $customerEmailSent),
+        'storeEmailSent'    => $storeEmailSent,
+        'customerEmailSent' => $customerEmailSent,
+    ];
 }
 ?>

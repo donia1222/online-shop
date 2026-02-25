@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
-    const { amount, currency, orderData, stripeSecretKey } = await req.json()
+    const { amount, currency, orderData, stripeSecretKey, paymentMethodTypes, paymentMethodConfigId } = await req.json()
 
     const secretKey = process.env.STRIPE_SECRET_KEY || stripeSecretKey
     if (!secretKey) {
@@ -31,12 +31,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Crear el Payment Intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount, // Ya viene en centavos desde el frontend
+    const piBase: any = {
+      amount,
       currency: currency || 'chf',
-      automatic_payment_methods: {
-        enabled: true,
-      },
+    }
+    // Prioridad: PMC ID > payment_method_types > automatic
+    if (paymentMethodConfigId) {
+      piBase.payment_method_configuration = paymentMethodConfigId
+    } else if (paymentMethodTypes && paymentMethodTypes.length > 0) {
+      piBase.payment_method_types = paymentMethodTypes
+    } else {
+      piBase.automatic_payment_methods = { enabled: true }
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      ...piBase,
       metadata: {
         orderId: orderData.orderId || 'unknown',
         customerEmail: orderData.customerInfo.email,

@@ -74,6 +74,10 @@ function PremiumHotSauceStoreInner() {
     if (searchParams.get("checkout") === "true") {
       setCurrentPage("checkout")
     }
+    // Retorno desde Stripe TWINT — montar checkout para mostrar confirmación
+    if (searchParams.get("twint_order") && searchParams.get("redirect_status")) {
+      setCurrentPage("checkout")
+    }
   }, [])
 
 

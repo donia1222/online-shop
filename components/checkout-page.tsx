@@ -35,6 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { UserProfile } from "./user-profile"
 import { StripePayment } from "./stripe-payment"
+import { StripeTwintPayment } from "./stripe-twint-payment"
 import { ProductImage } from "./product-image"
 
 interface Product {
@@ -117,7 +118,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   const [orderDetails, setOrderDetails] = useState<any>(null)
   const [formErrors, setFormErrors] = useState<Partial<CustomerInfo>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "invoice" | "stripe" | "twint">("invoice")
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "invoice" | "stripe" | "twint" | "twint_stripe">("invoice")
 
   // Billing address states
   const [useDifferentBillingAddress, setUseDifferentBillingAddress] = useState(false)
@@ -170,7 +171,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   // Payment settings
   const [paySettings, setPaySettings] = useState({
     enable_paypal: false, enable_stripe: false, enable_twint: false, enable_invoice: true,
-    paypal_email: "", stripe_publishable_key: "", stripe_secret_key: "", twint_phone: "",
+    paypal_email: "", stripe_publishable_key: "", stripe_secret_key: "", stripe_pmc_id: "", twint_phone: "",
     bank_iban: "", bank_holder: "", bank_name: "",
   })
 
@@ -231,6 +232,30 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
         }
       })
       .catch(() => {})
+  }, [])
+
+  // Detectar retorno desde Stripe TWINT (QR code flow)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    const redirectStatus = params.get("redirect_status")
+    const twintOrder = params.get("twint_order")
+    const twintTotal = params.get("twint_total")
+    if (redirectStatus === "succeeded" && twintOrder) {
+      setOrderStatus("completed")
+      setOrderDetails({
+        id: twintOrder,
+        status: "PAID",
+        customerInfo: customerInfo,
+        cart: [],
+        total: twintTotal ? parseFloat(twintTotal) : 0,
+      })
+      if (onClearCart) onClearCart()
+      window.history.replaceState({}, "", window.location.pathname)
+    } else if (redirectStatus === "failed" && twintOrder) {
+      setOrderStatus("error")
+      window.history.replaceState({}, "", window.location.pathname)
+    }
   }, [])
 
   // Recalculate shipping when cart or country changes
@@ -638,6 +663,18 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Guarda el pedido en DB antes de redirigir a Stripe TWINT
+  const handleStripeTwintSaveOrder = async (): Promise<string> => {
+    if (!validateForm()) throw new Error("Bitte füllen Sie alle Pflichtfelder aus")
+    if (!validateBillingAddress()) throw new Error("Rechnungsadresse ungültig")
+    if (showCreateAccount && !validateAccountCreation()) throw new Error("Konto-Daten ungültig")
+    const savedOrder = await saveOrderToDatabase({
+      paymentMethod: "stripe_twint",
+      paymentStatus: "pending",
+    })
+    return savedOrder.orderNumber
   }
 
   const handleTwintPayment = async () => {
@@ -1351,6 +1388,121 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Customer form */}
           <div className="space-y-6">
+            {/* Login Section — above the form */}
+            {!isLoggedIn && (
+              <Card className="rounded-2xl shadow-sm border-[#2C5F2E]/20 bg-[#F8FCF8]">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Checkbox
+                      id="showLogin"
+                      checked={showLogin}
+                      onCheckedChange={(checked) => {
+                        setShowLogin(checked as boolean)
+                        if (checked) setShowCreateAccount(false)
+                      }}
+                    />
+                    <Label htmlFor="showLogin" className="flex items-center cursor-pointer font-semibold text-[#2C5F2E]">
+                      <User className="w-4 h-4 mr-2" />
+                      Ich habe bereits ein Konto — Anmelden
+                    </Label>
+                  </div>
+
+                  {showLogin && (
+                    <div className="space-y-4 bg-white p-4 rounded-xl border border-[#2C5F2E]/15">
+                      <div>
+                        <Label htmlFor="loginEmail">E-Mail *</Label>
+                        <Input
+                          id="loginEmail"
+                          type="email"
+                          value={loginData.email}
+                          onChange={(e) => setLoginData((prev) => ({ ...prev, email: e.target.value }))}
+                          className={`bg-white ${loginErrors.email ? "border-red-500" : ""}`}
+                          placeholder="ihre@email.com"
+                        />
+                        {loginErrors.email && <p className="text-red-500 text-sm mt-1">{loginErrors.email}</p>}
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="loginPassword">Passwort *</Label>
+                          <Button
+                            type="button"
+                            variant="link"
+                            size="sm"
+                            onClick={openPasswordReset}
+                            className="text-xs text-[#2C5F2E] hover:text-[#1A4520] p-0 h-auto"
+                          >
+                            Passwort vergessen?
+                          </Button>
+                        </div>
+                        <div className="relative">
+                          <Input
+                            id="loginPassword"
+                            type={showLoginPassword ? "text" : "password"}
+                            value={loginData.password}
+                            onChange={(e) => setLoginData((prev) => ({ ...prev, password: e.target.value }))}
+                            className={`bg-white pr-10 ${loginErrors.password ? "border-red-500" : ""}`}
+                            placeholder="Ihr Passwort"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowLoginPassword(!showLoginPassword)}
+                          >
+                            {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                        {loginErrors.password && <p className="text-red-500 text-sm mt-1">{loginErrors.password}</p>}
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <Button
+                          onClick={handleLogin}
+                          disabled={isLoggingIn || !loginData.email || !loginData.password}
+                          className="w-full bg-[#2C5F2E] hover:bg-[#1A4520] text-white"
+                        >
+                          {isLoggingIn ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Anmeldung läuft...
+                            </>
+                          ) : (
+                            <>
+                              <User className="w-4 h-4 mr-2" />
+                              Anmelden
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {loginStatus === "error" && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+                            <div>
+                              <p className="text-red-700 font-medium">Anmeldung fehlgeschlagen</p>
+                              <p className="text-red-600 text-sm mt-1">{loginMessage}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="bg-[#F0F9F0] p-3 rounded-xl border border-[#2C5F2E]/15">
+                        <p className="text-sm text-[#2C5F2E] font-semibold">Nach der Anmeldung:</p>
+                        <ul className="text-sm text-[#2C5F2E]/80 mt-1 space-y-1">
+                          <li>• Ihre Daten werden automatisch ausgefüllt</li>
+                          <li>• Schnellerer Checkout-Prozess</li>
+                          <li>• Zugriff auf Ihr Profil und Bestellhistorie</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="rounded-2xl shadow-sm border-[#EBEBEB]">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-xl">
@@ -1436,8 +1588,8 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                   </div>
                 )}
 
-                {/* Login Section - ONLY show if NOT logged in */}
-                {!isLoggedIn && (
+                {/* Login Section placeholder removed — moved above */}
+                {false && (
                   <div className="border-t pt-4">
                     <div className="flex items-center space-x-2 mb-4">
                       <Checkbox
@@ -1446,7 +1598,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                         onCheckedChange={(checked) => {
                           setShowLogin(checked as boolean)
                           if (checked) {
-                            setShowCreateAccount(false) // Close create account if login is opened
+                            setShowCreateAccount(false)
                           }
                         }}
                       />
@@ -2078,7 +2230,24 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                     </div>
                   )}
 
-                  {/* TWINT */}
+                  {/* TWINT via Stripe QR (nuevo) */}
+                  {paySettings.enable_stripe && paySettings.stripe_publishable_key && (
+                    <div
+                      onClick={() => setPaymentMethod("twint_stripe")}
+                      className={`flex items-center gap-3 border rounded-xl px-4 py-3 cursor-pointer transition-all ${paymentMethod === "twint_stripe" ? "border-[#2C5F2E] bg-[#F0F9F0]" : "border-gray-200 hover:border-gray-300 bg-white"}`}
+                    >
+                      <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${paymentMethod === "twint_stripe" ? "border-[#2C5F2E] bg-[#2C5F2E]" : "border-gray-300"}`}>
+                        {paymentMethod === "twint_stripe" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-gray-900">TWINT <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded ml-1">QR-Code</span></p>
+                        <p className="text-xs text-gray-500">QR-Code scannen oder App-Weiterleitung – via Stripe</p>
+                      </div>
+                      <img src="/twint-logo.svg" alt="TWINT" className="h-7 w-auto object-contain flex-shrink-0" />
+                    </div>
+                  )}
+
+                  {/* TWINT manual (respaldo) */}
                   {paySettings.enable_twint && (
                     <div
                       onClick={() => setPaymentMethod("twint")}
@@ -2088,8 +2257,8 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                         {paymentMethod === "twint" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-900">TWINT</p>
-                        <p className="text-xs text-gray-500">Bezahlen per TWINT – Schweizer Mobile-Payment</p>
+                        <p className="font-semibold text-sm text-gray-900">TWINT <span className="text-[10px] bg-gray-100 text-gray-500 font-bold px-1.5 py-0.5 rounded ml-1">Manuell</span></p>
+                        <p className="text-xs text-gray-500">Bestellbestätigung erhalten, dann manuell überweisen</p>
                       </div>
                       <img src="/twint-logo.svg" alt="TWINT" className="h-7 w-auto object-contain flex-shrink-0" />
                     </div>
@@ -2216,6 +2385,29 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                       {isSubmitting ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Verarbeitung...</> : `Bestellen & via TWINT bezahlen · ${getFinalTotal().toFixed(2)} CHF`}
                     </Button>
                   </>
+                )}
+
+                {/* TWINT via Stripe QR */}
+                {paymentMethod === "twint_stripe" && (
+                  <div className="mb-4">
+                    <StripeTwintPayment
+                      amount={getFinalTotal()}
+                      orderData={{ customerInfo, cart }}
+                      publishableKey={paySettings.stripe_publishable_key || undefined}
+                      secretKey={paySettings.stripe_secret_key || undefined}
+                      pmcId={paySettings.stripe_pmc_id || undefined}
+                      disabled={!isFormValid || !isBillingValid || !isAccountValid}
+                      returnUrl={typeof window !== "undefined" ? window.location.origin : ""}
+                      onSaveOrder={handleStripeTwintSaveOrder}
+                      onError={(msg) => setStripeError(msg)}
+                    />
+                    {stripeError && (
+                      <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-600">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <p className="text-sm">{stripeError}</p>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 <p className="text-xs text-gray-500 mt-4 text-center">
