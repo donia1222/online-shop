@@ -97,6 +97,7 @@ try {
         $origin = $_POST['origin'] ?? $existing_product['origin'];
         $supplier = $_POST['supplier'] ?? $existing_product['supplier'] ?? '';
         $category = $_POST['category'] ?? $existing_product['category'] ?? 'hot-sauce';
+        $weight_kg = $_POST['weight_kg'] ?? $existing_product['weight_kg'] ?? 0.500;
         
         
         // Validar datos requeridos
@@ -186,6 +187,7 @@ try {
                 origin = :origin,
                 supplier = :supplier,
                 category = :category,
+                weight_kg = :weight_kg,
                 updated_at = CURRENT_TIMESTAMP
                 WHERE id = :id";
         
@@ -205,7 +207,8 @@ try {
             ':badge' => trim($badge),
             ':origin' => trim($origin),
             ':supplier' => trim($supplier),
-            ':category' => $category
+            ':category' => $category,
+            ':weight_kg' => floatval($weight_kg),
         ]);
         
         if (!$result) {

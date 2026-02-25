@@ -108,7 +108,13 @@ interface Product {
   image_url: string
   image_url_candidates?: string[]
   created_at: string
+  weight_kg: number
 }
+
+// Interfaces für Shipping
+interface ShippingZone  { id: number; name: string; countries: string; enabled: boolean }
+interface ShippingRange { id: number; min_kg: number; max_kg: number; label: string }
+interface ShippingRate  { zone_id: number; range_id: number; price: number }
 
 interface ProductStats {
   total_products: number
@@ -240,6 +246,14 @@ export function Admin({ onClose }: AdminProps) {
   const [gallerySaving, setGallerySaving] = useState(false)
   const [deleteGalleryId, setDeleteGalleryId] = useState<number | null>(null)
 
+  // Shipping State
+  const [shippingZones,  setShippingZones]  = useState<ShippingZone[]>([])
+  const [shippingRanges, setShippingRanges] = useState<ShippingRange[]>([])
+  const [shippingRates,  setShippingRates]  = useState<ShippingRate[]>([])
+  const [shippingLoading,   setShippingLoading]   = useState(false)
+  const [shippingSavedMsg,  setShippingSavedMsg]  = useState("")
+  const [isSavingShipping,  setIsSavingShipping]  = useState(false)
+
   // Filter Orders
   const [orderFilters, setOrderFilters] = useState({
     search: "",
@@ -278,6 +292,8 @@ export function Admin({ onClose }: AdminProps) {
       loadBlogPosts()
     } else if (activeTab === "gallery") {
       loadGalleryImages()
+    } else if (activeTab === "versand") {
+      loadShippingSettings()
     }
   }, [activeTab, currentOrderPage, orderFilters])
 
@@ -400,6 +416,54 @@ export function Admin({ onClose }: AdminProps) {
     } catch (e: any) {
       toast({ title: "Fehler", description: e.message, variant: "destructive" })
     }
+  }
+
+  // Shipping Functions
+  const loadShippingSettings = async () => {
+    setShippingLoading(true)
+    try {
+      const res = await fetch(`${API_BASE_URL}/get_shipping_settings.php`)
+      const d = await res.json()
+      if (d.success) {
+        setShippingZones(d.zones)
+        setShippingRanges(d.ranges)
+        setShippingRates(d.rates)
+      }
+    } catch {}
+    finally { setShippingLoading(false) }
+  }
+
+  const getRate = (zoneId: number, rangeId: number) =>
+    shippingRates.find(r => r.zone_id === zoneId && r.range_id === rangeId)?.price ?? 0
+
+  const setRate = (zoneId: number, rangeId: number, price: number) => {
+    setShippingRates(prev => {
+      const idx = prev.findIndex(r => r.zone_id === zoneId && r.range_id === rangeId)
+      if (idx >= 0) {
+        const next = [...prev]
+        next[idx] = { zone_id: zoneId, range_id: rangeId, price }
+        return next
+      }
+      return [...prev, { zone_id: zoneId, range_id: rangeId, price }]
+    })
+  }
+
+  const saveShippingSettings = async () => {
+    setIsSavingShipping(true)
+    setShippingSavedMsg("")
+    try {
+      const res = await fetch(`${API_BASE_URL}/save_shipping_settings.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ zones: shippingZones, ranges: shippingRanges, rates: shippingRates }),
+      })
+      const d = await res.json()
+      if (!d.success) throw new Error(d.error)
+      setShippingSavedMsg("Gespeichert ✓")
+      setTimeout(() => setShippingSavedMsg(""), 3000)
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" })
+    } finally { setIsSavingShipping(false) }
   }
 
   // Orders Functions
@@ -1114,7 +1178,7 @@ export function Admin({ onClose }: AdminProps) {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8 bg-white border border-[#EBEBEB] rounded-2xl p-1 shadow-sm">
+          <TabsList className="grid w-full grid-cols-5 mb-8 bg-white border border-[#EBEBEB] rounded-2xl p-1 shadow-sm">
             <TabsTrigger
               value="orders"
               className="flex items-center gap-2 rounded-xl font-semibold data-[state=active]:bg-[#2C5F2E] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
@@ -1142,6 +1206,13 @@ export function Admin({ onClose }: AdminProps) {
             >
               <Images className="w-4 h-4" />
               <span>Galerie</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="versand"
+              className="flex items-center gap-2 rounded-xl font-semibold data-[state=active]:bg-[#2C5F2E] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+            >
+              <Package className="w-4 h-4" />
+              <span>Versand</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1991,6 +2062,74 @@ export function Admin({ onClose }: AdminProps) {
               </div>
             )}
           </TabsContent>
+
+          {/* ── Versand Tab ── */}
+          <TabsContent value="versand">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-black text-[#1A1A1A]">Versandkosten</h2>
+                <p className="text-sm text-[#888] mt-0.5">Preise in CHF nach Zone und Gewicht</p>
+              </div>
+              <div className="flex items-center gap-3">
+                {shippingSavedMsg && <span className="text-sm text-green-600 font-semibold">{shippingSavedMsg}</span>}
+                <Button
+                  onClick={saveShippingSettings}
+                  disabled={isSavingShipping}
+                  className="bg-[#2C5F2E] hover:bg-[#1A4520] text-white gap-2 rounded-xl"
+                >
+                  {isSavingShipping ? "Speichern..." : "Speichern"}
+                </Button>
+              </div>
+            </div>
+
+            {shippingLoading && <p className="text-gray-400 text-sm">Laden...</p>}
+
+            {!shippingLoading && shippingZones.map((zone, i) => (
+              <div key={zone.id} className="bg-white border border-[#EBEBEB] rounded-2xl shadow-sm mb-4 overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[#F0F0F0]">
+                  <div>
+                    <span className="font-bold text-[#1A1A1A]">{zone.name}</span>
+                    <span className="ml-2 text-xs text-[#AAA]">{zone.countries === "*" ? "Alle anderen Länder" : zone.countries}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShippingZones(prev => prev.map((z, j) => j === i ? { ...z, enabled: !z.enabled } : z))}
+                    className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                      zone.enabled
+                        ? "bg-green-100 text-green-700 hover:bg-green-200"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    }`}
+                  >
+                    {zone.enabled ? "✓ Aktiv" : "✗ Deaktiviert"}
+                  </button>
+                </div>
+
+                {zone.enabled && (
+                  <div className="p-5">
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${shippingRanges.length}, minmax(90px, 1fr))` }}>
+                      {shippingRanges.map(range => (
+                        <div key={range.id}>
+                          <label className="text-xs text-[#888] block mb-1">{range.label}</label>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.5"
+                              value={getRate(zone.id, range.id) || ""}
+                              placeholder="0"
+                              onChange={e => setRate(zone.id, range.id, parseFloat(e.target.value) || 0)}
+                              className="w-full border border-[#EBEBEB] rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#2C5F2E]"
+                            />
+                            <span className="text-xs text-[#AAA] shrink-0">CHF</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </TabsContent>
         </Tabs>
 
         {/* Order Detail Modal */}
@@ -2222,6 +2361,19 @@ export function Admin({ onClose }: AdminProps) {
                     name="supplier"
                     placeholder="z.B. Airsoft, Böker"
                     defaultValue={currentEditingProduct?.supplier || ""}
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="weight_kg">Gewicht (kg)</Label>
+                  <Input
+                    id="weight_kg"
+                    name="weight_kg"
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    defaultValue={currentEditingProduct?.weight_kg ?? "0.500"}
+                    placeholder="z.B. 0.350"
                     className="bg-white"
                   />
                 </div>

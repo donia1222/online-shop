@@ -31,7 +31,8 @@ try {
     $origin = $_POST['origin'] ?? '';
     $supplier = $_POST['supplier'] ?? '';
     $category = $_POST['category'] ?? 'hot-sauce';
-    
+    $weight_kg = $_POST['weight_kg'] ?? 0.500;
+
     // Validar datos requeridos
     if (empty($name) || empty($price)) {
         throw new Exception('Nombre y precio son requeridos');
@@ -81,8 +82,8 @@ try {
     }
     
     // Insertar producto en la base de datos
-    $sql = "INSERT INTO products (name, description, price, image, image2, image3, image4, heat_level, rating, badge, origin, supplier, category)
-            VALUES (:name, :description, :price, :image, :image2, :image3, :image4, :heat_level, :rating, :badge, :origin, :supplier, :category)";
+    $sql = "INSERT INTO products (name, description, price, image, image2, image3, image4, heat_level, rating, badge, origin, supplier, category, weight_kg)
+            VALUES (:name, :description, :price, :image, :image2, :image3, :image4, :heat_level, :rating, :badge, :origin, :supplier, :category, :weight_kg)";
     
     $stmt = $pdo->prepare($sql);
     $result = $stmt->execute([
@@ -98,7 +99,8 @@ try {
         ':badge' => trim($badge),
         ':origin' => trim($origin),
         ':supplier' => trim($supplier),
-        ':category' => $category
+        ':category' => $category,
+        ':weight_kg' => floatval($weight_kg),
     ]);
     
     if (!$result) {

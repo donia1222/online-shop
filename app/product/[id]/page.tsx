@@ -18,12 +18,13 @@ interface Product {
   supplier?: string
   category?: string
   stock?: number
+  weight_kg?: number
 }
 
 interface CartItem {
   id: number; name: string; price: number; image: string; image_url?: string
   description: string; heatLevel: number; rating: number
-  badge?: string; origin?: string; quantity: number
+  badge?: string; origin?: string; quantity: number; weight_kg?: number
 }
 
 function getImages(p: Product): string[] {
@@ -114,6 +115,7 @@ export default function ProductPage() {
             description: product.description,
             heatLevel: 0, rating: 0,
             badge: product.badge, origin: product.origin, quantity: 1,
+            weight_kg: product.weight_kg,
           }]
       localStorage.setItem("cantina-cart", JSON.stringify(next))
       localStorage.setItem("cantina-cart-count", next.reduce((s, i) => s + i.quantity, 0).toString())

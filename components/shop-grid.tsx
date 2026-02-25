@@ -20,12 +20,12 @@ interface Product {
   id: number; name: string; description: string; price: number
   image_url?: string; image_urls?: (string | null)[]; image_url_candidates?: string[]
   heat_level: number; rating: number; badge: string
-  origin: string; supplier?: string; category?: string; stock?: number
+  origin: string; supplier?: string; category?: string; stock?: number; weight_kg?: number
 }
 interface CartItem {
   id: number; name: string; price: number; image: string; image_url?: string
   image_url_candidates?: string[]
-  description: string; heatLevel: number; rating: number
+  description: string; heatLevel: number; rating: number; weight_kg?: number
   badge?: string; origin?: string; quantity: number
 }
 interface Category { id: number; slug: string; name: string }
@@ -406,6 +406,7 @@ export default function ShopGrid() {
             description: product.description,
             heatLevel: product.heat_level, rating: product.rating,
             badge: product.badge, origin: product.origin, quantity: 1,
+            weight_kg: product.weight_kg,
           }]
       saveCart(next); setCartCount(next.reduce((s, i) => s + i.quantity, 0))
       return next

@@ -42,6 +42,7 @@ interface Product {
   rating: number
   badge?: string
   origin?: string
+  weight_kg?: number
 }
 
 interface CartItem extends Product {
@@ -68,6 +69,7 @@ interface CustomerInfo {
   postalCode: string
   canton: string
   notes: string
+  country: string
 }
 
 interface BillingAddress {
@@ -103,6 +105,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
     postalCode: "",
     canton: "",
     notes: "",
+    country: "CH",
   })
 
   const [orderStatus, setOrderStatus] = useState<"pending" | "processing" | "completed" | "error">("pending")
@@ -154,6 +157,11 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   const [loginStatus, setLoginStatus] = useState<"idle" | "success" | "error">("idle")
   const [loginMessage, setLoginMessage] = useState("")
 
+  // Shipping states
+  const [shippingCost, setShippingCost]     = useState(0)
+  const [shippingInfo, setShippingInfo]     = useState({ zone: "", range: "" })
+  const [enabledCountries, setEnabledCountries] = useState<string[]>(["CH"])
+
   // Stripe payment states
   const [stripePaymentStatus, setStripePaymentStatus] = useState<"idle" | "processing" | "success" | "error">("idle")
   const [stripeError, setStripeError] = useState("")
@@ -167,6 +175,53 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   const [resetErrors, setResetErrors] = useState<any>({})
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+
+  // Load enabled countries on mount
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/get_shipping_settings.php`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.zones) {
+          const countries: string[] = []
+          let hasWildcard = false
+          for (const z of data.zones) {
+            if (!z.enabled) continue
+            if (z.countries === "*") { hasWildcard = true; continue }
+            z.countries.split(",").map((c: string) => c.trim()).forEach((c: string) => {
+              if (c && !countries.includes(c)) countries.push(c)
+            })
+          }
+          if (hasWildcard) countries.push("OTHER")
+          if (countries.length > 0) {
+            setEnabledCountries(countries)
+            setCustomerInfo(prev => ({
+              ...prev,
+              country: countries.includes(prev.country) ? prev.country : (countries[0] || "CH"),
+            }))
+          }
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Recalculate shipping when cart or country changes
+  useEffect(() => {
+    if (cart.length === 0) { setShippingCost(0); setShippingInfo({ zone: "", range: "" }); return }
+    const totalWeight = cart.reduce((sum, item) => sum + (item.weight_kg ?? 0.5) * item.quantity, 0)
+    fetch(`${API_BASE_URL}/calculate_shipping.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: customerInfo.country, weight_kg: totalWeight }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          setShippingCost(data.price ?? 0)
+          setShippingInfo({ zone: data.zone ?? "", range: data.range ?? "" })
+        }
+      })
+      .catch(() => {})
+  }, [cart, customerInfo.country])
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -304,13 +359,9 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
     return cart.reduce((total, item) => total + item.price * item.quantity, 0)
   }
 
-  const getShippingCost = () => {
-    return 0 // Free shipping
-  }
+  const getShippingCost = () => shippingCost
 
-  const getFinalTotal = () => {
-    return getTotalPrice() + getShippingCost()
-  }
+  const getFinalTotal = () => getTotalPrice() + shippingCost
 
   const createUserAccount = async () => {
     try {
@@ -1341,6 +1392,33 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
+                  <Label htmlFor="country">Land *</Label>
+                  <select
+                    id="country"
+                    value={customerInfo.country}
+                    onChange={(e) => handleInputChange("country", e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    {(["CH","DE","AT","FR","IT","NL","BE","ES","PL","PT","CZ","DK","SE","FI","NO","HU","RO","HR","SK","SI","LU","LI","OTHER"] as const)
+                      .filter(c => enabledCountries.includes(c))
+                      .map(c => {
+                        const labels: Record<string, string> = {
+                          CH:"🇨🇭 Schweiz", DE:"🇩🇪 Deutschland", AT:"🇦🇹 Österreich",
+                          FR:"🇫🇷 Frankreich", IT:"🇮🇹 Italien", NL:"🇳🇱 Niederlande",
+                          BE:"🇧🇪 Belgien", ES:"🇪🇸 Spanien", PL:"🇵🇱 Polen",
+                          PT:"🇵🇹 Portugal", CZ:"🇨🇿 Tschechien", DK:"🇩🇰 Dänemark",
+                          SE:"🇸🇪 Schweden", FI:"🇫🇮 Finnland", NO:"🇳🇴 Norwegen",
+                          HU:"🇭🇺 Ungarn", RO:"🇷🇴 Rumänien", HR:"🇭🇷 Kroatien",
+                          SK:"🇸🇰 Slowakei", SI:"🇸🇮 Slowenien", LU:"🇱🇺 Luxemburg",
+                          LI:"🇱🇮 Liechtenstein", OTHER:"🌍 Andere",
+                        }
+                        return <option key={c} value={c}>{labels[c] ?? c}</option>
+                      })
+                    }
+                  </select>
+                </div>
+
+                <div>
                   <Label htmlFor="address">Straße und Hausnummer *</Label>
                   <Input
                     id="address"
@@ -1732,9 +1810,17 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                     <span>{getTotalPrice().toFixed(2)} CHF</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Versand:</span>
                     <span>
-                      <Badge className="bg-green-100 text-green-700">Kostenlos</Badge>
+                      Versand
+                      {shippingInfo.zone && (
+                        <span className="text-xs text-gray-500 ml-1">({shippingInfo.zone} · {shippingInfo.range})</span>
+                      )}:
+                    </span>
+                    <span>
+                      {shippingCost === 0
+                        ? <Badge className="bg-green-100 text-green-700">Kostenlos</Badge>
+                        : <span className="font-semibold">{shippingCost.toFixed(2)} CHF</span>
+                      }
                     </span>
                   </div>
                   <Separator />
@@ -1751,10 +1837,9 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
               <CardContent className="p-6">
                 <h3 className="font-semibold text-[#2C5F2E] mb-2">📦 Versandinformationen</h3>
                 <ul className="text-sm text-[#2C5F2E]/80 space-y-1">
-                  <li>• Versand nur innerhalb der Schweiz</li>
                   <li>• Lieferzeit: 2-3 Werktage</li>
-                  <li>• Kostenloser Versand für alle Bestellungen</li>
                   <li>• Versand aus 9745 Sevelen</li>
+                  {shippingInfo.zone && <li>• Zone: {shippingInfo.zone} · {shippingInfo.range}</li>}
                 </ul>
               </CardContent>
             </Card>
