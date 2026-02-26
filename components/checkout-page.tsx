@@ -23,6 +23,7 @@ import {
   ReceiptText,
   Home,
   Landmark,
+  LogOut,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -1378,23 +1379,22 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
               </div>
               {/* Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                <Button
-                  onClick={() => router.push("/profile")}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl text-xs h-8 border-[#2C5F2E]/30 text-[#2C5F2E] hover:bg-[#2C5F2E] hover:text-white gap-1.5"
+                <button
+                  onClick={() => router.push("/profile?back=" + encodeURIComponent(window.location.pathname + window.location.search))}
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl border border-[#2C5F2E]/30 text-[#2C5F2E] hover:bg-[#2C5F2E] hover:text-white transition-colors"
                 >
-                  <User className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Mein Profil</span>
-                </Button>
-                <Button
+                  <User className="w-4 h-4" />
+                  <span className="text-[9px] font-semibold leading-none sm:hidden">Profil</span>
+                  <span className="hidden sm:inline text-xs">Mein Profil</span>
+                </button>
+                <button
                   onClick={handleLogout}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl text-xs h-8 border-red-200 text-red-500 hover:bg-red-500 hover:text-white"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl border border-red-200 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
                 >
-                  Abmelden
-                </Button>
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-[9px] font-semibold leading-none sm:hidden">Logout</span>
+                  <span className="hidden sm:inline text-xs">Abmelden</span>
+                </button>
               </div>
             </div>
           )}
