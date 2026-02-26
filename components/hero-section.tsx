@@ -58,7 +58,6 @@ export function HeroSection() {
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [count, setCount] = useState(0)
-  const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     // Wait for the element to be visible (fade delay 360ms + partial animation), then count
@@ -92,17 +91,6 @@ export function HeroSection() {
       .catch(() => {})
   }, [])
 
-  useEffect(() => {
-    if (categories.length === 0) return
-    if (typeof window !== "undefined" && window.innerWidth < 1024) {
-      setVisibleCards(new Set([0, 1, 2, 3, 4, 5]))
-      return
-    }
-    const timers = categories.slice(0, 6).map((_, i) =>
-      setTimeout(() => setVisibleCards(prev => new Set([...prev, i])), i * 90)
-    )
-    return () => timers.forEach(clearTimeout)
-  }, [categories.length])
 
   return (
     <div className="bg-white">
@@ -308,7 +296,7 @@ export function HeroSection() {
           {/* Grid — solo 6 primeras */}
           {categories.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {categories.slice(0, 6).map((cat, i) => {
+              {categories.slice(0, 6).map((cat) => {
                 const catProds = products.filter(p =>
                   p.category === cat.slug || p.category === cat.name
                 )
@@ -318,11 +306,6 @@ export function HeroSection() {
                     key={cat.id}
                     onClick={() => router.push(`/shop?cat=${encodeURIComponent(cat.name)}`)}
                     className="relative overflow-hidden rounded-2xl bg-[#1a1a1a] group aspect-[3/4] text-left"
-                    style={{
-                      opacity: visibleCards.has(i) ? 1 : 0,
-                      transform: visibleCards.has(i) ? "translateY(0)" : "translateY(14px)",
-                      transition: "opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1)",
-                    }}
                   >
                     <CatImageCard
                       srcs={srcs}
