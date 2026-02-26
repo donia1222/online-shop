@@ -13,6 +13,7 @@ import { GalleryBanner } from "@/components/gallery-banner"
 import { ShoppingCartComponent } from "@/components/shopping-cart"
 import { CheckoutPage } from "@/components/checkout-page"
 import { Footer } from "@/components/footer"
+import { FadeSection } from "@/components/fade-section"
 import  Bot  from "@/components/bot"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { X } from "lucide-react"
@@ -396,13 +397,23 @@ function PremiumHotSauceStoreInner() {
 
       <HeroSection />
 
-      <CategoryPreviewSection />
+      <FadeSection>
+        <CategoryPreviewSection />
+      </FadeSection>
 
-      <RecommendedProducts />
-      <BlogBanner />
-      <GalleryBanner />
+      <FadeSection>
+        <RecommendedProducts />
+      </FadeSection>
+      <FadeSection>
+        <BlogBanner />
+      </FadeSection>
+      <FadeSection>
+        <GalleryBanner />
+      </FadeSection>
 
-      <ReviewsSection />
+      <FadeSection>
+        <ReviewsSection />
+      </FadeSection>
       <ShoppingCartComponent
         isOpen={isCartOpen}
         onOpenChange={setIsCartOpen}

@@ -57,6 +57,31 @@ export function HeroSection() {
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [mounted, setMounted] = useState(false)
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    setMounted(true)
+    // Wait for the element to be visible (fade delay 360ms + partial animation), then count
+    const startDelay = setTimeout(() => {
+      const target = 500
+      const duration = 1000
+      const steps = 50
+      const increment = target / steps
+      const interval = duration / steps
+      let current = 0
+      const timer = setInterval(() => {
+        current += increment
+        if (current >= target) {
+          setCount(target)
+          clearInterval(timer)
+        } else {
+          setCount(Math.floor(current))
+        }
+      }, interval)
+    }, 500)
+    return () => clearTimeout(startDelay)
+  }, [])
 
   useEffect(() => {
     Promise.all([fetch("/api/categories"), fetch("/api/products")])
@@ -79,13 +104,23 @@ export function HeroSection() {
               "100% Schweizer Shop",
               "Schnelle Lieferung",
               "14 Tage Rückgaberecht",
-              "500+ Artikel im Sortiment",
-            ].map((item) => (
-              <span key={item} className="flex items-center gap-1.5">
+            ].map((item, i) => (
+              <span
+                key={item}
+                className="flex items-center gap-1.5 section-fade"
+                style={{ animationDelay: `${i * 120}ms` }}
+              >
                 <span className="text-[#2C5F2E] font-bold">✓</span>
                 <span>{item}</span>
               </span>
             ))}
+            <span
+              className="flex items-center gap-1.5 section-fade"
+              style={{ animationDelay: "360ms" }}
+            >
+              <span className="text-[#2C5F2E] font-bold">✓</span>
+              <span><span className="font-bold">{count}+</span> Artikel im Sortiment</span>
+            </span>
           </div>
         </div>
       </div>
@@ -124,7 +159,10 @@ export function HeroSection() {
 
         <div className="relative z-10 container mx-auto px-6 flex items-center" style={{ minHeight: "520px" }}>
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2.5 mb-6">
+            <div
+              className="inline-flex items-center gap-2.5 mb-6 transition-all duration-700"
+              style={{ opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transitionDelay: "0ms" }}
+            >
               <span className="bg-[#CC0000] text-white text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
                 🔥 Frühjahrs-Sale
               </span>
@@ -132,23 +170,32 @@ export function HeroSection() {
             </div>
 
             <h1
-              className="text-white font-black leading-[1.05] mb-5"
+              className="text-white font-black leading-[1.05] mb-5 transition-all duration-700"
               style={{
                 fontSize: "clamp(2.5rem, 6vw, 4.5rem)",
                 textShadow: "0 2px 24px rgba(0,0,0,0.45)",
                 letterSpacing: "-0.02em",
+                opacity: mounted ? 1 : 0,
+                transform: mounted ? "translateY(0)" : "translateY(24px)",
+                transitionDelay: "150ms",
               }}
             >
               Top-Ausrüstung<br />
               <span className="text-[#6DBF6A]">zu Bestpreisen</span>
             </h1>
 
-            <p className="text-white/75 text-lg mb-8 leading-relaxed max-w-lg">
+            <p
+              className="text-white/75 text-lg mb-8 leading-relaxed max-w-lg transition-all duration-700"
+              style={{ opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transitionDelay: "300ms" }}
+            >
               Jagd, Angeln & Outdoor — alles was du brauchst,<br />
               jetzt zum Frühjahrs-Sale-Preis.
             </p>
 
-            <div className="flex flex-wrap gap-3">
+            <div
+              className="flex flex-wrap gap-3 transition-all duration-700"
+              style={{ opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transitionDelay: "450ms" }}
+            >
               <button
                 onClick={() => router.push("/shop")}
                 className="bg-white text-[#1A1A1A] font-bold px-8 py-3.5 text-sm hover:bg-[#F0F0F0] transition-all rounded-full inline-flex items-center gap-2 shadow-xl"
