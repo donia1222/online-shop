@@ -148,7 +148,7 @@ export function ShoppingCartComponent({
               onClick={handleGoToCheckout}
               className="w-full flex items-center justify-center gap-2 bg-[#2C5F2E] hover:bg-[#1e4220] text-white font-bold py-3.5 rounded-2xl text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#2C5F2E]/30"
             >
-              Zur Kasse
+              Warenkorb ansehen
               <ArrowRight className="w-4 h-4" />
             </button>
 
