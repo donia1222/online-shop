@@ -199,7 +199,7 @@ export default function ProductPage() {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
-          <p className="text-sm font-semibold text-[#1A1A1A] truncate">{product.name}</p>
+          <p className="truncate" style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.15rem', color: '#333333' }}>{product.name}</p>
           <button
             onClick={() => router.push("/?checkout=true")}
             className="ml-auto relative flex items-center justify-center w-10 h-10 hover:bg-[#F5F5F5] rounded-xl transition-colors flex-shrink-0"
