@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ChevronLeft, X, ChevronRight, Images } from "lucide-react"
+import { ArrowLeft, ChevronLeft, X, ChevronRight, Images, Menu, Newspaper, Download, ShoppingCart } from "lucide-react"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { LoginAuth } from "@/components/login-auth"
 
 interface GalleryImage {
   id: number
@@ -85,6 +87,7 @@ export default function GalleryPage() {
   const [images, setImages] = useState<GalleryImage[]>([])
   const [loading, setLoading] = useState(true)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [categories, setCategories] = useState<{ slug: string; name: string }[]>([])
 
   useEffect(() => {
     fetch("/api/gallery")
@@ -92,6 +95,10 @@ export default function GalleryPage() {
       .then(d => { if (d.success) setImages(d.images) })
       .catch(() => {})
       .finally(() => setLoading(false))
+    fetch("/api/categories")
+      .then(r => r.json())
+      .then(d => { if (d.success) setCategories(d.categories) })
+      .catch(() => {})
   }, [])
 
   return (
@@ -100,9 +107,70 @@ export default function GalleryPage() {
       {/* Header */}
       <div className="bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center gap-3">
+          {/* Mobile: hamburger menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <button className="sm:hidden p-2 border border-[#E0E0E0] rounded hover:bg-[#F5F5F5] flex-shrink-0 focus:outline-none">
+                <Menu className="w-5 h-5 text-[#333]" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="bg-white border-r border-gray-100 w-full sm:w-72 flex flex-col p-0 shadow-2xl h-full">
+              <SheetTitle className="sr-only">Navigation</SheetTitle>
+              <div className="flex items-center justify-between p-4 pr-16 border-b border-[#E0E0E0] flex-shrink-0">
+                <div className="flex items-center gap-2">
+                  <img src="/Security_n.png" alt="Logo" className="h-14 w-auto object-contain" />
+                  <span className="leading-tight">
+                    <span style={{ fontFamily: 'Impact, Arial Narrow, sans-serif', fontStyle: 'italic', fontWeight: 900, color: '#CC0000', fontSize: '0.9rem' }}>US-</span>
+                    <span style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '0.8rem' }}> FISHING &amp;<br />HUNTINGSHOP</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="[&_span]:hidden flex items-center">
+                    <LoginAuth onLoginSuccess={() => {}} onLogout={() => {}} onShowProfile={() => router.push("/profile")} isLightSection={true} variant="button" />
+                  </div>
+                  <button onClick={() => router.push("/shop")} className="relative p-2 rounded-xl hover:bg-[#F5F5F5] text-[#555]">
+                    <ShoppingCart className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+                <button onClick={() => router.push("/")} className="w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#333] font-medium">Home</button>
+                <button onClick={() => router.push("/shop")} className="w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#333] font-medium">Alle Produkte</button>
+                {categories.map(cat => (
+                  <button key={cat.slug} onClick={() => router.push(`/shop?cat=${encodeURIComponent(cat.name)}`)} className="w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#333] font-medium">
+                    {cat.name.replace(/\s*\d{4}$/, "")}
+                  </button>
+                ))}
+                <div className="pt-2 mt-1 border-t border-[#E0E0E0]">
+                  <div className="flex">
+                    <button onClick={() => router.push("/blog")} className="flex items-center gap-1.5 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#2C5F2E] font-semibold"><Newspaper className="w-4 h-4 shrink-0" />Blog</button>
+                    <button onClick={() => router.push("/gallery")} className="flex items-center gap-1.5 px-3 py-2.5 text-sm rounded font-semibold bg-gray-100 text-[#2C5F2E]"><Images className="w-4 h-4 shrink-0" />Gallery</button>
+                    <button
+                      onClick={() => {
+                        const imageUrl = "https://online-shop-seven-delta.vercel.app/Security_n.png"
+                        fetch(imageUrl).then(r => r.blob()).then(blob => {
+                          const reader = new FileReader(); reader.onloadend = () => {
+                            const b64 = (reader.result as string).split(",")[1]
+                            const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:US - Fishing & Huntingshop\nORG:US - Fishing & Huntingshop\nTITLE:JAGD · ANGELN · OUTDOOR\nADR:;;Bahnhofstrasse 2;Sevelen;;9475;Switzerland\nTEL:+41786066105\nEMAIL:info@usfh.ch\nURL:https://usfh.ch\nPHOTO;ENCODING=b;TYPE=PNG:${b64}\nEND:VCARD`
+                            const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([vcard], { type: "text/vcard" })); a.download = "US-Fishing-Huntingshop.vcf"; document.body.appendChild(a); a.click(); document.body.removeChild(a)
+                          }; reader.readAsDataURL(blob)
+                        }).catch(() => {
+                          const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:US - Fishing & Huntingshop\nORG:US - Fishing & Huntingshop\nTEL:+41786066105\nEMAIL:info@usfh.ch\nURL:https://usfh.ch\nEND:VCARD`
+                          const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([vcard], { type: "text/vcard" })); a.download = "US-Fishing-Huntingshop.vcf"; document.body.appendChild(a); a.click(); document.body.removeChild(a)
+                        })
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#2C5F2E] font-semibold"
+                    ><Download className="w-4 h-4 shrink-0" />VCard</button>
+                  </div>
+                  <p className="px-3 pt-3 pb-1 text-sm text-[#AAA] tracking-wide">Jagd · Angeln · Outdoor · Schweiz🇨🇭</p>
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
+          {/* Desktop: back button */}
           <button
             onClick={() => router.push("/")}
-            className="w-9 h-9 flex items-center justify-center rounded-full border-2 border-[#2C5F2E]/30 text-[#2C5F2E] hover:bg-[#2C5F2E] hover:text-white hover:border-[#2C5F2E] transition-all flex-shrink-0"
+            className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full border-2 border-[#2C5F2E]/30 text-[#2C5F2E] hover:bg-[#2C5F2E] hover:text-white hover:border-[#2C5F2E] transition-all flex-shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>

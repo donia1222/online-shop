@@ -556,7 +556,7 @@ export function LoginAuth({
       {/* User Icon Button */}
       <button
         onClick={handleUserIconClick}
-        className={`relative flex flex-col items-center p-2 hover:bg-[#F5F5F5] rounded min-w-[64px] ${className}`}
+        className={`relative flex flex-col items-center p-2 hover:bg-[#F5F5F5] rounded min-w-[64px] focus:outline-none focus-visible:outline-none ${className}`}
       >
         <User className={`w-6 h-6 ${isLoggedIn ? "text-[#2C5F2E]" : "text-[#555]"}`} />
         <span className="text-xs text-[#555] mt-0.5 leading-none text-center font-medium">

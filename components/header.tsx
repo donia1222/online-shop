@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ShoppingCart, ChevronDown, Menu, ArrowUp, Newspaper, Download, Images } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { LoginAuth } from "./login-auth"
 
 interface HeaderProps {
@@ -65,6 +65,7 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
                 </button>
               </SheetTrigger>
               <SheetContent side="left" className="bg-white border-r border-gray-100 w-full sm:w-72 flex flex-col p-0 shadow-2xl h-full">
+                <SheetTitle className="sr-only">Navigation</SheetTitle>
                 <div className="flex items-center justify-between p-4 pr-16 border-b border-[#E0E0E0] flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <img src="/Security_n.png" alt="Logo" className="h-14 w-auto object-contain" />
