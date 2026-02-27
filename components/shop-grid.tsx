@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, memo } from "react"
+import { useState, useEffect, useCallback, memo, useRef } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import {
   ShoppingCart, ChevronLeft, ChevronRight,
@@ -168,16 +168,18 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
 
 // ─── MobileCatCard: smaller version for mobile scroll ─────────────────────────
 
-function MobileCatCard({ srcs, displayName, isActive, onClick }: {
+function MobileCatCard({ srcs, displayName, isActive, onClick, id }: {
   srcs: string[]
   displayName: string
   isActive: boolean
   onClick: () => void
+  id?: string
 }) {
   const [idx, setIdx] = useState(0)
   const img = srcs[idx] ?? null
   return (
     <button
+      id={id}
       onClick={onClick}
       className="relative overflow-hidden rounded-xl flex-shrink-0 text-left transition-all duration-200"
       style={{
@@ -207,7 +209,7 @@ function MobileCatCard({ srcs, displayName, isActive, onClick }: {
         </div>
       )}
       <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2">
-        <span className="text-white font-black text-[11px] leading-tight block truncate drop-shadow-md">
+        <span className="text-white font-black text-[13px] leading-tight block truncate drop-shadow-md">
           {displayName}
         </span>
       </div>
@@ -284,6 +286,7 @@ export default function ShopGrid() {
 
   const [search, setSearch]                 = useState("")
   const [activeCategory, setActiveCategory] = useState("all")
+  const mobileCatScrollRef = useRef<HTMLDivElement>(null)
   const [activeSupplier, setActiveSupplier] = useState("all")
   const [stockFilter, setStockFilter]       = useState<"all" | "out_of_stock">("all")
   const [sortBy, setSortBy]                 = useState<"default"|"name_asc"|"name_desc"|"price_asc"|"price_desc">("default")
@@ -359,8 +362,21 @@ export default function ShopGrid() {
     const matched = categories.find((c) =>
       c.name.toLowerCase().includes(catParam.toLowerCase())
     )
-    if (matched) setActiveCategory(matched.slug)
+    if (matched) {
+      setActiveCategory(matched.slug)
+    }
   }, [categories, searchParams])
+
+  // Scroll horizontal automático al card de categoría activa en móvil
+  useEffect(() => {
+    if (activeCategory === "all") return
+    const container = mobileCatScrollRef.current
+    const el = document.getElementById(`mobile-cat-${activeCategory}`)
+    if (!container || !el) return
+    const containerCenter = container.offsetWidth / 2
+    const elCenter = el.offsetLeft + el.offsetWidth / 2
+    container.scrollTo({ left: elCenter - containerCenter, behavior: "smooth" })
+  }, [activeCategory])
 
   useEffect(() => {
     const onScroll = () => setShowBackTop(window.scrollY > 500)
@@ -891,7 +907,7 @@ export default function ShopGrid() {
             </div>
 
             {/* ── Category cards — mobile only ── */}
-            <div className="lg:hidden overflow-x-auto mb-3 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div ref={mobileCatScrollRef} className="lg:hidden overflow-x-auto mb-3 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div className="flex gap-2.5 pb-1" style={{ flexWrap: "nowrap" }}>
 
                 {/* Alle card — mobile */}
@@ -911,8 +927,8 @@ export default function ShopGrid() {
                     <LayoutGrid className="w-4 h-4" style={{ color: "#2C5F2E" }} />
                   </div>
                   <div className="relative">
-                    <p className="font-black text-[11px] leading-tight" style={{ color: "#2C5F2E" }}>Alle</p>
-                    <p className="text-[10px] text-[#999] mt-0.5">Anzeigen</p>
+                    <p className="font-black text-[15px] leading-tight" style={{ color: "#2C5F2E" }}>Alle</p>
+                    <p className="text-[12px] text-[#999] mt-0.5">Anzeigen</p>
                   </div>
                 </button>
 
@@ -931,6 +947,7 @@ export default function ShopGrid() {
                   return (
                     <MobileCatCard
                       key={cat.slug}
+                      id={`mobile-cat-${cat.slug}`}
                       srcs={uniqueSrcs}
                       displayName={displayName}
                       isActive={isActive}
@@ -1019,7 +1036,7 @@ export default function ShopGrid() {
             </div>
 
             {/* Sort + count */}
-            <div className="flex items-center justify-between mb-4 gap-3">
+            <div id="products-section" className="flex items-center justify-between mb-4 gap-3">
               <p className="text-sm text-[#888] font-medium">
                 <span className="font-black text-[#1A1A1A]">{filtered.length}</span> Produkte
               </p>
