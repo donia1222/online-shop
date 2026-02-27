@@ -1936,11 +1936,11 @@ export function Admin({ onClose }: AdminProps) {
               <div className="flex flex-row items-center gap-2 flex-nowrap">
                 <Button onClick={() => { setEditingCategory(null); setIsCategoryModalOpen(true) }} variant="outline" className="border-[#2C5F2E]/40 text-[#2C5F2E] bg-white hover:bg-[#2C5F2E]/5 rounded-full">
                   <Plus className="w-4 h-4 mr-2" />
-                  Kategorie erstellen
+                  Kategorie
                 </Button>
                 <Button onClick={showAddProductModal} className="bg-[#2C5F2E] hover:bg-[#1A4520] text-white rounded-full">
                   <Plus className="w-4 h-4 mr-2" />
-                  Produkt hinzufügen
+                  Produkt
                 </Button>
               </div>
             </div>
