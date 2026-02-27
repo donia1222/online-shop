@@ -1,10 +1,6 @@
-# US – Fishing & Huntingshop — Complete Technical Documentation
+# Hunting, Fishing & Accessories Store — Complete Technical Documentation
 
 > Full e-commerce platform for a hunting, fishing and outdoor accessories store. Features admin dashboard, CMS, AI chatbot, multiple payment methods and PHP backend.
-
-**Live:** [https://online-shop-seven-delta.vercel.app](https://online-shop-seven-delta.vercel.app)
-
-**Store:** US – Fishing & Huntingshop · Bahnhofstrasse 2, 9475 Sevelen · 078 606 61 05 · info@lweb.ch
 
 ---
 
@@ -25,9 +21,8 @@
 13. [Admin Dashboard](#admin-dashboard)
 14. [Payment System](#payment-system)
 15. [Configuration & Environment Variables](#configuration--environment-variables)
-16. [Getting Started](#getting-started)
-17. [Estimated Price for Switzerland](#estimated-price-for-switzerland)
-18. [Client Summary](#client-summary)
+16. [Estimated Price for Switzerland](#estimated-price-for-switzerland)
+17. [Client Summary](#client-summary)
 
 ---
 
@@ -599,26 +594,70 @@ PAYPAL_CLIENT_SECRET=...                     # PayPal secret
 
 ---
 
-## Getting Started
+## Estimated Price for Switzerland
 
-### Prerequisites
-- Node.js 18+
-- npm
+> Estimates based on Swiss market rates (2025/2026). Swiss rates are significantly higher than other European countries.
 
-### Installation
-```bash
-git clone <repo-url>
-cd hot-sauce-store-main
-npm install
-```
+### Breakdown by Module
 
-### Development
-```bash
-npm run dev       # http://localhost:3000
-npm run build     # Production build
-npm run start     # Start production server
-npm run lint      # Lint
-```
+| Module | Est. Hours | CHF (100–150/h) |
+|--------|-----------|-----------------|
+| Next.js setup + base architecture | 20–30h | CHF 2,000 – 4,500 |
+| UI/UX design + Tailwind + shadcn/ui | 40–60h | CHF 4,000 – 9,000 |
+| Product catalogue + filters + pagination | 30–40h | CHF 3,000 – 6,000 |
+| Shopping cart + full checkout | 30–40h | CHF 3,000 – 6,000 |
+| Payment system (Stripe + TWINT + PayPal + Invoice) | 40–60h | CHF 4,000 – 9,000 |
+| PHP backend + MySQL + all endpoints | 60–80h | CHF 6,000 – 12,000 |
+| Full admin dashboard | 60–80h | CHF 6,000 – 12,000 |
+| User system (auth, profile, orders) | 25–35h | CHF 2,500 – 5,250 |
+| Blog with CMS + Markdown + lightbox | 20–30h | CHF 2,000 – 4,500 |
+| Image gallery | 10–15h | CHF 1,000 – 2,250 |
+| AI chatbot (OpenAI + product detection) | 20–30h | CHF 2,000 – 4,500 |
+| Announcement/modal system | 10–15h | CHF 1,000 – 2,250 |
+| Transactional emails (confirmation, shipping) | 10–15h | CHF 1,000 – 2,250 |
+| Animations + UX (fade, lightbox, zoom) | 10–15h | CHF 1,000 – 2,250 |
+| Testing, QA and fixes | 20–30h | CHF 2,000 – 4,500 |
+| Deployment + Vercel + DNS setup | 5–10h | CHF 500 – 1,500 |
 
+### Total Development Cost
+
+| Scenario | Total Hours | Estimated Cost |
+|----------|------------|----------------|
+| **Minimum** (junior/mid, Swiss offshore) | ~410h | **CHF 30,000 – 40,000** |
+| **Realistic** (standard Swiss agency) | ~410h | **CHF 45,000 – 65,000** |
+| **Premium** (top-tier Zurich/Geneva agency) | ~410h | **CHF 65,000 – 90,000** |
+
+### Annual Recurring Costs
+
+| Service | Estimated Cost |
+|---------|---------------|
+| Vercel hosting (Pro) | CHF 240/year |
+| PHP + MySQL hosting (external server) | CHF 300 – 600/year |
+| .ch domain | CHF 15 – 30/year |
+| Stripe (per transaction) | 1.5% + CHF 0.30 per payment |
+| PayPal (per transaction) | 2.49% + CHF 0.35 per payment |
+| OpenAI API (chatbot) | CHF 5 – 50/month (usage-based) |
+| Maintenance and updates | CHF 150 – 300/month |
+| **Estimated total recurring** | **CHF 3,000 – 5,000/year** |
+
+> Swiss VAT (MWST) of 8.1% may apply on top if the provider is VAT-registered.
+
+---
+
+## Client Summary
+
+A fully custom-built online store has been developed for selling hunting, fishing and outdoor accessories.
+
+Customers can browse products, add them to their cart and pay by card, TWINT, PayPal or invoice. Each buyer receives an order confirmation by email and can track their orders from their personal account.
+
+All content — products, prices, stock, blog, gallery, banners and payment settings — is managed from a private admin panel, with no technical knowledge required.
+
+The store also features an AI-powered virtual assistant that answers customer questions in real time.
+
+**Estimated investment — Swiss market:**
+- Full development: **CHF 45,000 – 65,000**
+- Annual maintenance: **CHF 3,000 – 5,000/year**
+
+---
 
 *Documentation generated on 27 February 2026 — US Fishing & Huntingshop*
