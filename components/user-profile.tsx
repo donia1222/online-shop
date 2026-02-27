@@ -1285,7 +1285,7 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
                                     )}
 
                                     {/* Toggle Items Button */}
-                                    <div className="flex justify-between items-center pt-3 border-t">
+                                    <div className="flex flex-col gap-2 pt-3 border-t">
                                       <div className="flex items-center gap-2">
                                         <Button
                                           onClick={() => toggleOrderItems(order.id)}
@@ -1311,7 +1311,7 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
                                           PDF
                                         </Button>
                                       </div>
-                                      <div className="text-xs text-gray-500 p-4">
+                                      <div className="text-xs text-gray-500 px-1">
                                         Bestellt am {formatDate(order.created_at)}
                                       </div>
                                     </div>
