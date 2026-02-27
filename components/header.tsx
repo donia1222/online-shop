@@ -67,7 +67,7 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
               <SheetContent side="left" className="bg-white border-r border-gray-100 w-full sm:w-72 flex flex-col p-0 shadow-2xl h-full">
                 <div className="flex items-center justify-between p-4 pr-16 border-b border-[#E0E0E0] flex-shrink-0">
                   <div className="flex items-center gap-2">
-                    <img src="/Security_n.png" alt="Logo" className="h-8 w-auto object-contain" />
+                    <img src="/Security_n.png" alt="Logo" className="h-14 w-auto object-contain" />
                     <span className="leading-tight">
                       <span style={{ fontFamily: 'Impact, Arial Narrow, sans-serif', fontStyle: 'italic', fontWeight: 900, color: '#CC0000', fontSize: '0.9rem' }}>US-</span>
                       <span style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '0.8rem' }}> FISHING &amp;<br />HUNTINGSHOP</span>
