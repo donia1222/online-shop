@@ -15,6 +15,7 @@ function toSlug(sheetName: string): string {
     .replace(/^-+|-+$/g, "")
 }
 
+
 function getCol(row: Record<string, unknown>, ...keys: string[]): unknown {
   for (const key of keys) {
     if (row[key] !== undefined && row[key] !== null && row[key] !== "") {
