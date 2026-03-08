@@ -29,7 +29,6 @@ export function ProductImage({ src, candidates, alt, onAllFailed, ...props }: Pr
         : []
 
   const [attempt, setAttempt] = useState(0)
-  const [loaded, setLoaded] = useState(false)
 
   const allFailed = urls.length === 0 || attempt >= urls.length
 
@@ -38,7 +37,6 @@ export function ProductImage({ src, candidates, alt, onAllFailed, ...props }: Pr
   }, [allFailed, onAllFailed])
 
   useEffect(() => {
-    setLoaded(false)
     setAttempt(0)
   }, [src])
 
@@ -54,25 +52,16 @@ export function ProductImage({ src, candidates, alt, onAllFailed, ...props }: Pr
     )
   }
 
-  const { className, style, ...rest } = props
-
   return (
-    <span className={`relative block overflow-hidden ${className ?? ""}`} style={style}>
-      {!loaded && (
-        <span className="absolute inset-0 bg-gradient-to-r from-[#F0F0F0] via-[#E8E8E8] to-[#F0F0F0] animate-pulse rounded-[inherit]" />
-      )}
-      <img
-        src={urls[attempt]}
-        alt={alt}
-        loading="lazy"
-        onLoad={() => {
-          setLoaded(true)
-          if (cacheKey && urls[attempt]) setResolvedImage(cacheKey, urls[attempt])
-        }}
-        onError={() => { setLoaded(false); setAttempt(a => a + 1) }}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
-        {...rest}
-      />
-    </span>
+    <img
+      src={urls[attempt]}
+      alt={alt}
+      loading="lazy"
+      onLoad={() => {
+        if (cacheKey && urls[attempt]) setResolvedImage(cacheKey, urls[attempt])
+      }}
+      onError={() => { setAttempt(a => a + 1) }}
+      {...props}
+    />
   )
 }
