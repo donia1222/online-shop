@@ -400,10 +400,7 @@ function PremiumHotSauceStoreInner() {
       <FadeSection>
         <CategoryPreviewSection />
       </FadeSection>
-
-      <FadeSection>
-        <RecommendedProducts />
-      </FadeSection>
+      
       <FadeSection>
         <BlogBanner />
       </FadeSection>
