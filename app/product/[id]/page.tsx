@@ -425,6 +425,7 @@ export default function ProductPage() {
                 </button>
                 <button
                   onClick={toggleWishlist}
+                  style={{ marginTop: '8px' }}
                   className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all duration-200 border ${
                     isWished
                       ? "bg-red-50 border-red-200 text-red-500"
