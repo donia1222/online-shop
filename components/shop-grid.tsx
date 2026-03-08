@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, memo, useRef } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import {
   ShoppingCart, ChevronLeft, ChevronRight,
-  Search, X, Check, LayoutGrid,
+  Search, X, Check, LayoutGrid, Home,
   ArrowUp, ChevronDown, Heart, Menu, Newspaper, Download, Images
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -287,6 +287,7 @@ export default function ShopGrid() {
   const [search, setSearch]                 = useState("")
   const [activeCategory, setActiveCategory] = useState("all")
   const mobileCatScrollRef = useRef<HTMLDivElement>(null)
+  const desktopCatScrollRef = useRef<HTMLDivElement>(null)
   const [activeSupplier, setActiveSupplier] = useState("all")
   const [stockFilter, setStockFilter]       = useState<"all" | "out_of_stock">("all")
   const [sortBy, setSortBy]                 = useState<"default"|"name_asc"|"name_desc"|"price_asc"|"price_desc">("default")
@@ -679,7 +680,7 @@ export default function ShopGrid() {
               className="hidden lg:flex items-center gap-2 text-[#555] hover:text-[#2C5F2E] transition-colors group flex-shrink-0"
             >
               <div className="w-8 h-8 rounded-full border border-[#E5E5E5] group-hover:border-[#2C5F2E]/60 group-hover:bg-[#2C5F2E]/5 flex items-center justify-center transition-all">
-                <ChevronLeft className="w-4 h-4" />
+                <Home className="w-4 h-4" />
               </div>
               <span style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.1rem', color: '#333333' }}>Online-Shop</span>
             </button>
@@ -853,7 +854,20 @@ export default function ShopGrid() {
             </div>
 
             {/* ── Category image banners — desktop only ── */}
-            <div className="hidden lg:block mb-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="hidden lg:block mb-6 relative group/cat">
+              <button
+                onClick={() => desktopCatScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 border border-[#E0E0E0] shadow-md flex items-center justify-center opacity-0 group-hover/cat:opacity-100 transition-opacity hover:bg-white"
+              >
+                <ChevronLeft className="w-5 h-5 text-[#333]" />
+              </button>
+              <button
+                onClick={() => desktopCatScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 border border-[#E0E0E0] shadow-md flex items-center justify-center opacity-0 group-hover/cat:opacity-100 transition-opacity hover:bg-white"
+              >
+                <ChevronRight className="w-5 h-5 text-[#333]" />
+              </button>
+              <div ref={desktopCatScrollRef} className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div className="flex gap-3" style={{ flexWrap: "nowrap" }}>
               {/* Alle — default card */}
               <button
@@ -912,6 +926,7 @@ export default function ShopGrid() {
                   />
                 )
               })}
+              </div>
               </div>
             </div>
 

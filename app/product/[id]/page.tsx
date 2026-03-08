@@ -8,6 +8,39 @@ import { fetchProductsCached } from "@/lib/product-cache"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
+function DescriptionBlock({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const [clamped, setClamped] = useState(false)
+  const ref = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (el) setClamped(el.scrollHeight > el.clientHeight)
+  }, [text])
+
+  return (
+    <div className="bg-[#F8F8F8] rounded-2xl p-4 border border-[#F0F0F0]">
+      <p className="text-[11px] font-bold text-[#BBBBBB] uppercase tracking-widest mb-2">
+        Beschreibung
+      </p>
+      <p
+        ref={ref}
+        className={`text-sm text-[#444] leading-relaxed whitespace-pre-line ${!expanded ? "line-clamp-4" : ""}`}
+      >
+        {text}
+      </p>
+      {clamped && (
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="mt-2 text-xs font-semibold text-[#2C5F2E] hover:underline"
+        >
+          {expanded ? "Weniger anzeigen" : "Mehr anzeigen"}
+        </button>
+      )}
+    </div>
+  )
+}
+
 interface Product {
   id: number
   name: string
@@ -337,14 +370,7 @@ export default function ProductPage() {
               </div>
 
               {product.description && (
-                <div className="bg-[#F8F9FA] rounded-2xl p-4 border border-[#F0F0F0]">
-                  <p className="text-[11px] font-bold text-[#BBBBBB] uppercase tracking-widest mb-2">
-                    Beschreibung
-                  </p>
-                  <p className="text-sm text-[#444] leading-relaxed whitespace-pre-line">
-                    {product.description}
-                  </p>
-                </div>
+                <DescriptionBlock text={product.description} />
               )}
 
               {product.origin && (
