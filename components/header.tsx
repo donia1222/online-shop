@@ -229,7 +229,7 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
                 `}
               >
                 {cat.label}
-                <ChevronDown className="w-3.5 h-3.5 opacity-40" />
+
               </button>
             ))}
             </div>

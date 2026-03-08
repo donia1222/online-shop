@@ -320,9 +320,12 @@ export function HeroSection() {
                     <button
                       key={cat.id}
                       onClick={() => router.push(`/shop?cat=${encodeURIComponent(cat.name)}`)}
-                      className={`${c.bg} rounded-2xl border border-[#E8E8E8] ${c.border} p-5 group hover:shadow-xl transition-all duration-300 text-left flex flex-col gap-4`}
+                      className={`${c.bg} rounded-2xl border border-[#E8E8E8] ${c.border} p-5 group hover:shadow-xl transition-all duration-300 text-left flex flex-col gap-4 relative overflow-hidden`}
                     >
-                      <div className={`w-14 h-14 rounded-2xl ${c.icon} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                      {/* Decorative circles — floating */}
+                      <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-[#2C5F2E]/5 animate-float" />
+                      <div className="absolute -top-2 -right-2 w-16 h-16 rounded-full bg-[#2C5F2E]/8 animate-float-reverse" />
+                      <div className={`relative w-14 h-14 rounded-2xl ${c.icon} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                         {iconMap[cat.name] || <Flashlight className="w-7 h-7" />}
                       </div>
                       <div>
