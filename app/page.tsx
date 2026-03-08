@@ -398,9 +398,12 @@ function PremiumHotSauceStoreInner() {
       <HeroSection />
 
       <FadeSection>
+        <RecommendedProducts />
+      </FadeSection>
+      <FadeSection>
         <CategoryPreviewSection />
       </FadeSection>
-      
+
       <FadeSection>
         <BlogBanner />
       </FadeSection>
