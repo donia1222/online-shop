@@ -101,6 +101,9 @@ interface UserData {
   notes: string
 }
 
+// ⚠️ Cambiar a false para reactivar la tienda
+const STORE_UNDER_MAINTENANCE = true
+
 export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, onRemoveFromCart }: CheckoutPageProps) {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     firstName: "",
@@ -2331,10 +2334,10 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                     </div>
                     <Button
                       onClick={handleInvoicePayment}
-                      disabled={isSubmitting}
-                      className="w-full min-h-14 h-auto py-3 text-base font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-xl transition-all duration-300"
+                      disabled={isSubmitting || STORE_UNDER_MAINTENANCE}
+                      className="w-full min-h-14 h-auto py-3 text-base font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isSubmitting ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Verarbeitung...</> : `Bestellung abschließen · ${getFinalTotal().toFixed(2)} CHF`}
+                      {STORE_UNDER_MAINTENANCE ? "Shop wird gerade überarbeitet" : isSubmitting ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Verarbeitung...</> : `Bestellung abschließen · ${getFinalTotal().toFixed(2)} CHF`}
                     </Button>
                   </>
                 )}
@@ -2349,10 +2352,10 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                     </div>
                     <Button
                       onClick={handlePayPalPayment}
-                      disabled={isSubmitting}
-                      className="w-full min-h-14 h-auto py-3 text-base font-bold bg-[#0070BA] hover:bg-[#005ea6] text-white shadow-xl transition-all duration-300"
+                      disabled={isSubmitting || STORE_UNDER_MAINTENANCE}
+                      className="w-full min-h-14 h-auto py-3 text-base font-bold bg-[#0070BA] hover:bg-[#005ea6] text-white shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isSubmitting ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Weiterleitung...</> : `Mit PayPal bezahlen · ${getFinalTotal().toFixed(2)} CHF`}
+                      {STORE_UNDER_MAINTENANCE ? "Shop wird gerade überarbeitet" : isSubmitting ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Weiterleitung...</> : `Mit PayPal bezahlen · ${getFinalTotal().toFixed(2)} CHF`}
                     </Button>
                   </>
                 )}
@@ -2367,7 +2370,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                         orderData={{ orderId: `ORDER-${Date.now()}`, customerInfo: customerInfo, cart: cart }}
                         onSuccess={handleStripeSuccess}
                         onError={handleStripeError}
-                        disabled={!isFormValid || !isBillingValid || !isAccountValid}
+                        disabled={!isFormValid || !isBillingValid || !isAccountValid || STORE_UNDER_MAINTENANCE}
                         publishableKey={paySettings.stripe_publishable_key || undefined}
                         secretKey={paySettings.stripe_secret_key || undefined}
                       />
@@ -2392,10 +2395,10 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                     </div>
                     <Button
                       onClick={handleTwintPayment}
-                      disabled={isSubmitting}
-                      className="w-full min-h-14 h-auto py-3 text-base font-bold bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white shadow-xl transition-all duration-300"
+                      disabled={isSubmitting || STORE_UNDER_MAINTENANCE}
+                      className="w-full min-h-14 h-auto py-3 text-base font-bold bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isSubmitting
+                      {STORE_UNDER_MAINTENANCE ? "Shop wird gerade überarbeitet" : isSubmitting
                         ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Verarbeitung...</>
                         : <span className="flex flex-col items-center leading-tight"><span>Bestellen &amp; via TWINT bezahlen</span><span className="text-sm font-semibold opacity-90">{getFinalTotal().toFixed(2)} CHF</span></span>
                       }
@@ -2412,7 +2415,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                       publishableKey={paySettings.stripe_publishable_key || undefined}
                       secretKey={paySettings.stripe_secret_key || undefined}
                       pmcId={paySettings.stripe_pmc_id || undefined}
-                      disabled={!isFormValid || !isBillingValid || !isAccountValid}
+                      disabled={!isFormValid || !isBillingValid || !isAccountValid || STORE_UNDER_MAINTENANCE}
                       returnUrl={typeof window !== "undefined" ? window.location.origin : ""}
                       onSaveOrder={handleStripeTwintSaveOrder}
                       onError={(msg) => setStripeError(msg)}
