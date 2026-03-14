@@ -373,22 +373,24 @@ export function Admin({ onClose }: AdminProps) {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
+  // Load all data on mount
+  useEffect(() => {
+    loadOrders()
+    loadProducts()
+    loadCategories()
+    loadBlogPosts()
+    loadGalleryImages()
+    loadShippingSettings()
+    loadPaymentSettings()
+    loadAnnouncements()
+  }, [])
+
+  // Reload specific tab data when tab changes or filters change
   useEffect(() => {
     if (activeTab === "orders") {
       loadOrders()
     } else if (activeTab === "products") {
       loadProducts()
-      if (categories.length === 0) loadCategories()
-    } else if (activeTab === "blog") {
-      loadBlogPosts()
-    } else if (activeTab === "gallery") {
-      loadGalleryImages()
-    } else if (activeTab === "versand") {
-      loadShippingSettings()
-    } else if (activeTab === "einstellungen") {
-      loadPaymentSettings()
-    } else if (activeTab === "anuncios") {
-      loadAnnouncements()
     }
   }, [activeTab, currentOrderPage, orderFilters])
 
