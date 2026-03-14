@@ -137,7 +137,7 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
       {/* Details */}
       <div className="p-3.5 flex flex-col flex-1 gap-1.5">
         <p className="text-[10px] font-bold text-[#BBBBBB] uppercase tracking-widest truncate">
-          {product.supplier || product.origin || "—"}
+          {product.origin || "—"}
         </p>
         <h3
           className="text-sm font-bold text-[#1A1A1A] line-clamp-2 leading-snug cursor-pointer hover:text-[#2C5F2E] transition-colors"
@@ -467,12 +467,24 @@ export default function ShopGrid() {
     setCart([]); setCartCount(0)
     localStorage.removeItem("cantina-cart"); localStorage.removeItem("cantina-cart-count")
   }
+  const normalizeOrigin = (s: string) => s.toUpperCase().replace(/[`'']/g, "'").replace(/\s*&\s*/g, " & ").replace(/\s+/g, " ").trim()
+  const ORIGIN_ALIASES: Record<string, string> = {
+    "BLACKFIELD": "BLACK FIELD",
+    "BLACKFLASH": "BLACK FLASH",
+    "SMITH&WESSON": "SMITH & WESSON",
+  }
+  const getCanonicalOrigin = (s: string) => {
+    const n = normalizeOrigin(s)
+    return ORIGIN_ALIASES[n] ?? n
+  }
+
   const suppliers = Array.from(
     new Set(
       products
         .filter(p => activeCategory === "all" || p.category === activeCategory)
-        .map(p => p.supplier)
+        .map(p => p.origin)
         .filter((s): s is string => !!s && s.trim() !== "")
+        .map(s => getCanonicalOrigin(s))
     )
   ).sort()
 
@@ -488,7 +500,7 @@ export default function ShopGrid() {
       if (showWishlist) return wishlist.has(p.id)
       const matchSearch   = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase())
       const matchCategory = activeCategory === "all" || p.category === activeCategory
-      const matchSupplier = activeSupplier === "all" || p.supplier === activeSupplier
+      const matchSupplier = activeSupplier === "all" || (p.origin && getCanonicalOrigin(p.origin) === activeSupplier)
       const matchStock    = stockFilter === "out_of_stock" ? (p.stock ?? 0) === 0 : (p.stock ?? 0) > 0
       return matchSearch && matchCategory && matchSupplier && matchStock
     })
@@ -848,7 +860,7 @@ export default function ShopGrid() {
             <div className="hidden lg:flex items-start gap-3 mb-3">
               <div className="w-1 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
               <div>
-                <p className="font-black text-[#2C5F2E] text-2xl leading-tight">Unsere Kategorien</p>
+                <p className="font-black text-[#2C5F2E] text-2xl leading-tight">Kategorien</p>
                 <p className="text-sm text-[#888] mt-1">Jagd, Angeln & Outdoor-Ausrüstung</p>
               </div>
             </div>
@@ -988,7 +1000,7 @@ export default function ShopGrid() {
                 <div className="flex items-start gap-2.5 mb-2.5">
                   <div className="w-0.5 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
                   <div>
-                    <p className="font-black text-[#2C5F2E] text-xl lg:text-2xl leading-tight">Unsere Lieferanten</p>
+                    <p className="font-black text-[#2C5F2E] text-xl lg:text-2xl leading-tight">Lieferanten</p>
                     <p className="text-sm text-[#888] mt-1">Qualitätsmarken aus aller Welt</p>
                   </div>
                 </div>

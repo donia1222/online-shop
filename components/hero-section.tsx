@@ -10,6 +10,7 @@ interface Product {
   image_urls?: (string | null)[]
   image_url_candidates?: string[]
   category?: string
+  origin?: string
 }
 
 interface Category {
@@ -220,47 +221,54 @@ export function HeroSection() {
             <div className="h-px flex-1 bg-gradient-to-r from-[#E0E0E0] to-transparent" />
           </div>
         </div>
-        <div className="overflow-hidden w-full">
-          <style>{`
-            @keyframes marquee {
-              0%   { transform: translateX(0); }
-              100% { transform: translateX(-50%); }
-            }
-            .marquee-track { animation: marquee 80s linear infinite; }
-          `}</style>
-          <div className="flex marquee-track w-max">
-            {[...Array(2)].flatMap((_, copy) =>
-              [
-                { name: "AIRSOFT",      domain: "airsoft.ch",               style: "text-[#1A1A1A] font-black text-base tracking-widest" },
-                { name: "BLACKFLASH",   domain: "black-flash-archery.com",  style: "text-[#1A1A1A] font-black text-base tracking-widest" },
-                { name: "BÖKER",        domain: "boker.de",                 style: "text-[#8B0000] font-black text-base tracking-wide" },
-                { name: "FISHERMAN'S",  domain: "fishermans-partner.eu",    style: "text-[#1A5276] font-black text-sm" },
-                { name: "HALLER",       domain: "haller-stahlwaren.de",     style: "text-[#2C5F2E] font-black text-base tracking-wide" },
-                { name: "JENZI",        domain: "jenzi.com",                style: "text-[#FF6600] font-black text-base" },
-                { name: "LINDER",       domain: "linder.de",                style: "text-[#333] font-black text-base tracking-wide" },
-                { name: "NATURZONE",    domain: "naturzone.ch",             style: "text-[#2C5F2E] font-bold text-sm tracking-wide" },
-                { name: "POHLFORCE",    domain: "pohlforce.de",             style: "text-[#CC0000] font-black text-base" },
-                { name: "SMOKI",        domain: "smoki-raeuchertechnik.de", style: "text-[#8B6914] font-black text-sm" },
-                { name: "STEAMBOW",     domain: "steambow.at",              style: "text-[#1A1A8C] font-black text-base tracking-wider" },
-                { name: "SYTONG",       domain: "sytong.global",            style: "text-[#003087] font-black text-sm tracking-wider" },
-                { name: "WILTEC",       domain: "wiltec.de",                style: "text-[#555] font-black text-sm tracking-wide" },
-              ].map((brand) => (
-                <div
-                  key={`${copy}-${brand.name}`}
-                  className="flex-shrink-0 mx-[5px] px-4 py-2 rounded-full border border-[#EBEBEB] bg-white flex items-center gap-2.5 select-none"
-                >
-                  <img
-                    src={`https://www.google.com/s2/favicons?domain=${brand.domain}&sz=64`}
-                    alt={brand.name}
-                    className="h-5 w-auto object-contain flex-shrink-0"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none" }}
-                  />
-                  <span className={brand.style}>{brand.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        {(() => {
+          const normalizeOrigin = (s: string) => s.toUpperCase().replace(/[`'']/g, "'").replace(/\s*&\s*/g, " & ").replace(/\s+/g, " ").trim()
+          const ORIGIN_ALIASES: Record<string, string> = {
+            "BLACKFIELD": "BLACK FIELD",
+            "BLACKFLASH": "BLACK FLASH",
+            "SMITH&WESSON": "SMITH & WESSON",
+          }
+          const BRAND_COLORS = [
+            "#2C5F2E", "#CC0000", "#1A5276", "#8B0000", "#FF6600",
+            "#003087", "#8B6914", "#1A1A8C", "#333", "#555",
+            "#0B6E4F", "#9B2335", "#D4A017", "#4A148C", "#00695C",
+          ]
+          const brands = Array.from(
+            new Set(
+              products
+                .map((p) => p.origin)
+                .filter((s): s is string => !!s && s.trim() !== "")
+                .map(s => {
+                  const n = normalizeOrigin(s)
+                  return ORIGIN_ALIASES[n] ?? n
+                })
+            )
+          ).sort()
+          if (brands.length === 0) return null
+          return (
+            <div className="overflow-hidden w-full">
+              <style>{`
+                @keyframes marquee {
+                  0%   { transform: translateX(0); }
+                  100% { transform: translateX(-50%); }
+                }
+                .marquee-track { animation: marquee ${Math.max(40, brands.length * 4)}s linear infinite; }
+              `}</style>
+              <div className="flex marquee-track w-max">
+                {[...Array(2)].flatMap((_, copy) =>
+                  brands.map((name, i) => (
+                    <div
+                      key={`${copy}-${name}`}
+                      className="flex-shrink-0 mx-[5px] px-4 py-2 rounded-full border border-[#EBEBEB] bg-white flex items-center gap-2.5 select-none"
+                    >
+                      <span className="font-black text-sm tracking-wide" style={{ color: BRAND_COLORS[i % BRAND_COLORS.length] }}>{name}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* ── Unsere Top Kategorien (dinámico, solo 6) ── */}

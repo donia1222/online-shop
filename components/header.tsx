@@ -16,13 +16,26 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLightSection] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
   const [backendCategories, setBackendCategories] = useState<{ slug: string; name: string }[]>([])
 
   useEffect(() => {
-    const onScroll = () => setShowScrollTop(window.scrollY > 400)
+    const onScroll = () => {
+      const currentY = window.scrollY
+      setShowScrollTop(currentY > 400)
+      if (currentY < 10) {
+        setHeaderVisible(true)
+      } else if (currentY > lastScrollY && currentY > 100) {
+        setHeaderVisible(false)
+      } else if (currentY < lastScrollY) {
+        setHeaderVisible(true)
+      }
+      setLastScrollY(currentY)
+    }
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [])
+  }, [lastScrollY])
 
   useEffect(() => {
     fetch("/api/categories")
@@ -53,8 +66,8 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
 
 
       {/* ── TIER 2: Logo + Search + Icons ── */}
-      <div className="bg-white border-b border-[#E0E0E0] sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-3">
+      <div className={`bg-white border-b border-[#E0E0E0] sticky top-0 z-50 transition-transform duration-300 ${headerVisible ? "translate-y-0" : "-translate-y-full"}`}>
+        <div className="container mx-auto px-4 lg:px-8 h-32 flex items-center justify-between gap-3">
 
           {/* LEFT: Mobile menu + Logo */}
           <div className="flex items-center gap-3">
@@ -68,11 +81,8 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
                 <SheetTitle className="sr-only">Navigation</SheetTitle>
                 <div className="flex items-center justify-between p-4 pr-16 border-b border-[#E0E0E0] flex-shrink-0">
                   <div className="flex items-center gap-2">
-                    <img src="/Security_n.png" alt="Logo" className="h-14 w-auto object-contain" />
-                    <span className="leading-tight">
-                      <span style={{ fontFamily: 'Impact, Arial Narrow, sans-serif', fontStyle: 'italic', fontWeight: 900, color: '#CC0000', fontSize: '0.9rem' }}>US-</span>
-                      <span style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '0.8rem' }}> FISHING &amp;<br />HUNTINGSHOP</span>
-                    </span>
+                    <img src="/Security_mini.png" alt="Logo" className="h-14 w-auto object-contain" />
+        
                   </div>
                   <div className="flex items-center gap-1">
                     <div className="[&_span]:hidden flex items-center">
@@ -164,20 +174,14 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
             {/* Logo */}
             <button
               onClick={() => router.push("/")}
-              className="flex items-center gap-3 flex-shrink-0"
+              className="flex items-center gap-3 flex-shrink-0 py-1 lg:pl-2"
             >
               <img
                 src="/Security_n.png"
                 alt="US - Fishing & Huntingshop"
-                className="h-16 w-auto object-contain"
+                className="h-28 w-auto object-contain"
               />
-              <div className="hidden sm:block">
-                <div className="leading-tight tracking-tight">
-                  <span style={{ fontFamily: 'Impact, Arial Narrow, sans-serif', fontStyle: 'italic', fontWeight: 900, color: '#CC0000', fontSize: '1.25rem' }}>US-</span>
-                  <span style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '1.1rem' }}> FISHING &amp; HUNTINGSHOP</span>
-                </div>
-                <div className="text-xs text-[#666] tracking-widest uppercase mt-1">Jagd · Angeln · Outdoor</div>
-              </div>
+  
             </button>
           </div>
 
@@ -208,7 +212,7 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
       </div>
 
       {/* ── TIER 3: Category navigation bar ── */}
-      <div className="bg-white border-b border-[#E0E0E0] hidden lg:block sticky top-20 z-40">
+      <div className={`bg-white border-b border-[#E0E0E0] hidden lg:block sticky top-32 z-40 transition-transform duration-300 ${headerVisible ? "translate-y-0" : "-translate-y-[calc(100%+8rem)]"}`}>
         <div className="relative">
           {/* fade edges para indicar scroll */}
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-white to-transparent z-10" />

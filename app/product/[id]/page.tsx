@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
-import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, Check, MapPin, X, ZoomIn, Heart } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, Check, X, ZoomIn, Heart } from "lucide-react"
 import { ProductImage } from "@/components/product-image"
 import { fetchProductsCached } from "@/lib/product-cache"
 
@@ -342,41 +342,11 @@ export default function ProductPage() {
             {/* Info side */}
             <div className="p-6 md:p-8 flex flex-col gap-4">
 
-              {(product.supplier || product.origin) && (() => {
-                const BRANDS: Record<string, { color: string; domain: string }> = {
-                  "AIRSOFT":      { color: "text-[#1A1A1A]", domain: "airsoft.ch" },
-                  "BLACK FLASH":  { color: "text-[#333]",    domain: "black-flash-archery.com" },
-                  "BLACKFLASH":   { color: "text-[#1A1A1A]", domain: "black-flash-archery.com" },
-                  "BÖKER":        { color: "text-[#8B0000]", domain: "boker.de" },
-                  "FISHERMAN'S":  { color: "text-[#1A5276]", domain: "fishermans-partner.eu" },
-                  "HALLER":       { color: "text-[#2C5F2E]", domain: "haller-stahlwaren.de" },
-                  "JENZI":        { color: "text-[#FF6600]", domain: "jenzi.com" },
-                  "LINDER":       { color: "text-[#333]",    domain: "linder.de" },
-                  "NATURZONE":    { color: "text-[#2C5F2E]", domain: "naturzone.ch" },
-                  "POHLFORCE":    { color: "text-[#CC0000]", domain: "pohlforce.de" },
-                  "SMOKI":        { color: "text-[#8B6914]", domain: "smoki-raeuchertechnik.de" },
-                  "STEAMBOW":     { color: "text-[#1A1A8C]", domain: "steambow.at" },
-                  "SYTONG":       { color: "text-[#003087]", domain: "sytong.global" },
-                  "WILTEC":       { color: "text-[#555]",    domain: "wiltec.de" },
-                }
-                const label = (product.supplier || product.origin || "").toUpperCase()
-                const brand = BRANDS[label]
-                return (
-                  <div className="flex items-center gap-2">
-                    {brand && (
-                      <img
-                        src={`https://www.google.com/s2/favicons?domain=${brand.domain}&sz=64`}
-                        alt={label}
-                        className="h-5 w-auto object-contain"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none" }}
-                      />
-                    )}
-                    <p className={`text-sm font-black uppercase tracking-widest ${brand?.color ?? "text-[#888]"}`}>
-                      {label}
-                    </p>
-                  </div>
-                )
-              })()}
+              {product.origin && (
+                <p className="text-sm font-black uppercase tracking-widest text-[#888]">
+                  {product.origin}
+                </p>
+              )}
 
               <h1 className="text-2xl md:text-3xl font-black text-[#1A1A1A] leading-tight tracking-tight">
                 {product.name}
@@ -393,12 +363,6 @@ export default function ProductPage() {
                 <DescriptionBlock text={product.description} />
               )}
 
-              {product.origin && (
-                <div className="flex items-center gap-1.5 text-xs text-[#999]">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>{product.origin}</span>
-                </div>
-              )}
 
               {/* Price + CTA */}
               <div className="mt-auto pt-5 border-t border-[#F0F0F0]">
