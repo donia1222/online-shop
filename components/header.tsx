@@ -212,7 +212,7 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
       </div>
 
       {/* ── TIER 3: Category navigation bar ── */}
-      <div className={`bg-white border-b border-[#E0E0E0] hidden lg:block sticky top-32 z-40 transition-transform duration-300 ${headerVisible ? "translate-y-0" : "-translate-y-[calc(100%+8rem)]"}`}>
+      <div className="bg-white border-b border-[#E0E0E0] hidden lg:block sticky top-0 z-40">
         <div className="relative">
           {/* fade edges para indicar scroll */}
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-white to-transparent z-10" />
