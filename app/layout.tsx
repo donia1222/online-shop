@@ -30,35 +30,95 @@ export default function RootLayout({
 }>) {
   if (MAINTENANCE_MODE) {
     return (
-      <html lang="en">
-        <body style={{ margin: 0, padding: 0, background: '#ffffff' }}>
+      <html lang="de">
+        <body style={{ margin: 0, padding: 0 }}>
           <div style={{
             minHeight: '100vh',
-            background: '#ffffff',
+            background: 'linear-gradient(160deg, #f8f9fa 0%, #e9ecef 100%)',
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
-            color: '#1a1a1a', fontFamily: "'Segoe UI', sans-serif", textAlign: 'center', padding: '2rem',
+            fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
+            textAlign: 'center', padding: '2rem',
           }}>
-            {/* Logo Lweb */}
-            <img
-              src="/logolweb.png"
-              alt="Lweb Logo"
-              style={{ width: '180px', marginBottom: '2rem' }}
-            />
-            <div style={{ marginTop: '1rem', width: '40px', height: '2px', background: '#1a1a1a', borderRadius: '2px', opacity: 0.2 }} />
-            <div style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#444', lineHeight: 2 }}>
-              <p style={{ margin: 0, fontWeight: '600', fontSize: '1rem', color: '#1a1a1a' }}>Lweb Schweiz</p>
-              <p style={{ margin: 0 }}>App Entwickler &amp; Full-Stack Developer in Buchs SG</p>
-              <p style={{ margin: 0, color: '#777', fontSize: '0.85rem' }}>
-                Native iOS &amp; Android Apps, moderne Websites und KI-Lösungen.<br />
-                Faire Preise, direkt vom Entwickler.
-              </p>
-              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'center' }}>
-                <a href="mailto:info@lweb.ch" style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 500 }}>info@lweb.ch</a>
-                <a href="tel:+41765608645" style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 500 }}>+41 76 560 86 45</a>
-                <a href="https://www.lweb.ch" target="_blank" rel="noopener noreferrer" style={{ color: '#1a1a1a', textDecoration: 'none', fontWeight: 500 }}>www.lweb.ch</a>
-                <p style={{ margin: 0, color: '#888', fontSize: '0.8rem' }}>9475 Sevelen, Schweiz</p>
+            {/* Card */}
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+              padding: 'clamp(2rem, 5vw, 3.5rem)',
+              maxWidth: '520px', width: '100%',
+            }}>
+              {/* Logo */}
+              <img
+                src="/logolweb.png"
+                alt="Lweb Logo"
+                style={{ width: '160px', marginBottom: '2rem', display: 'block', marginLeft: 'auto', marginRight: 'auto', borderRadius: '16px' }}
+              />
+
+              {/* Domain CTA */}
+              <div style={{
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                marginBottom: '2rem',
+                color: '#fff',
+              }}>
+                <p style={{ margin: '0 0 0.4rem', fontSize: '0.78rem', letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.6 }}>
+                  Domain zum Verkauf
+                </p>
+                <h2 style={{ margin: '0 0 0.5rem', fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                  Interessiert an <span style={{ color: '#60a5fa' }}>usfh.ch</span>?
+                </h2>
+                <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.7 }}>
+                  Kontaktieren Sie uns — wir freuen uns auf Ihre Anfrage.
+                </p>
               </div>
+
+              {/* Divider */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.8rem' }}>
+                <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
+                <span style={{ fontSize: '0.75rem', color: '#9ca3af', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Kontakt</span>
+                <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
+              </div>
+
+              {/* Company info */}
+              <p style={{ margin: '0 0 0.3rem', fontWeight: '700', fontSize: '1.05rem', color: '#111827' }}>Lweb Schweiz</p>
+              <p style={{ margin: '0 0 0.2rem', fontSize: '0.88rem', color: '#6b7280' }}>App Entwickler &amp; Full-Stack Developer in Buchs SG</p>
+              <p style={{ margin: '0 0 1.5rem', fontSize: '0.82rem', color: '#9ca3af' }}>
+                Native iOS &amp; Android Apps, moderne Websites und KI-Lösungen.
+              </p>
+
+              {/* Contact links */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {[
+                  { href: 'mailto:info@lweb.ch', label: 'info@lweb.ch', icon: '✉' },
+                  { href: 'tel:+41765608645', label: '+41 76 560 86 45', icon: '📞' },
+                  { href: 'https://www.lweb.ch', label: 'www.lweb.ch', icon: '🌐', external: true },
+                ].map(({ href, label, icon, external }) => (
+                  <a
+                    key={href}
+                    href={href}
+                    {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                      padding: '0.65rem 1rem',
+                      borderRadius: '10px',
+                      background: '#f9fafb',
+                      border: '1px solid #e5e7eb',
+                      color: '#111827',
+                      textDecoration: 'none',
+                      fontSize: '0.9rem', fontWeight: 500,
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    <span>{icon}</span> {label}
+                  </a>
+                ))}
+              </div>
+
+              <p style={{ marginTop: '1.5rem', marginBottom: 0, fontSize: '0.78rem', color: '#d1d5db' }}>
+                9475 Sevelen, Schweiz
+              </p>
             </div>
           </div>
         </body>
