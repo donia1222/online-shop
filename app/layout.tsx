@@ -52,22 +52,24 @@ export default function RootLayout({
               <img
                 src="/logolweb.png"
                 alt="Lweb Logo"
-                style={{ width: '160px', marginBottom: '2rem', display: 'block', marginLeft: 'auto', marginRight: 'auto', borderRadius: '16px' }}
+                style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '0.75rem', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
               />
+              <p style={{ margin: '0 0 1.8rem', fontWeight: '700', fontSize: '1rem', color: '#111827' }}>Lweb Schweiz</p>
 
               {/* Domain CTA */}
               <div style={{
                 background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
                 borderRadius: '16px',
-                padding: '1.5rem',
+                padding: '2rem 1.5rem',
                 marginBottom: '2rem',
+                marginTop: '0.5rem',
                 color: '#fff',
               }}>
                 <p style={{ margin: '0 0 0.4rem', fontSize: '0.78rem', letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.6 }}>
                   Domain zum Verkauf
                 </p>
-                <h2 style={{ margin: '0 0 0.5rem', fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: '800', letterSpacing: '-0.02em' }}>
-                  Interessiert an <span style={{ color: '#60a5fa' }}>usfh.ch</span>?
+                <h2 style={{ margin: '1rem 0 1rem', fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                  Interessiert an <span style={{ color: '#60a5fa' }}>usfh.ch</span> ?
                 </h2>
                 <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.7 }}>
                   Kontaktieren Sie uns — wir freuen uns auf Ihre Anfrage.
@@ -82,7 +84,6 @@ export default function RootLayout({
               </div>
 
               {/* Company info */}
-              <p style={{ margin: '0 0 0.3rem', fontWeight: '700', fontSize: '1.05rem', color: '#111827' }}>Lweb Schweiz</p>
               <p style={{ margin: '0 0 0.2rem', fontSize: '0.88rem', color: '#6b7280' }}>App Entwickler &amp; Full-Stack Developer in Buchs SG</p>
               <p style={{ margin: '0 0 1.5rem', fontSize: '0.82rem', color: '#9ca3af' }}>
                 Native iOS &amp; Android Apps, moderne Websites und KI-Lösungen.
