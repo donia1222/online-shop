@@ -192,7 +192,7 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
               className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#333333] hover:text-[#2C5F2E] hover:bg-[#F5F5F5] rounded-xl transition-colors"
             >
               <Newspaper className="w-4 h-4 text-[#2C5F2E]" />
-              Blog
+              Aktuelles & Tipps
             </button>
             <button
               onClick={() => router.push("/gallery")}
