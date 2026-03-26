@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, ChevronDown, Menu, ArrowUp, Newspaper, Download, Images } from "lucide-react"
+import { ShoppingCart, ChevronDown, Menu, ArrowUp, Newspaper, Download, Images, Mail } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { LoginAuth } from "./login-auth"
 
@@ -185,8 +185,32 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
             </button>
           </div>
 
-          {/* RIGHT: Login + Cart */}
+          {/* RIGHT: Blog + Gallery + Login + Cart */}
           <div className="flex items-center gap-1 justify-end">
+            <button
+              onClick={() => router.push("/blog")}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#333333] hover:text-[#2C5F2E] hover:bg-[#F5F5F5] rounded-xl transition-colors"
+            >
+              <Newspaper className="w-4 h-4 text-[#2C5F2E]" />
+              Blog
+            </button>
+            <button
+              onClick={() => router.push("/gallery")}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#333333] hover:text-[#2C5F2E] hover:bg-[#F5F5F5] rounded-xl transition-colors"
+            >
+              <Images className="w-4 h-4 text-[#2C5F2E]" />
+              Gallery
+            </button>
+            <button
+              onClick={() => {
+                const footer = document.getElementById("footer")
+                if (footer) footer.scrollIntoView({ behavior: "smooth" })
+              }}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#333333] hover:text-[#2C5F2E] hover:bg-[#F5F5F5] rounded-xl transition-colors"
+            >
+              <Mail className="w-4 h-4 text-[#2C5F2E]" />
+              Kontakt
+            </button>
             <div className="[&_span]:hidden flex items-center justify-center">
               <LoginAuth
                 onLoginSuccess={handleLoginSuccess}

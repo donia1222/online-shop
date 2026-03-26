@@ -15,7 +15,7 @@ import { CheckoutPage } from "@/components/checkout-page"
 import { Footer } from "@/components/footer"
 import { FadeSection } from "@/components/fade-section"
 import  Bot  from "@/components/bot"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { X } from "lucide-react"
 
 interface Announcement {
@@ -348,6 +348,7 @@ function PremiumHotSauceStoreInner() {
       {announcement && (
         <Dialog open={isAnnOpen} onOpenChange={open => { if (!open) handleCloseAnnouncement() }}>
           <DialogContent hideClose className="max-w-md bg-white p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+            <DialogTitle className="sr-only">{announcement?.title ?? "Ankündigung"}</DialogTitle>
             {/* Close button */}
             <button
               onClick={handleCloseAnnouncement}
