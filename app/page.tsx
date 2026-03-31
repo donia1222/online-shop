@@ -358,6 +358,7 @@ function PremiumHotSauceStoreInner() {
             </button>
 
             {/* Image(s) */}
+            
             {announcement.image1_url && (
               <div className="relative w-full">
                 {announcement.type === 'general' && announcement.image2_url ? (
