@@ -1286,11 +1286,11 @@ export function Admin({ onClose }: AdminProps) {
     doc.text("Zwischensumme (Artikel):", pageW - 75, y)
     doc.text(`${itemsSubtotal.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
     y += 6
-    doc.text("Versandkosten:", pageW - 75, y)
-    doc.text(`${shipping.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
-    y += 6
     doc.text("MwSt. 8.1%:", pageW - 75, y)
     doc.text(`${mwstAmount.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+    y += 6
+    doc.text("Versandkosten:", pageW - 75, y)
+    doc.text(`${shipping.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
     y += 6
     y -= 4
     doc.setDrawColor(44, 95, 46); doc.line(pageW - 75, y, pageW - margin, y); y += 5

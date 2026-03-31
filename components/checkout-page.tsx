@@ -2162,6 +2162,10 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                     <span>Zwischensumme:</span>
                     <span>{getTotalPrice().toFixed(2)} CHF</span>
                   </div>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>MwSt. 8.1%:</span>
+                    <span>{getMwst().toFixed(2)} CHF</span>
+                  </div>
                   <div className="flex justify-between">
                     <span>Versand:</span>
                     <span>
@@ -2176,10 +2180,6 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                       {shippingInfo.zone} · {shippingInfo.range}
                     </div>
                   )}
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>MwSt. 8.1%:</span>
-                    <span>{getMwst().toFixed(2)} CHF</span>
-                  </div>
                   <Separator />
                   <div className="flex justify-between text-xl font-black">
                     <span>Gesamt:</span>
