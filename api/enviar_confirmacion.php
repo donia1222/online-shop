@@ -41,7 +41,7 @@ if (empty($payerID) || empty($customerInfo) || empty($cart)) {
 }
 
 // Configuración de emails
-$toStore = 'info@lweb.ch';
+$toStore = 'info@usfh.ch';
 $toCustomer = $customerInfo['email'] ?? '';
 $fromEmail = 'info@cantinatexmex.ch';
 

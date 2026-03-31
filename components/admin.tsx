@@ -1203,13 +1203,13 @@ export function Admin({ onClose }: AdminProps) {
     doc.text("JAGD · ANGELN · OUTDOOR", margin, 41)
     doc.text("Bahnhofstrasse 2, 9475 Sevelen", margin, 46)
     doc.text("Tel: 078 606 61 05", margin, 51)
-    doc.text("info@lweb.ch", margin, 56)
+    doc.text("info@usfh.ch", margin, 56)
 
     // Titel Rechnung
     doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(44, 95, 46)
     doc.text("RECHNUNG", pageW - margin, 36, { align: "right" })
     doc.setFontSize(10); doc.setTextColor(100, 100, 100)
-    doc.text(`Nr: ${order.order_number}`, pageW - margin, 43, { align: "right" })
+    doc.text(`Bestellnummer: ${order.order_number}`, pageW - margin, 43, { align: "right" })
     doc.text(`Datum: ${formatDate(order.created_at)}`, pageW - margin, 49, { align: "right" })
 
     // Trennlinie
@@ -1249,9 +1249,9 @@ export function Admin({ onClose }: AdminProps) {
 
     // Artikeltabelle
     let y = 118
-    const colQty   = 130
-    const colPrice = 158
-    const colTotal = pageW - margin
+    const colQty   = 125
+    const colPrice = 165
+    const colTotal = pageW - margin - 8
 
     doc.setFillColor(44, 95, 46); doc.setTextColor(255, 255, 255)
     doc.setFont("helvetica", "bold"); doc.setFontSize(10)
@@ -1265,13 +1265,17 @@ export function Admin({ onClose }: AdminProps) {
     doc.setFont("helvetica", "normal"); doc.setTextColor(40, 40, 40)
     const items = order.items || []
     items.forEach((item, idx) => {
-      if (idx % 2 === 0) { doc.setFillColor(245, 248, 245); doc.rect(margin, y - 2, pageW - margin * 2, 8, "F") }
-      doc.setFontSize(9)
+      const rowH = 13
+      if (idx % 2 === 0) { doc.setFillColor(245, 248, 245); doc.rect(margin, y - 2, pageW - margin * 2, rowH, "F") }
+      doc.setFontSize(9); doc.setFont("helvetica", "bold")
       doc.text(item.product_name.substring(0, 50), margin + 2, y + 4)
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(150, 150, 150)
+      doc.text(`Art.-Nr: ${item.product_id}`, margin + 2, y + 9)
+      doc.setFontSize(9); doc.setTextColor(40, 40, 40)
       doc.text(`${item.quantity}x`, colQty, y + 4)
       doc.text(`${(Number(item.price) || 0).toFixed(2)} CHF`, colPrice, y + 4, { align: "right" })
       doc.text(`${(Number(item.subtotal) || 0).toFixed(2)} CHF`, colTotal, y + 4, { align: "right" })
-      y += 9
+      y += rowH
     })
 
     // Totales

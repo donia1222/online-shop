@@ -13,7 +13,7 @@ function sendInvoiceConfirmationEmail($data) {
     $orderNumber = $data['orderNumber'];
     
     // Configuración de emails
-    $toStore = 'info@lweb.ch';
+    $toStore = 'info@usfh.ch';
     $toCustomer = $customerInfo['email'];
     $fromEmail = 'info@lweb.ch';
     
@@ -289,7 +289,7 @@ function sendPayPalConfirmationEmail($data) {
     $paypalPayerID = $data['paypalPayerID'];
     
     // Configuración de emails
-    $toStore = 'info@lweb.ch';
+    $toStore = 'info@usfh.ch';
     $toCustomer = $customerInfo['email'];
     $fromEmail = 'info@lweb.ch';
     
