@@ -420,8 +420,8 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
 
   const getShippingCost = () => shippingCost
 
-  const getMwst = () => (getTotalPrice() + shippingCost) * 0.085
-  const getFinalTotal = () => Math.ceil((getTotalPrice() + shippingCost + getMwst()) / 0.5) * 0.5
+  const getMwst = () => Math.round((getTotalPrice() + shippingCost) * 0.085 / 0.05) * 0.05
+  const getFinalTotal = () => Math.round((getTotalPrice() + shippingCost + getMwst()) * 100) / 100
 
   const createUserAccount = async () => {
     try {

@@ -656,7 +656,8 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
     doc.text(`Bestellnummer: ${order.order_number}`, pageW - margin, 43, { align: "right" })
-    doc.text(`Datum: ${formatDate(order.created_at)}`, pageW - margin, 49, { align: "right" })
+    doc.text(`Rechnungsnummer: #FA${String(order.order_number).padStart(8, '0')}`, pageW - margin, 49, { align: "right" })
+    doc.text(`Datum: ${formatDate(order.created_at)}`, pageW - margin, 55, { align: "right" })
 
     // --- Trennlinie ---
     doc.setDrawColor(44, 95, 46)
@@ -685,15 +686,13 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
     doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(100, 100, 100)
     doc.text("(identisch mit Lieferadresse)", pageW / 2 + 5, 76)
 
-    // --- Bestellstatus ---
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(10)
-    doc.text(`Status: ${getStatusText(order.status)}`, pageW - margin, 70, { align: "right" })
-    doc.text(`Zahlung: ${order.payment_method}`, pageW - margin, 76, { align: "right" })
+    // Zahlungsstatus unter RECHNUNG-Titel
     const payStatusLabel = order.payment_status === "completed" ? "Bezahlt" : order.payment_status === "pending" ? "Ausstehend" : order.payment_status === "failed" ? "Fehlgeschlagen" : order.payment_status
     const payStatusColor: [number, number, number] = order.payment_status === "completed" ? [44, 95, 46] : order.payment_status === "failed" ? [180, 0, 0] : [180, 130, 0]
-    doc.setTextColor(...payStatusColor)
-    doc.text(`Zahlungsstatus: ${payStatusLabel}`, pageW - margin, 82, { align: "right" })
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...payStatusColor)
+    doc.text(`Zahlungsstatus: ${payStatusLabel}`, pageW - margin, 84, { align: "right" })
+    doc.setTextColor(100, 100, 100); doc.setFont("helvetica", "normal")
+    doc.text(`Zahlung: ${order.payment_method}`, pageW - margin, 90, { align: "right" })
     doc.setTextColor(40, 40, 40)
 
     // --- Artikeltabelle ---
@@ -742,9 +741,8 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
     const itemsSubtotal = items.reduce((s, i) => s + (Number(i.subtotal) || 0), 0)
     const shipping = Number(order.shipping_cost) || 0
     const netTotal = itemsSubtotal + shipping
-    const mwstAmount = netTotal * 0.085
-    const grossTotal = netTotal + mwstAmount
-    const roundedTotal = Math.ceil(grossTotal / 0.5) * 0.5
+    const mwstAmount = Math.round(netTotal * 0.085 / 0.05) * 0.05
+    const roundedTotal = netTotal + mwstAmount
 
     doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(40, 40, 40)
     doc.text("Zwischensumme (Artikel):", pageW - 75, y)
@@ -755,7 +753,8 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
     y += 6
     doc.text("MwSt. 8.5%:", pageW - 75, y)
     doc.text(`${mwstAmount.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
-    y += 2
+    y += 6
+    y -= 4
     doc.setDrawColor(44, 95, 46); doc.line(pageW - 75, y, pageW - margin, y); y += 5
     doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(44, 95, 46)
     doc.text("TOTAL:", pageW - 55, y)
