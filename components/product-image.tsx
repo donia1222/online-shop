@@ -51,6 +51,7 @@ export function ProductImage({ src, candidates, alt, onAllFailed, ...props }: Pr
       />
     )
   }
+  
 
   return (
     <img
