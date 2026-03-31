@@ -2704,7 +2704,7 @@ export function Admin({ onClose }: AdminProps) {
               </div>
             )}
 
-            {!shippingLoading && shippingZones.filter(zone => zone.countries === "CH").map((zone, i) => (
+            {!shippingLoading && shippingZones.filter(zone => zone.countries.split(",").includes("CH")).map((zone, i) => (
               <div key={zone.id} className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-5 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-gray-50/80 to-transparent border-b border-gray-100">
                   <div className="flex items-center gap-3">
@@ -2713,7 +2713,9 @@ export function Admin({ onClose }: AdminProps) {
                     </div>
                     <div>
                       <span className="font-bold text-gray-900">{zone.name}</span>
-                      <span className="ml-2 text-xs text-gray-400">{zone.countries === "*" ? "Alle anderen Länder" : zone.countries}</span>
+                      <span className="ml-2 text-xs text-gray-400">
+                        {zone.countries === "*" ? "Alle anderen Länder" : zone.countries.split(",").map(c => c.trim()).join(" · ")}
+                      </span>
                     </div>
                   </div>
                   <button
