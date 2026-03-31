@@ -1758,6 +1758,16 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                       })
                     }
                   </select>
+                  <p className="mt-1.5 text-xs text-[#888]">
+                    Für Lieferungen in andere Länder{" "}
+                    <a
+                      href="mailto:info@usfh.ch?subject=Anfrage%20internationale%20Lieferung"
+                      className="text-[#2C5F2E] font-semibold underline hover:text-[#1A4520]"
+                    >
+                      kontaktieren Sie uns bitte direkt
+                    </a>
+                    .
+                  </p>
                 </div>
 
                 <div>

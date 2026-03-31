@@ -501,7 +501,7 @@ export default function ShopGrid() {
       const matchSearch   = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase())
       const matchCategory = activeCategory === "all" || p.category === activeCategory
       const matchSupplier = activeSupplier === "all" || (p.origin && getCanonicalOrigin(p.origin) === activeSupplier)
-      const matchStock    = stockFilter === "out_of_stock" ? (p.stock ?? 0) === 0 : (p.stock ?? 0) > 0
+      const matchStock    = stockFilter === "out_of_stock" ? (p.stock ?? 0) === 0 : true
       return matchSearch && matchCategory && matchSupplier && matchStock
     })
     .sort((a, b) => {
@@ -784,7 +784,7 @@ export default function ShopGrid() {
                 <p className="text-[10px] font-black text-[#AAAAAA] uppercase tracking-[0.15em] mb-3">Kategorien</p>
                 <ul className="space-y-0.5">
                   {[{ slug: "all", name: "Alle" }, ...categories].map(cat => {
-                    const count = cat.slug === "all" ? products.filter(p => (p.stock ?? 0) > 0).length : products.filter(p => p.category === cat.slug).length
+                    const count = cat.slug === "all" ? products.length : products.filter(p => p.category === cat.slug).length
                     const isActive = activeCategory === cat.slug
                     return (
                       <li key={cat.slug}>
