@@ -39,6 +39,7 @@ import {
   Receipt,
   ArrowUpRight,
   Users,
+  XCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -189,6 +190,7 @@ export function Admin({ onClose }: AdminProps) {
   const [showCategoryFilterModal, setShowCategoryFilterModal] = useState(false)
   const [hasScrolled, setHasScrolled] = useState(false)
   const filterCardRef = useRef<HTMLDivElement>(null)
+  const statusSectionRef = useRef<HTMLDivElement>(null)
   const [bulkLoading, setBulkLoading] = useState(false)
   const [removedImages, setRemovedImages] = useState<boolean[]>([false, false, false, false])
 
@@ -941,6 +943,9 @@ export function Admin({ onClose }: AdminProps) {
     setSelectedProductIds((prev) => {
       const next = new Set(prev)
       next.has(id) ? next.delete(id) : next.add(id)
+      if (next.size > 0) {
+        setTimeout(() => statusSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
+      }
       return next
     })
   }
@@ -2348,53 +2353,72 @@ export function Admin({ onClose }: AdminProps) {
               <p className="text-xs text-gray-400 mt-0.5">Produkte filtern und suchen</p>
             </div>
             <div ref={filterCardRef}>
-            <div className="mb-4 rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
-                <div className="relative flex-1 w-full">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <div className="mb-4 rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+              {/* Search bar */}
+              <div className="p-3 border-b border-gray-100">
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     placeholder="Produkte suchen..."
                     value={productFilters.search}
                     onChange={(e) => setProductFilters((prev) => ({ ...prev, search: e.target.value }))}
-                    className="pl-10 bg-gray-50/80 border-gray-200 rounded-xl h-10 focus:bg-white transition-colors"
+                    className="pl-10 bg-gray-50 border-0 rounded-xl h-10 focus:bg-white focus:ring-2 focus:ring-gray-200 transition-all text-sm"
                   />
+                  {productFilters.search && (
+                    <button onClick={() => setProductFilters(prev => ({ ...prev, search: "" }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
+              </div>
 
-                <Select
-                  value={productFilters.category || "all"}
-                  onValueChange={(value) => setProductFilters((prev) => ({ ...prev, category: value === "all" ? "" : value }))}
-                >
-                  <SelectTrigger className="w-full md:w-40 bg-gray-50/80 border-gray-200 rounded-xl h-10">
-                    <SelectValue placeholder="Kategorie" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white rounded-xl">
-                    <SelectItem value="all">Alle Kategorien</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.slug} value={cat.slug}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Category chips row */}
+              <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-b border-gray-100">
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Kategorie:</span>
+                {[{ value: "", label: "Alle" }, ...categories.map(c => ({ value: c.slug, label: c.name }))].map(opt => (
+                  <button
+                    key={opt.value || "all"}
+                    onClick={() => setProductFilters(prev => ({ ...prev, category: opt.value }))}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                      (productFilters.category || "") === opt.value
+                        ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/20"
+                        : "bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
 
-                <Select
-                  value={productFilters.stock_status || "all"}
-                  onValueChange={(value) => setProductFilters((prev) => ({ ...prev, stock_status: value === "all" ? "" : value }))}
-                >
-                  <SelectTrigger className="w-full md:w-40 bg-gray-50/80 border-gray-200 rounded-xl h-10">
-                    <SelectValue placeholder="Lagerstatus" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white rounded-xl">
-                    <SelectItem value="all">Alle Status</SelectItem>
-                    <SelectItem value="in_stock">Auf Lager</SelectItem>
-                    <SelectItem value="low_stock">Geringer Bestand</SelectItem>
-                    <SelectItem value="out_of_stock">Nicht vorrätig</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Stock row */}
+              <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-b border-gray-100">
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Status:</span>
+                {[
+                  { value: "", label: "Alle", icon: null },
+                  { value: "in_stock", label: "Lager", icon: <CheckCircle className="w-3.5 h-3.5" />, active: "bg-emerald-600 border-emerald-600 text-white shadow-sm shadow-emerald-500/20" },
+                  { value: "low_stock", label: "Wenig", icon: <AlertTriangle className="w-3.5 h-3.5" />, active: "bg-amber-500 border-amber-500 text-white shadow-sm shadow-amber-500/20" },
+                  { value: "out_of_stock", label: "Leer", icon: <XCircle className="w-3.5 h-3.5" />, active: "bg-red-500 border-red-500 text-white shadow-sm shadow-red-500/20" },
+                ].map(opt => (
+                  <button
+                    key={opt.value || "all-stock"}
+                    onClick={() => setProductFilters(prev => ({ ...prev, stock_status: opt.value }))}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                      (productFilters.stock_status || "") === opt.value
+                        ? (opt.active ?? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/20")
+                        : "bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100"
+                    }`}
+                  >
+                    {opt.icon}
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
 
-                <Select
-                  value={productFilters.sortBy}
-                  onValueChange={(value) => setProductFilters((prev) => ({ ...prev, sortBy: value }))}
-                >
-                  <SelectTrigger className="w-full md:w-36 bg-gray-50/80 border-gray-200 rounded-xl h-10">
+              {/* Sort + Reset row */}
+              <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Sortieren:</span>
+                <Select value={productFilters.sortBy} onValueChange={(value) => setProductFilters((prev) => ({ ...prev, sortBy: value }))}>
+                  <SelectTrigger className="h-8 text-xs border-gray-200 bg-gray-50 rounded-full px-4 w-40 gap-1 font-semibold text-gray-600">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white rounded-xl">
@@ -2409,47 +2433,38 @@ export function Admin({ onClose }: AdminProps) {
                 </Select>
 
                 {(productFilters.search || productFilters.category || productFilters.stock_status) && (
-                  <Button
-                    onClick={() => {
-                      setProductFilters({ search: "", category: "", stock_status: "", sortBy: "name" })
-                    }}
-                    variant="ghost"
-                    className="rounded-xl text-sm text-gray-500 hover:text-red-500 hover:bg-red-50 h-10 px-3 shrink-0"
+                  <button
+                    onClick={() => setProductFilters({ search: "", category: "", stock_status: "", sortBy: "name" })}
+                    className="ml-auto flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
                   >
-                    <X className="w-4 h-4 mr-1" />
-                    Zurücksetzen
-                  </Button>
+                    <X className="w-3 h-3" />
+                    Reset
+                  </button>
                 )}
               </div>
             </div>
             </div>{/* end filterCardRef wrapper */}
 
-            <div className="mb-3">
-              <h2 className="text-xl font-black text-gray-900 tracking-tight">Produktstatus ändern</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Status der Produkte ändern</p>
-            </div>
+            <div ref={statusSectionRef} />
 
-            {/* Bulk action bar — sticky */}
-            <div className="sticky top-16 z-20 bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl px-4 py-2.5 mb-4 shadow-md flex flex-wrap items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleSelectAll}
-                className="text-sm"
-              >
-                {selectedProductIds.size === filteredProducts.length && filteredProducts.length > 0
-                  ? "Alle abwählen"
-                  : "Alle auswählen"}
-              </Button>
-
-
-              {selectedProductIds.size > 0 && (
-                <>
-                  <span className="text-sm text-gray-600 font-medium">
-                    {selectedProductIds.size} ausgewählt
-                  </span>
+            {/* Bulk action bar — sticky, solo visible con selección */}
+            {selectedProductIds.size > 0 && (
+              <div className="sticky top-16 z-20 mb-4">
+                <div className="bg-gradient-to-r from-[#2C5F2E] to-[#3a7a3d] rounded-2xl px-4 py-3 shadow-lg shadow-green-500/20 flex flex-wrap items-center gap-3">
+                  <div className="mr-2">
+                    <p className="text-white font-bold text-sm leading-tight">Produktstatus ändern</p>
+                    <p className="text-green-100 text-xs">{selectedProductIds.size} Produkt{selectedProductIds.size !== 1 ? "e" : ""} ausgewählt</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleSelectAll}
+                    className="text-sm bg-white/10 border-white/30 text-white hover:bg-white/20"
+                  >
+                    {selectedProductIds.size === filteredProducts.length && filteredProducts.length > 0 ? "Alle abwählen" : "Alle auswählen"}
+                  </Button>
                   <Select value={bulkStatus} onValueChange={setBulkStatus}>
-                    <SelectTrigger className="w-48 bg-white border-gray-300 text-sm">
+                    <SelectTrigger className="w-44 bg-white border-0 text-sm rounded-xl h-8">
                       <SelectValue placeholder="Status ändern..." />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -2462,20 +2477,21 @@ export function Admin({ onClose }: AdminProps) {
                     size="sm"
                     onClick={handleBulkStatusUpdate}
                     disabled={!bulkStatus || bulkLoading}
-                    className="bg-[#2C5F2E] hover:bg-[#1A4520] text-white"
+                    className="bg-white text-[#2C5F2E] hover:bg-green-50 font-semibold"
                   >
                     {bulkLoading ? "Speichern..." : "Anwenden"}
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => setSelectedProductIds(new Set())}
+                    className="text-white hover:bg-white/20 ml-auto"
                   >
                     Abbrechen
                   </Button>
-                </>
-              )}
-            </div>
+                </div>
+              </div>
+            )}
 
             <div className="mb-3">
               <h2 className="text-xl font-black text-gray-900 tracking-tight">Produkte</h2>
