@@ -150,19 +150,26 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
         </h3>
         <div className="mt-auto pt-2.5 flex items-center justify-between gap-2 border-t border-[#F5F5F5]">
           <span className="text-base font-black text-[#1A1A1A] tracking-tight">CHF {product.price.toFixed(2)}</span>
-          <button
-            onClick={() => onAddToCart(product)}
-            disabled={!inStock}
-            className={`flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 ${
-              isAdded
-                ? "bg-emerald-500 text-white"
-                : inStock
-                  ? "bg-[#2C5F2E] hover:bg-[#1A4520] text-white hover:shadow-md active:scale-95"
-                  : "bg-[#F0F0F0] text-[#CCC] cursor-not-allowed"
-            }`}
-          >
-            {isAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
-          </button>
+          {inStock ? (
+            <button
+              onClick={() => onAddToCart(product)}
+              className={`flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 ${
+                isAdded
+                  ? "bg-emerald-500 text-white"
+                  : "bg-[#2C5F2E] hover:bg-[#1A4520] text-white hover:shadow-md active:scale-95"
+              }`}
+            >
+              {isAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
+            </button>
+          ) : (
+            <a
+              href={`mailto:info@usfh.ch?subject=Verfügbarkeitsanfrage: ${encodeURIComponent(product.name)}&body=Guten Tag,%0A%0Aich würde gerne wissen, ob der folgende Artikel wieder verfügbar ist:%0A%0AArtikel: ${encodeURIComponent(product.name)}%0AArtikel-Nr.: ${product.id}%0A%0AVielen Dank!`}
+              onClick={e => e.stopPropagation()}
+              className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-semibold px-2.5 py-1.5 rounded-full border border-blue-200 transition-colors"
+            >
+              Anfragen
+            </a>
+          )}
         </div>
       </div>
     </div>
