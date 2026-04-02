@@ -2229,7 +2229,7 @@ export function Admin({ onClose }: AdminProps) {
             </div>
 
             {/* Excel Import */}
-            {showExcelImport && <Card className="mb-6 border border-emerald-200 bg-gradient-to-r from-emerald-50/50 to-white rounded-2xl shadow-sm">
+            {false && showExcelImport && <Card className="mb-6 border border-emerald-200 bg-gradient-to-r from-emerald-50/50 to-white rounded-2xl shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-base">
                   <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-2">
@@ -2244,7 +2244,7 @@ export function Admin({ onClose }: AdminProps) {
                     <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 bg-white hover:bg-gray-50 transition-colors">
                       <Upload className="w-4 h-4 text-gray-500 shrink-0" />
                       <span className="text-sm text-gray-600 truncate">
-                        {importFile ? importFile.name : ".xlsx / .xls auswählen"}
+                        {importFile ? importFile?.name : ".xlsx / .xls auswählen"}
                       </span>
                     </div>
                     <input
@@ -2268,29 +2268,29 @@ export function Admin({ onClose }: AdminProps) {
                 </div>
 
                 {importResult && (
-                  <div className={`mt-4 rounded-lg p-3 text-sm ${importResult.success ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
-                    {importResult.success ? (
+                  <div className={`mt-4 rounded-lg p-3 text-sm ${importResult?.success ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
+                    {importResult?.success ? (
                       <div className="space-y-1">
-                        <p className="font-medium text-green-800">Import abgeschlossen ({importResult.parsed} verarbeitet)</p>
+                        <p className="font-medium text-green-800">Import abgeschlossen ({importResult?.parsed} verarbeitet)</p>
                         <div className="flex gap-4 text-green-700 flex-wrap">
-                          <span>✅ Neu: <strong>{importResult.inserted}</strong></span>
-                          <span>🔄 Aktualisiert: <strong>{importResult.updated}</strong></span>
-                          <span>🗑 Gelöscht: <strong>{importResult.deleted ?? 0}</strong></span>
-                          <span>⏭ Übersprungen: <strong>{importResult.skipped}</strong></span>
+                          <span>✅ Neu: <strong>{importResult?.inserted}</strong></span>
+                          <span>🔄 Aktualisiert: <strong>{importResult?.updated}</strong></span>
+                          <span>🗑 Gelöscht: <strong>{importResult?.deleted ?? 0}</strong></span>
+                          <span>⏭ Übersprungen: <strong>{importResult?.skipped}</strong></span>
                         </div>
-                        {importResult.errors && importResult.errors.length > 0 && (
+                        {(importResult?.errors?.length ?? 0) > 0 && (
                           <details className="mt-2">
                             <summary className="cursor-pointer text-yellow-700 font-medium">
-                              {importResult.errors.length} Warnungen anzeigen
+                              {importResult?.errors?.length} Warnungen anzeigen
                             </summary>
                             <ul className="mt-1 space-y-0.5 text-yellow-700 text-xs">
-                              {importResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+                              {importResult?.errors?.map((e, i) => <li key={i}>{e}</li>)}
                             </ul>
                           </details>
                         )}
                       </div>
                     ) : (
-                      <p className="text-red-700 font-medium">Fehler: {importResult.error}</p>
+                      <p className="text-red-700 font-medium">Fehler: {importResult?.error}</p>
                     )}
                   </div>
                 )}
@@ -2298,7 +2298,7 @@ export function Admin({ onClose }: AdminProps) {
             </Card>}
 
             {/* Excel Add (sin borrar) — HIDDEN */}
-            {false && <Card className="mb-6 border border-blue-200 bg-gradient-to-r from-blue-50/50 to-white rounded-2xl shadow-sm">
+            {true && <Card className="mb-6 border border-blue-200 bg-gradient-to-r from-blue-50/50 to-white rounded-2xl shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-base">
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">

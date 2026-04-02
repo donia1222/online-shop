@@ -111,7 +111,7 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
 
         {!inStock && (
           <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-            <span className="bg-[#1A1A1A]/80 text-white text-xs font-bold px-3 py-1.5 rounded-full">Ausverkauft</span>
+            <span className="bg-[#1A1A1A]/80 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Im Moment nicht im Lager</span>
           </div>
         )}
         {product.badge && (
@@ -119,6 +119,9 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
             {product.badge}
           </span>
         )}
+
+        {/* Stock indicator */}
+        <div className={`absolute top-2.5 left-2.5 w-2.5 h-2.5 rounded-full shadow ${inStock ? "bg-emerald-500" : "bg-red-500"}`} />
 
         {/* Wishlist heart */}
         <button
@@ -501,7 +504,7 @@ export default function ShopGrid() {
       const matchSearch   = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase())
       const matchCategory = activeCategory === "all" || p.category === activeCategory
       const matchSupplier = activeSupplier === "all" || (p.origin && getCanonicalOrigin(p.origin) === activeSupplier)
-      const matchStock    = stockFilter === "out_of_stock" ? (p.stock ?? 0) === 0 : true
+      const matchStock    = stockFilter === "out_of_stock" ? (p.stock ?? 0) > 0 : true
       return matchSearch && matchCategory && matchSupplier && matchStock
     })
     .sort((a, b) => {
@@ -808,7 +811,7 @@ export default function ShopGrid() {
               <div className="border-t border-[#F3F3F3] pt-4">
                 <p className="text-[10px] font-black text-[#AAAAAA] uppercase tracking-[0.15em] mb-3">Verfügbarkeit</p>
                 <ul className="space-y-0.5">
-                  {([["all", "Auf Lager"], ["out_of_stock", "Ausverkauft"]] as const).map(([val, label]) => (
+                  {([["all", "Alle"], ["out_of_stock", "An Lager"]] as const).map(([val, label]) => (
                     <li key={val}>
                       <button
                         onClick={() => { setShowWishlist(false); setStockFilter(val); setSidebarOpen(false) }}

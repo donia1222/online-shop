@@ -52,7 +52,7 @@ try {
             $category     = isset($p['category'])     ? trim($p['category'])          : '';
             $categoryName = isset($p['category_name']) ? trim($p['category_name'])    : $category;
             $image_url    = isset($p['image_url']) && $p['image_url'] !== '' ? trim($p['image_url']) : null;
-            $weight_kg    = isset($p['weight_kg']) && $p['weight_kg'] > 0 ? floatval($p['weight_kg']) : 0.500;
+            $weight_kg    = isset($p['weight_kg']) && floatval($p['weight_kg']) > 0 ? floatval($p['weight_kg']) : null;
 
             if ($id <= 0 || $name === '') {
                 $skipped++;
@@ -82,7 +82,7 @@ try {
                          heat_level, rating, badge, image_url, weight_kg)
                     VALUES
                         (:id, :name, :description, :price, :stock, :supplier, :origin, :category,
-                         1, 0.0, '', :image_url, :weight_kg)
+                         1, 0.0, '', :image_url, COALESCE(:weight_kg_ins, 0.500))
                     ON DUPLICATE KEY UPDATE
                         name        = VALUES(name),
                         description = VALUES(description),
@@ -91,8 +91,7 @@ try {
                         supplier    = VALUES(supplier),
                         origin      = VALUES(origin),
                         category    = VALUES(category),
-                        image_url   = IF(VALUES(image_url) IS NOT NULL, VALUES(image_url), image_url),
-                        weight_kg   = VALUES(weight_kg),
+                        weight_kg   = IF(:weight_kg_upd IS NOT NULL, :weight_kg_upd, weight_kg),
                         updated_at  = CURRENT_TIMESTAMP";
 
             $stmt = $pdo->prepare($sql);
@@ -106,7 +105,8 @@ try {
                 ':origin'      => $origin,
                 ':category'    => $category,
                 ':image_url'   => $image_url,
-                ':weight_kg'   => $weight_kg,
+                ':weight_kg_ins' => $weight_kg,
+                ':weight_kg_upd' => $weight_kg,
             ]);
 
             $affected = $stmt->rowCount();

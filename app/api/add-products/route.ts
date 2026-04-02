@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
         const description = String(getCol(row, "Beschreibung") ?? "").trim()
         const supplier = String(getCol(row, "Lieferant") ?? "").trim()
         const origin = String(getCol(row, "Hersteller") ?? "").trim()
+        const weight_kg = parseFloat(String(getCol(row, "Gewicht kg", "Gewicht (kg)", "Gewicht", "weight_kg") ?? 0)) || 0.500
 
         const artikelNr = String(id).trim()
         const rawImage = artikelToUrl.get(artikelNr)
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
           category: categorySlug,
           category_name: categoryName,
           image_url,
+          weight_kg,
         })
       }
     }

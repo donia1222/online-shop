@@ -313,7 +313,7 @@ export default function ProductPage() {
                 {!inStock && (
                   <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
                     <span className="bg-[#1A1A1A]/80 text-white text-sm font-bold px-4 py-2 rounded-full">
-                      Ausverkauft
+                      Im Moment nicht im Lager
                     </span>
                   </div>
                 )}
@@ -356,7 +356,7 @@ export default function ProductPage() {
                 inStock ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-500"
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${inStock ? "bg-emerald-500" : "bg-red-400"}`} />
-                {inStock ? `Auf Lager · ${product.stock} Stück` : "Nicht verfügbar"}
+                {inStock ? `Auf Lager · ${product.stock} Stück` : "Im Moment nicht im Lager"}
               </div>
 
               {product.description && (
@@ -385,17 +385,17 @@ export default function ProductPage() {
                   }`}
                 >
                   {added ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
-                  {added ? "Hinzugefügt!" : inStock ? "In den Warenkorb" : "Ausverkauft"}
+                  {added ? "Hinzugefügt!" : inStock ? "In den Warenkorb" : "Im Moment nicht im Lager"}
                 </button>
                 {!inStock && (
-                  <p className="text-xs text-center text-[#999] mt-3">
+                  <div className="flex justify-center mt-3">
                     <a
                       href={`mailto:info@usfh.ch?subject=Verfügbarkeitsanfrage: ${encodeURIComponent(product.name)}&body=Guten Tag,%0A%0Aich würde gerne wissen, ob der folgende Artikel wieder verfügbar ist:%0A%0AArtikel: ${encodeURIComponent(product.name)}%0AArtikel-Nr.: ${product.id}%0A%0AVielen Dank!`}
-                      className="underline hover:text-[#8B5E3C] transition-colors"
+                      className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200 transition-colors"
                     >
                       Nach Verfügbarkeit anfragen
                     </a>
-                  </p>
+                  </div>
                 )}
                 <button
                   onClick={toggleWishlist}
