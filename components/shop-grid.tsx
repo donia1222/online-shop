@@ -1206,10 +1206,10 @@ export default function ShopGrid() {
                   <div className="text-center mt-10">
                     <button
                       onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-                      className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-white hover:bg-[#2C5F2E] hover:text-white text-[#1A1A1A] border-2 border-[#2C5F2E]/25 hover:border-[#2C5F2E] rounded-full text-sm font-bold transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-[#2C5F2E]/15 active:scale-[0.98]"
+                      className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-[#2C5F2E] hover:bg-[#1A4520] text-white border-2 border-[#2C5F2E] hover:border-[#1A4520] rounded-full text-sm font-bold transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-[#2C5F2E]/30 active:scale-[0.98]"
                     >
                       Mehr laden
-                      <span className="bg-[#2C5F2E]/10 text-[#2C5F2E] text-xs font-black px-2.5 py-0.5 rounded-full">
+                      <span className="bg-white/20 text-white text-xs font-black px-2.5 py-0.5 rounded-full">
                         +{filtered.length - visibleCount}
                       </span>
                     </button>
