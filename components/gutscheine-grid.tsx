@@ -33,6 +33,7 @@ interface CartItem {
 const CART_KEY = "cantina-cart"
 const CART_COUNT_KEY = "cantina-cart-count"
 const gcEnabled = false
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 export default function GutscheineGrid() {
   const router = useRouter()
@@ -43,9 +44,29 @@ export default function GutscheineGrid() {
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set())
   const [cartOpen, setCartOpen] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
+  const [paySettings, setPaySettings] = useState<{
+    enable_paypal: boolean; enable_stripe: boolean; enable_twint: boolean; enable_invoice: boolean
+  } | null>(null)
 
   const [showBackTop, setShowBackTop] = useState(false)
   const { toast } = useToast()
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/get_payment_settings.php`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.settings) {
+          const s = data.settings
+          setPaySettings({
+            enable_paypal: !!s.enable_paypal,
+            enable_stripe: !!s.enable_stripe,
+            enable_twint: !!s.enable_twint,
+            enable_invoice: s.enable_invoice !== false,
+          })
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     loadCards()
@@ -353,6 +374,46 @@ export default function GutscheineGrid() {
               </div>
             ))}
           </div>
+
+          {/* Payment footer */}
+          {paySettings && (paySettings.enable_invoice || paySettings.enable_stripe || paySettings.enable_twint || paySettings.enable_paypal) && (
+            <div className="border-t border-[#E0E0E0] py-5 bg-white rounded-2xl mb-8">
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <div className="flex items-center gap-1.5 pr-4 border-r border-[#E0E0E0]">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#2C5F2E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span className="text-[11px] font-semibold text-[#555] tracking-widest uppercase">Sichere Zahlung</span>
+                </div>
+                {paySettings.enable_invoice && (
+                  <div className="h-8 px-3 rounded-lg bg-[#F5F5F5] border border-[#E0E0E0] flex items-center gap-1.5 shadow-sm">
+                    <span className="text-base">🏦</span>
+                    <span className="text-[11px] font-bold text-[#444]">Rechnung</span>
+                  </div>
+                )}
+                {paySettings.enable_twint && (
+                  <div className="h-8 px-3 rounded-lg bg-black flex items-center shadow-sm">
+                    <img src="/twint-logo.svg" alt="TWINT" className="h-5 w-auto" />
+                  </div>
+                )}
+                {paySettings.enable_stripe && (
+                  <>
+                    <div className="h-8 px-4 rounded-lg bg-[#1A1F71] flex items-center shadow-sm">
+                      <span className="font-black text-white text-base italic tracking-tight">VISA</span>
+                    </div>
+                    <div className="h-8 px-3 rounded-lg bg-white border border-[#E0E0E0] flex items-center gap-1 shadow-sm">
+                      <div className="w-4 h-4 rounded-full bg-[#EB001B]" />
+                      <div className="w-4 h-4 rounded-full bg-[#F79E1B] -ml-2" />
+                      <span className="text-[11px] font-bold text-[#333] ml-1.5">Mastercard</span>
+                    </div>
+                  </>
+                )}
+                {paySettings.enable_paypal && (
+                  <div className="h-8 px-3 rounded-lg bg-white border border-[#E0E0E0] flex items-center shadow-sm">
+                    <img src="/0014294_paypal-express-payment-plugin.png" alt="PayPal" className="h-6 w-auto object-contain" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
