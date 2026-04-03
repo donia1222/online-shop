@@ -21,9 +21,11 @@ try {
     $id          = intval($_POST['id'] ?? 0);
     $name        = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
+    $parent_id   = isset($_POST['parent_id']) && intval($_POST['parent_id']) > 0 ? intval($_POST['parent_id']) : null;
 
     if ($id <= 0) throw new Exception('ID de categoría requerido');
     if (empty($name)) throw new Exception('El nombre es requerido');
+    if ($parent_id !== null && $parent_id === $id) throw new Exception('Una categoría no puede ser su propio padre');
 
     // Verificar que existe
     $stmt = $pdo->prepare("SELECT id, slug FROM categories WHERE id = :id");
@@ -32,13 +34,13 @@ try {
     if (!$existing) throw new Exception('Kategorie nicht gefunden');
 
     // Actualizar solo nombre y descripción (el slug no cambia para no romper productos)
-    $stmt = $pdo->prepare("UPDATE categories SET name = :name, description = :description WHERE id = :id");
-    $stmt->execute([':name' => $name, ':description' => $description, ':id' => $id]);
+    $stmt = $pdo->prepare("UPDATE categories SET name = :name, description = :description, parent_id = :parent_id WHERE id = :id");
+    $stmt->execute([':name' => $name, ':description' => $description, ':parent_id' => $parent_id, ':id' => $id]);
 
     echo json_encode([
         'success' => true,
         'message' => 'Kategorie erfolgreich aktualisiert',
-        'category' => ['id' => $id, 'slug' => $existing['slug'], 'name' => $name, 'description' => $description]
+        'category' => ['id' => $id, 'parent_id' => $parent_id, 'slug' => $existing['slug'], 'name' => $name, 'description' => $description]
     ]);
 
 } catch (Exception $e) {

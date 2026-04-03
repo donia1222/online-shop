@@ -20,9 +20,16 @@ try {
 
     $name        = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
+    $parent_id   = isset($_POST['parent_id']) && intval($_POST['parent_id']) > 0 ? intval($_POST['parent_id']) : null;
 
     if (empty($name)) {
         throw new Exception('El nombre de la categoría es requerido');
+    }
+
+    if ($parent_id !== null) {
+        $check = $pdo->prepare("SELECT id FROM categories WHERE id = :id");
+        $check->execute([':id' => $parent_id]);
+        if (!$check->fetch()) throw new Exception('Kategoría padre no existe');
     }
 
     // Generar slug a partir del nombre: minúsculas, espacios → guión, solo alfanumérico y guiones
@@ -41,8 +48,9 @@ try {
         throw new Exception('Ya existe una categoría con ese nombre');
     }
 
-    $stmt = $pdo->prepare("INSERT INTO categories (slug, name, description) VALUES (:slug, :name, :description)");
+    $stmt = $pdo->prepare("INSERT INTO categories (parent_id, slug, name, description) VALUES (:parent_id, :slug, :name, :description)");
     $stmt->execute([
+        ':parent_id'   => $parent_id,
         ':slug'        => $slug,
         ':name'        => $name,
         ':description' => $description
@@ -55,6 +63,7 @@ try {
         'message'  => 'Categoría creada exitosamente',
         'category' => [
             'id'          => $new_id,
+            'parent_id'   => $parent_id,
             'slug'        => $slug,
             'name'        => $name,
             'description' => $description

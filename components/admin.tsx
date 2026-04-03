@@ -143,6 +143,7 @@ interface ProductStats {
 
 interface Category {
   id: number
+  parent_id: number | null
   slug: string
   name: string
   description: string
@@ -2217,70 +2218,89 @@ export function Admin({ onClose }: AdminProps) {
             </div>
 
             {/* Categories List */}
-            {categories.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Kategorien</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {categories.map((cat) => {
-                    const productCount = products.filter((p) => p.category === cat.slug).length
-                    return (
-                      <div key={cat.slug} className={`flex flex-col rounded-2xl bg-white border shadow-sm hover:shadow-md transition-all overflow-hidden ${productFilters.category === cat.slug ? "border-blue-400 ring-2 ring-blue-200" : "border-gray-100 hover:border-gray-200"}`}>
-                        <div className="flex items-center gap-2.5 px-3.5 pt-3 pb-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-500 rounded-xl flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20">
-                            <Flame className="w-4 h-4 text-white" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-gray-900 text-sm truncate">{cat.name}</p>
-                            <p className="text-[11px] text-gray-400 font-medium">{productCount} Produkt{productCount !== 1 ? "e" : ""}</p>
-                          </div>
-                        </div>
-                        {categoryDeleteWarning === cat.slug && (
-                          <div className="mx-3 mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-700 leading-snug">
-                            ⚠️ Diese Kategorie hat <strong>{productCount} Produkte</strong>. Lösche oder ändere die Kategorie der Produkte, um sie zu entfernen.
-                          </div>
-                        )}
-                        <div className="flex border-t border-gray-100 mt-1">
-                          <button
-                            onClick={() => {
-                              const isActive = productFilters.category === cat.slug
-                              setProductFilters(prev => ({ ...prev, category: isActive ? "" : cat.slug }))
-                              if (!isActive) setTimeout(() => productsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
-                            }}
-                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold transition-colors ${productFilters.category === cat.slug ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-50"}`}
-                          >
-                            <Eye className="w-3 h-3" />
-                            Ansehen
-                          </button>
-                          <div className="w-px bg-gray-100" />
-                          <button
-                            onClick={() => { setEditingCategory(cat); setIsCategoryModalOpen(true) }}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-green-700 hover:bg-green-50 transition-colors"
-                          >
-                            <Edit className="w-3 h-3" />
-                            Bearbeiten
-                          </button>
-                          <div className="w-px bg-gray-100" />
-                          <button
-                            onClick={() => {
-                              if (productCount > 0) {
-                                setCategoryDeleteWarning(prev => prev === cat.slug ? null : cat.slug)
-                              } else {
-                                setCategoryDeleteWarning(null)
-                                handleDeleteCategory(cat)
-                              }
-                            }}
-                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold transition-colors ${categoryDeleteWarning === cat.slug ? "bg-amber-50 text-amber-600" : "text-red-500 hover:bg-red-50"}`}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                            Löschen
-                          </button>
-                        </div>
+            {(() => {
+              const renderCatCard = (cat: Category) => {
+                const productCount = products.filter((p) => p.category === cat.slug).length
+                const parentName = cat.parent_id ? categories.find(c => c.id === cat.parent_id)?.name : null
+                return (
+                  <div key={cat.slug} className={`flex flex-col rounded-2xl border shadow-sm hover:shadow-md transition-all overflow-hidden ${cat.parent_id ? "border-dashed bg-blue-100" : "bg-white"} ${productFilters.category === cat.slug ? "border-blue-400 ring-2 ring-blue-200" : "border-gray-100 hover:border-gray-200"}`}>
+                    <div className="flex items-center gap-2.5 px-3.5 pt-3 pb-2">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${cat.parent_id ? "bg-gradient-to-br from-blue-400 to-blue-300 shadow-blue-300/20" : "bg-gradient-to-br from-blue-600 to-blue-500 shadow-blue-500/20"}`}>
+                        <Flame className="w-4 h-4 text-white" />
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+                      <div className="min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate">{cat.name}</p>
+                        {parentName && <p className="text-xs text-blue-500 font-bold truncate">Kategorie ↳ {parentName}</p>}
+                        <p className="text-[11px] text-gray-400 font-medium">{productCount} Produkt{productCount !== 1 ? "e" : ""}</p>
+                      </div>
+                    </div>
+                    {categoryDeleteWarning === cat.slug && (
+                      <div className="mx-3 mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-700 leading-snug">
+                        ⚠️ Diese Kategorie hat <strong>{productCount} Produkte</strong>. Lösche oder ändere die Kategorie der Produkte, um sie zu entfernen.
+                      </div>
+                    )}
+                    <div className="flex border-t border-gray-100 mt-1">
+                      <button
+                        onClick={() => {
+                          const isActive = productFilters.category === cat.slug
+                          setProductFilters(prev => ({ ...prev, category: isActive ? "" : cat.slug }))
+                          if (!isActive) setTimeout(() => productsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold transition-colors ${productFilters.category === cat.slug ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-50"}`}
+                      >
+                        <Eye className="w-3 h-3" />
+                        Ansehen
+                      </button>
+                      <div className="w-px bg-gray-100" />
+                      <button
+                        onClick={() => { setEditingCategory(cat); setIsCategoryModalOpen(true) }}
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-green-700 hover:bg-green-50 transition-colors"
+                      >
+                        <Edit className="w-3 h-3" />
+                        Bearbeiten
+                      </button>
+                      <div className="w-px bg-gray-100" />
+                      <button
+                        onClick={() => {
+                          if (productCount > 0) {
+                            setCategoryDeleteWarning(prev => prev === cat.slug ? null : cat.slug)
+                          } else {
+                            setCategoryDeleteWarning(null)
+                            handleDeleteCategory(cat)
+                          }
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold transition-colors ${categoryDeleteWarning === cat.slug ? "bg-amber-50 text-amber-600" : "text-red-500 hover:bg-red-50"}`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Löschen
+                      </button>
+                    </div>
+                  </div>
+                )
+              }
+              const mainCats = categories.filter(c => c.parent_id === null)
+              const subCats = categories.filter(c => c.parent_id !== null)
+              return (
+                <>
+                  {mainCats.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Kategorien</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {mainCats.map(renderCatCard)}
+                      </div>
+                    </div>
+                  )}
+                  {subCats.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">Subkategorien</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {subCats.map(renderCatCard)}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )
+            })()}
 
             <div className="mb-4">
               <h2 className="text-xl font-black text-gray-900 tracking-tight">Produkte hinzufügen</h2>
@@ -3797,6 +3817,24 @@ export function Admin({ onClose }: AdminProps) {
                   {editingCategory && (
                     <p className="text-xs text-gray-400 mt-1">Slug: <span className="font-mono">{editingCategory.slug}</span> (wird nicht geändert)</p>
                   )}
+                </div>
+                <div>
+                  <Label htmlFor="cat-parent" className="text-sm font-medium">Übergeordnete Kategorie</Label>
+                  <select
+                    id="cat-parent"
+                    name="parent_id"
+                    defaultValue={editingCategory?.parent_id ?? ""}
+                    key={(editingCategory?.id ?? "new") + "-parent"}
+                    className="w-full mt-1 h-12 sm:h-10 px-3 text-base sm:text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2C5F2E]"
+                  >
+                    <option value="">— Keine (Hauptkategorie) —</option>
+                    {categories
+                      .filter(c => c.parent_id === null && c.id !== editingCategory?.id)
+                      .map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))
+                    }
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="cat-description" className="text-sm font-medium">Beschreibung</Label>

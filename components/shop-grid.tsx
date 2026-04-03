@@ -28,7 +28,7 @@ interface CartItem {
   description: string; heatLevel: number; rating: number; weight_kg?: number
   badge?: string; origin?: string; quantity: number
 }
-interface Category { id: number; slug: string; name: string }
+interface Category { id: number; parent_id: number | null; slug: string; name: string }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -249,7 +249,6 @@ function CatCard({ srcs, displayName, isActive, onClick }: {
         boxShadow: isActive ? "0 8px 32px rgba(44,95,46,0.3)" : "none",
       }}
     >
-      {/* Image */}
       {img && (
         <img
           src={img}
@@ -258,22 +257,16 @@ function CatCard({ srcs, displayName, isActive, onClick }: {
           onError={() => setIdx(i => i + 1)}
         />
       )}
-
-      {/* Gradient — solo en la parte inferior para el texto */}
       <div className="absolute inset-0" style={{
         background: isActive
           ? "linear-gradient(to top, rgba(44,95,46,0.75) 0%, transparent 50%)"
           : "linear-gradient(to top, rgba(0,0,0,0.60) 0%, transparent 50%)"
       }} />
-
-      {/* Active check */}
       {isActive && (
         <div className="absolute top-3 right-3 w-6 h-6 bg-[#2C5F2E] rounded-full flex items-center justify-center shadow-lg">
           <Check className="w-3.5 h-3.5 text-white" />
         </div>
       )}
-
-      {/* Name */}
       <div className="absolute bottom-0 left-0 right-0 px-3.5 pb-3.5">
         <span className="text-white font-black text-sm leading-tight block tracking-wide drop-shadow-lg">
           {displayName}
@@ -819,11 +812,15 @@ export default function ShopGrid() {
               <div className="border-t border-[#F3F3F3] pt-4">
                 <p className="text-[10px] font-black text-[#AAAAAA] uppercase tracking-[0.15em] mb-3">Kategorien</p>
                 <ul className="space-y-0.5">
-                  {categories.map(cat => {
-                    const count = cat.slug === "all" ? products.length : products.filter(p => p.category === cat.slug).length
+                  {categories
+                    .filter(c => c.parent_id === null)
+                    .flatMap(parent => [parent, ...categories.filter(c => c.parent_id === parent.id)])
+                  .map(cat => {
+                    const count = products.filter(p => p.category === cat.slug).length
                     const isActive = activeCategory === cat.slug
+                    const isSub = cat.parent_id !== null
                     return (
-                      <li key={cat.slug}>
+                      <li key={cat.slug} className={isSub ? "pl-3" : ""}>
                         <button
                           onClick={() => { setShowWishlist(false); setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug); setSidebarOpen(false) }}
                           className={`w-full text-left flex items-center justify-between text-sm px-3 py-2 rounded-xl transition-all font-medium ${
@@ -832,7 +829,7 @@ export default function ShopGrid() {
                               : "text-[#555] hover:bg-[#F5F5F5] hover:text-[#1A1A1A]"
                           }`}
                         >
-                          <span className="truncate">{cat.name.replace(/\s*\d{4}$/, "")}</span>
+                          <span className="truncate">{isSub ? "↳ " : ""}{cat.name.replace(/\s*\d{4}$/, "")}</span>
                           <span className={`text-[10px] font-bold ml-2 px-1.5 py-0.5 rounded-full flex-shrink-0 ${isActive ? "bg-white/25 text-white" : "bg-[#F0F0F0] text-[#888]"}`}>{count}</span>
                         </button>
                       </li>
@@ -923,7 +920,7 @@ export default function ShopGrid() {
                   <p className="text-[11px] mt-0.5 font-medium text-[#999]">Alles anzeigen →</p>
                 </div>
               </button>
-              {categories.map(cat => {
+              {categories.filter(cat => cat.parent_id === null).map(cat => {
                 const catProds = products.filter(p =>
                   p.category === cat.slug || p.category === cat.name
                 )
@@ -1003,6 +1000,48 @@ export default function ShopGrid() {
                 })}
               </div>
             </div>
+
+            {/* ── Subcategory bar — visible when active category has subcategories ── */}
+            {(() => {
+              const activeCat = categories.find(c => c.slug === activeCategory)
+              // Si la categoría activa es una sub, busca el padre
+              const parentCat = activeCat?.parent_id
+                ? categories.find(c => c.id === activeCat.parent_id)
+                : activeCat
+              const subs = parentCat ? categories.filter(c => c.parent_id === parentCat.id) : []
+              if (subs.length === 0) return null
+              return (
+                <div className="border-t border-[#E0E0E0] mt-6 pt-6">
+                  <div className="flex items-start gap-2.5 mb-2.5">
+                    <div className="w-0.5 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
+                    <div>
+                      <p className="font-black text-[#2C5F2E] text-xl lg:text-2xl leading-tight">Subkategorien</p>
+                      <p className="text-sm text-[#888] mt-1">{parentCat?.name.replace(/\s*\d{4}$/, "")}</p>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto mb-3 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <div className="flex items-center gap-1.5 min-w-max pb-1">
+                      {subs.map(sub => {
+                        const isSubActive = activeCategory === sub.slug
+                        return (
+                          <button
+                            key={sub.slug}
+                            onClick={() => setActiveCategory(prev => prev === sub.slug ? parentCat!.slug : sub.slug)}
+                            className="px-2.5 py-1 rounded-full border transition-all whitespace-nowrap text-[11px] font-black uppercase tracking-wider"
+                            style={isSubActive
+                              ? { backgroundColor: "#2C5F2E", color: "#fff", borderColor: "#2C5F2E" }
+                              : { backgroundColor: "#4a7f4c", color: "#fff", borderColor: "#4a7f4c" }
+                            }
+                          >
+                            {sub.name.replace(/\s*\d{4}$/, "")}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* ── Supplier section ── */}
             {suppliers.length > 0 && (
