@@ -299,7 +299,7 @@ export default function GutscheineGrid() {
                       {card.description && (
                         <p className="text-xs sm:text-sm text-gray-500 line-clamp-2">{card.description}</p>
                       )}
-                      <p className="hidden sm:block text-[9px] font-bold tracking-[0.08em] uppercase text-[#AAA] mt-1 leading-relaxed">
+                      <p className="text-[9px] font-bold tracking-[0.08em] uppercase text-[#2C5F2E] mt-1 leading-relaxed">
                         ALLES FUER DIE BACH FLUSS UND SEEFISCHE<br />
                         ** ARMBRUESTE UND PFEILBOEG<br />
                         ** GROSSES MESSERSORTIME
