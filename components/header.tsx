@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, ChevronDown, Menu, ArrowUp, Newspaper, Download, Images, Mail } from "lucide-react"
+import { ShoppingCart, ChevronDown, Menu, ArrowUp, Newspaper, Download, Images, Mail, Gift } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { LoginAuth } from "./login-auth"
 
@@ -51,6 +51,7 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
       label: cat.name,
       href: `/shop?cat=${encodeURIComponent(cat.name)}`,
     })),
+    { label: "Gutscheine", href: "/gutscheine" },
   ]
 
   const handleLoginSuccess = (_user: any) => {}
@@ -112,8 +113,9 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
                     <button
                       key={i}
                       onClick={() => { router.push(cat.href); setIsMenuOpen(false) }}
-                      className={`w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] ${cat.highlight ? "text-[#CC0000] font-bold" : "text-[#333333] font-medium"}`}
+                      className={`w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] flex items-center gap-2 ${cat.highlight ? "text-[#CC0000] font-bold" : "text-[#333333] font-medium"}`}
                     >
+                      {cat.label === "Gutscheine" && <Gift className="w-4 h-4 shrink-0" />}
                       {cat.label}
                     </button>
                   ))}
@@ -188,6 +190,13 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
           {/* RIGHT: Blog + Gallery + Login + Cart */}
           <div className="flex items-center gap-1 justify-end">
             <button
+              onClick={() => router.push("/gutscheine")}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#333333] hover:text-[#2C5F2E] hover:bg-[#F5F5F5] rounded-xl transition-colors"
+            >
+              <Gift className="w-4 h-4 text-[#2C5F2E]" />
+              Gutscheine
+            </button>
+            <button
               onClick={() => router.push("/blog")}
               className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#333333] hover:text-[#2C5F2E] hover:bg-[#F5F5F5] rounded-xl transition-colors"
             >
@@ -246,7 +255,7 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             <div className="flex items-center justify-center min-w-max mx-auto px-4">
-            {categories.filter(cat => cat.label !== "Home").map((cat, i) => (
+            {categories.filter(cat => cat.label !== "Home" && cat.label !== "Gutscheine").map((cat, i) => (
               <button
                 key={i}
                 onClick={() => router.push(cat.href)}

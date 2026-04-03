@@ -15,7 +15,7 @@ function sendInvoiceConfirmationEmail($data) {
     // Configuración de emails
     $toStore = 'info@usfh.ch';
     $toCustomer = $customerInfo['email'];
-    $fromEmail = 'info@lweb.ch';
+    $fromEmail = 'info@usfh.ch';
     
     // ===== EMAIL PARA LA TIENDA (Factura) =====
     $storeSubject = '🎣 NEUE BESTELLUNG - US Fishing & Huntingshop - ' . $orderNumber;
@@ -163,7 +163,7 @@ function generateStoreInvoiceEmail($customerInfo, $billingAddress, $cart, $total
 
             <div class='footer'>
                 <p><strong>US - Fishing &amp; Huntingshop</strong></p>
-                <p>info@lweb.ch</p>
+                <p>info@usfh.ch</p>
             </div>
         </div>
     </body>
@@ -270,7 +270,7 @@ function generateCustomerInvoiceEmail($customerInfo, $billingAddress, $cart, $to
     $content .= "
             <div class='footer'>
                 <p><strong>US - Fishing &amp; Huntingshop</strong></p>
-                <p>info@lweb.ch</p>
+                <p>info@usfh.ch</p>
                 <p style='margin-top: 8px; font-size: 12px; color: #b8a080;'>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
             </div>
         </div>
@@ -291,7 +291,7 @@ function sendPayPalConfirmationEmail($data) {
     // Configuración de emails
     $toStore = 'info@usfh.ch';
     $toCustomer = $customerInfo['email'];
-    $fromEmail = 'info@lweb.ch';
+    $fromEmail = 'info@usfh.ch';
     
     // ===== EMAIL PARA LA TIENDA (PayPal) =====
     $storeSubject = '🎣 NEUE BESTELLUNG - US Fishing & Huntingshop - PayPal ID: ' . $paypalPayerID;
@@ -542,13 +542,13 @@ function generateCustomerPayPalEmail($customerInfo, $billingAddress, $cart, $tot
                 <p>📦 Wir bereiten Ihre Bestellung vor</p>
                 <p>🚚 Versand in 2-3 Werktagen</p>
                 <p>📧 Sie erhalten eine Tracking-Nummer per E-Mail</p>
-                <p>📞 Bei Fragen: info@lweb.ch</p>
+                <p>📞 Bei Fragen: info@usfh.ch</p>
             </div>
 
             <div class='footer'>
                 <p><strong>Vielen Dank für Ihr Vertrauen!</strong></p>
                 <p>🎣 US - Fishing &amp; Huntingshop Team</p>
-                <p>info@lweb.ch</p>
+                <p>info@usfh.ch</p>
             </div>
         </div>
     </body>
@@ -565,9 +565,9 @@ function sendOrderConfirmationEmail($data) {
     $orderNumber   = $data['orderNumber'];
     $paymentMethod = $data['paymentMethod'] ?? 'stripe';
 
-    $toStore    = 'info@lweb.ch';
+    $toStore    = 'info@usfh.ch';
     $toCustomer = $customerInfo['email'];
-    $fromEmail  = 'info@lweb.ch';
+    $fromEmail  = 'info@usfh.ch';
 
     $methodLabel = match($paymentMethod) {
         'stripe'       => 'Kreditkarte (Stripe)',

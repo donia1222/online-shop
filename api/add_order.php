@@ -2,6 +2,7 @@
 // Incluir configuración y funciones de email
 require_once 'config.php';
 require_once 'email_functions.php';
+require_once 'process_gift_card_order.php';
 
 // Configurar headers CORS y content type
 header('Content-Type: application/json');
@@ -102,14 +103,17 @@ try {
     $stockUpdates = [];
     
     foreach ($cart as $index => $item) {
+        // Saltar gutscheine — no tienen stock en products
+        if (($item['item_type'] ?? '') === 'gutschein') continue;
+
         $productId = $item['id'] ?? 0;
         $requestedQuantity = $item['quantity'] ?? 1;
-        
+
         if ($productId <= 0) {
             $stockErrors[] = "Producto inválido en posición $index";
             continue;
         }
-        
+
         // Obtener stock actual del producto
         $stockSql = "SELECT id, name, stock FROM products WHERE id = :id";
         $stockStmt = $pdo->prepare($stockSql);
@@ -267,7 +271,27 @@ try {
     // Confirmar transacción
     $pdo->commit();
     error_log("Transaction committed successfully");
-    
+
+    // ============================================
+    // PROCESAR GUTSCHEINE DEL PEDIDO
+    // ============================================
+    try {
+        $giftCardItems = array_filter($cart, fn($i) => ($i['item_type'] ?? '') === 'gutschein');
+        if (!empty($giftCardItems)) {
+            $isPaidNow = ($paymentMethod !== 'invoice');
+            processGiftCardOrder(
+                $pdo,
+                (int)$orderId,
+                array_values($giftCardItems),
+                $customerInfo['firstName'] . ' ' . $customerInfo['lastName'],
+                $customerInfo['email'],
+                $isPaidNow
+            );
+        }
+    } catch (Exception $gcError) {
+        error_log("Error processing gift cards: " . $gcError->getMessage());
+    }
+
     // Enviar email de confirmación según el método de pago
     try {
         $emailData = [

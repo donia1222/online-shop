@@ -265,6 +265,9 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   // Recalculate shipping when cart or country changes
   useEffect(() => {
     if (cart.length === 0) { setShippingCost(0); setShippingInfo({ zone: "", range: "" }); return }
+    // Gift cards (item_type === "gutschein") have no shipping cost
+    const onlyGutscheine = cart.every(item => (item as any).item_type === "gutschein")
+    if (onlyGutscheine) { setShippingCost(0); setShippingInfo({ zone: "", range: "" }); return }
     const totalWeight = cart.reduce((sum, item) => sum + (item.weight_kg ?? 0.5) * item.quantity, 0)
     fetch(`${API_BASE_URL}/calculate_shipping.php`, {
       method: "POST",
@@ -420,8 +423,9 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
 
   const getShippingCost = () => shippingCost
 
-  const getMwst = () => Math.round(getTotalPrice() * 0.081 / 0.05) * 0.05
-  const getFinalTotal = () => Math.ceil((getTotalPrice() + shippingCost + getMwst()) / 0.5) * 0.5
+  const isOnlyGutscheine = () => cart.length > 0 && cart.every(item => (item as any).item_type === "gutschein")
+  const getMwst = () => isOnlyGutscheine() ? 0 : Math.round(getTotalPrice() * 0.081 / 0.05) * 0.05
+  const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((getTotalPrice() + shippingCost + getMwst()) / 0.5) * 0.5
 
   const createUserAccount = async () => {
     try {

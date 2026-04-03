@@ -730,7 +730,9 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
       doc.text(`${subtotal.toFixed(2)} CHF`, colTotal, y + 4, { align: "right" })
       doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(130, 130, 130)
       doc.text(`Art.-Nr: ${item.product_id}`, margin + 2, y + 10)
-      doc.text(`Steuersatz: ${itemMwst.toFixed(2)} CHF`, colTotal, y + 10, { align: "right" })
+      if (Number(item.product_id) >= 0) {
+        doc.text(`Steuersatz: ${itemMwst.toFixed(2)} CHF`, colTotal, y + 10, { align: "right" })
+      }
       doc.setTextColor(40, 40, 40)
       y += rowH
     })
@@ -742,22 +744,26 @@ export function UserProfile({ onClose, onAccountDeleted }: UserProfileProps) {
     y += 6
 
     const itemsSubtotal = items.reduce((s, i) => s + (Number(i.subtotal) || 0), 0)
-    const shipping = Number(order.shipping_cost) || 0
-    const netTotal = itemsSubtotal + shipping
-    const mwstAmount = Math.round(itemsSubtotal * 0.081 / 0.05) * 0.05
-    const grossTotal = netTotal + mwstAmount
-    const roundedTotal = Math.ceil(grossTotal / 0.5) * 0.5
+    const onlyGutscheine = items.length > 0 && items.every(i => Number(i.product_id) < 0)
+    const shipping = onlyGutscheine ? 0 : (Number(order.shipping_cost) || 0)
+    const mwstAmount = onlyGutscheine ? 0 : Math.round(itemsSubtotal * 0.081 / 0.05) * 0.05
+    const grossTotal = itemsSubtotal + shipping + mwstAmount
+    const roundedTotal = onlyGutscheine ? itemsSubtotal : Math.ceil(grossTotal / 0.5) * 0.5
 
     doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(40, 40, 40)
     doc.text("Zwischensumme (Artikel):", pageW - 75, y)
     doc.text(`${itemsSubtotal.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
     y += 6
-    doc.text("MwSt. 8.1%:", pageW - 75, y)
-    doc.text(`${mwstAmount.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
-    y += 6
-    doc.text("Versandkosten:", pageW - 75, y)
-    doc.text(`${shipping.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
-    y += 6
+    if (!onlyGutscheine) {
+      doc.text("MwSt. 8.1%:", pageW - 75, y)
+      doc.text(`${mwstAmount.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+      y += 6
+      if (shipping > 0) {
+        doc.text("Versandkosten:", pageW - 75, y)
+        doc.text(`${shipping.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+        y += 6
+      }
+    }
     y -= 4
     doc.setDrawColor(44, 95, 46); doc.line(pageW - 75, y, pageW - margin, y); y += 5
     doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(44, 95, 46)

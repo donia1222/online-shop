@@ -1,0 +1,360 @@
+"use client"
+
+import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { ShoppingCart, Check, Gift, ArrowLeft, Home, ArrowUp, Truck } from "lucide-react"
+import { ShoppingCartComponent } from "@/components/shopping-cart"
+import { LoginAuth } from "@/components/login-auth"
+import { CheckoutPage } from "@/components/checkout-page"
+import { useToast } from "@/hooks/use-toast"
+
+interface GiftCard {
+  id: number
+  name: string
+  description: string
+  amount: number
+  image: string | null
+  is_active: number
+}
+
+interface CartItem {
+  id: number
+  name: string
+  price: number
+  image: string
+  description: string
+  heatLevel: number
+  rating: number
+  quantity: number
+  item_type: "gutschein"
+  gift_card_id: number
+}
+
+const CART_KEY = "cantina-cart"
+const CART_COUNT_KEY = "cantina-cart-count"
+const gcEnabled = false
+
+export default function GutscheineGrid() {
+  const router = useRouter()
+  const [cards, setCards] = useState<GiftCard[]>([])
+  const [loading, setLoading] = useState(true)
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [cartCount, setCartCount] = useState(0)
+  const [addedIds, setAddedIds] = useState<Set<number>>(new Set())
+  const [cartOpen, setCartOpen] = useState(false)
+  const [showCheckout, setShowCheckout] = useState(false)
+
+  const [showBackTop, setShowBackTop] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    loadCards()
+    loadCart()
+    const onScroll = () => setShowBackTop(window.scrollY > 400)
+    window.addEventListener("scroll", onScroll)
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  const loadCards = async () => {
+    try {
+      const res = await fetch("/api/gutscheine")
+      const data = await res.json()
+      if (data.success) setCards(data.gift_cards)
+    } catch {}
+    finally { setLoading(false) }
+  }
+
+  const loadCart = () => {
+    try {
+      const saved = localStorage.getItem(CART_KEY)
+      if (saved) {
+        const data: CartItem[] = JSON.parse(saved)
+        setCart(data)
+        setCartCount(data.reduce((s, i) => s + i.quantity, 0))
+      }
+    } catch {}
+  }
+
+  const saveCart = useCallback((c: CartItem[]) => {
+    localStorage.setItem(CART_KEY, JSON.stringify(c))
+    localStorage.setItem(CART_COUNT_KEY, c.reduce((s, i) => s + i.quantity, 0).toString())
+  }, [])
+
+  const addToCart = (card: GiftCard) => {
+    const cartId = -card.id
+    setCart(prev => {
+      const exists = prev.find(i => i.id === cartId)
+      const next = exists
+        ? prev.map(i => i.id === cartId ? { ...i, quantity: i.quantity + 1 } : i)
+        : [...prev, {
+            id: cartId,
+            name: card.name,
+            price: card.amount,
+            image: "/icon-192x192.png",
+            description: card.description ?? "",
+            heatLevel: 0,
+            rating: 0,
+            quantity: 1,
+            item_type: "gutschein" as const,
+            gift_card_id: card.id,
+          }]
+      saveCart(next)
+      setCartCount(next.reduce((s, i) => s + i.quantity, 0))
+      return next
+    })
+    setAddedIds(prev => new Set([...prev, card.id]))
+    setTimeout(() => setAddedIds(prev => { const s = new Set(prev); s.delete(card.id); return s }), 2000)
+    toast({ title: "Gutschein hinzugefügt", description: card.name })
+  }
+
+  const removeFromCart = (cartId: number) => {
+    setCart(prev => {
+      const item = prev.find(i => i.id === cartId)
+      const next = item && item.quantity > 1
+        ? prev.map(i => i.id === cartId ? { ...i, quantity: i.quantity - 1 } : i)
+        : prev.filter(i => i.id !== cartId)
+      saveCart(next)
+      setCartCount(next.reduce((s, i) => s + i.quantity, 0))
+      return next
+    })
+  }
+
+  const clearCart = () => {
+    setCart([]); setCartCount(0)
+    localStorage.setItem(CART_KEY, "[]")
+    localStorage.setItem(CART_COUNT_KEY, "0")
+  }
+
+  if (showCheckout) {
+    return (
+      <CheckoutPage
+        cart={cart}
+        onBackToStore={() => setShowCheckout(false)}
+        onRemoveFromCart={removeFromCart}
+        onClearCart={clearCart}
+      />
+    )
+  }
+
+  return (
+    <>
+      {/* Side cart modal */}
+      <ShoppingCartComponent
+        isOpen={cartOpen}
+        onOpenChange={setCartOpen}
+        cart={cart}
+        onAddToCart={() => {}}
+        onRemoveFromCart={removeFromCart}
+        onGoToCheckout={() => { setCartOpen(false); setShowCheckout(true) }}
+        onClearCart={clearCart}
+      />
+
+      {/* Back to top */}
+      {showBackTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed right-6 bottom-6 z-50 bg-white hover:bg-gray-50 text-gray-700 rounded-2xl p-3 shadow-xl border border-gray-200 transition-all hover:scale-110 active:scale-95"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
+      )}
+
+      <div className="min-h-screen bg-[#F4F4F5]">
+
+        {/* ── Top bar — same as shop ── */}
+        <div className="bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+
+
+            {/* Mobile: home button + title */}
+            <button
+              onClick={() => router.push("/")}
+              className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-gray-100 text-gray-600 hover:bg-[#2C5F2E] hover:text-white transition-all flex-shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <span className="lg:hidden flex-shrink-0" style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.1rem', color: '#333333' }}>Gutscheine kaufen</span>
+
+            {/* Desktop: ← Home button */}
+            <button
+              onClick={() => router.push("/")}
+              className="hidden lg:flex items-center gap-2 text-[#555] hover:text-[#2C5F2E] transition-colors group flex-shrink-0"
+            >
+              <div className="w-9 h-9 rounded-xl bg-gray-100 group-hover:bg-[#2C5F2E] group-hover:text-white flex items-center justify-center transition-all">
+                <Home className="w-4 h-4" />
+              </div>
+              <span style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.1rem', color: '#333333' }}>Gutscheine kaufen</span>
+            </button>
+
+            <div className="hidden lg:block w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
+
+            {/* Logo */}
+            <div className="hidden md:flex items-center flex-shrink-0">
+              <img src="/Security_n.png" alt="Logo" className="h-12 w-auto object-contain" />
+            </div>
+
+            <div className="hidden md:block w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Right: login + cart */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="[&_span]:hidden sm:[&_span]:inline-block flex items-center justify-center">
+                <LoginAuth
+                  onLoginSuccess={() => {}}
+                  onLogout={() => {}}
+                  onShowProfile={() => router.push("/profile")}
+                  isLightSection={true}
+                  variant="button"
+                />
+              </div>
+              <button
+                onClick={() => gcEnabled && setCartOpen(true)}
+                className={`relative flex flex-col items-center p-2 rounded-xl transition-colors ${gcEnabled ? "hover:bg-[#F5F5F5] cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
+                disabled={!gcEnabled}
+              >
+                <ShoppingCart className="w-6 h-6 text-[#555]" />
+                {gcEnabled ? (
+                  <span className="text-[10px] text-[#555] mt-0.5 leading-none hidden sm:block">Warenkorb</span>
+                ) : (
+                  <span className="text-[9px] text-[#999] mt-0.5 leading-none hidden sm:block whitespace-nowrap">Demnächst</span>
+                )}
+                {gcEnabled && cartCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-[#CC0000] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                    {cartCount > 9 ? "9+" : cartCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Hero banner */}
+        <div
+          className="relative w-full overflow-hidden"
+          style={{ height: "220px", backgroundImage: "url('/images/shop/header.jpeg')", backgroundSize: "cover", backgroundPosition: "center" }}
+        >
+          <div className="absolute inset-0 bg-black/55" />
+          <div className="relative h-full flex flex-col items-center justify-center text-center px-4">
+            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-lg">Geschenkgutscheine</h1>
+            <p className="text-sm sm:text-base text-white/80 mt-3 max-w-xl">Verschenken Sie Freude – für Angler, Jäger und Outdoor-Enthusiasten.</p>
+          </div>
+        </div>
+
+        {/* Grid */}
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          {loading ? (
+            <div className="flex flex-col gap-5">
+              {[1,2,3].map(i => (
+                <div key={i} className="bg-white rounded-2xl h-44 animate-pulse border border-gray-100" />
+              ))}
+            </div>
+          ) : cards.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">
+              <Gift className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p className="font-semibold">Keine Gutscheine verfügbar</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {cards.map(card => {
+                const isAdded = addedIds.has(card.id)
+                return (
+                  <div
+                    key={card.id}
+                    className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-[#DCDCDC] flex flex-row"
+                    style={{ minHeight: "160px" }}
+                  >
+                    {/* Left: logo section */}
+                    <div className="flex items-center justify-center border-r border-[#E0E0E0] px-2 py-2 flex-shrink-0 overflow-hidden" style={{ width: "180px" }}>
+                      <img src="/icon-192x192.png" alt="US-Fishing & Huntingshop" className="w-full h-auto object-contain" />
+                    </div>
+
+                    {/* Center: card info */}
+                    <div className="flex flex-col justify-center flex-1 px-6 py-5 gap-1.5">
+                      <span className="text-[10px] font-black tracking-[0.2em] uppercase text-[#b40000] flex items-center gap-1"><Gift className="w-3 h-3" />Geschenkgutschein</span>
+                      <h3 className="text-xl font-black text-[#1A1A1A] leading-tight">{card.name}</h3>
+                      {card.description && (
+                        <p className="text-sm text-gray-500">{card.description}</p>
+                      )}
+                      <p className="text-[9px] font-bold tracking-[0.08em] uppercase text-[#AAA] mt-2 leading-relaxed">
+                        ALLES FUER DIE BACH FLUSS UND SEEFISCHE<br />
+                        ** ARMBRUESTE UND PFEILBOEG<br />
+                        ** GROSSES MESSERSORTIME
+                      </p>
+                    </div>
+
+                    {/* Right: price + CTA */}
+                    <div className="flex flex-col items-center justify-center px-6 py-5 gap-3 flex-shrink-0 border-l border-[#E0E0E0]" style={{ width: "140px" }}>
+                      <div className="text-center">
+                        <span className="text-[11px] font-bold text-[#888] uppercase tracking-widest block">CHF</span>
+                        <span className="text-4xl font-black text-[#1A1A1A] leading-none">{card.amount % 1 === 0 ? card.amount.toFixed(0) : card.amount.toFixed(2)}</span>
+                      </div>
+                      {gcEnabled ? (
+                        <button
+                          onClick={() => addToCart(card)}
+                          className={`flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 active:scale-95 ${
+                            isAdded
+                              ? "bg-emerald-500 text-white"
+                              : "bg-[#2C5F2E] hover:bg-[#1A4520] text-white hover:shadow-md"
+                          }`}
+                        >
+                          {isAdded ? <Check className="w-5 h-5" /> : <ShoppingCart className="w-5 h-5" />}
+                        </button>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex items-center justify-center w-11 h-11 rounded-full bg-gray-100 opacity-50">
+                            <ShoppingCart className="w-5 h-5 text-gray-400" />
+                          </div>
+                          <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wide text-center leading-tight">Demnächst<br/>verfügbar</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Info box */}
+          <div className="mt-8 bg-white rounded-2xl border border-[#EBEBEB] shadow-sm overflow-hidden text-sm text-gray-600">
+            {/* Banner versandkostenfrei */}
+            <div className="w-full py-4 text-center" style={{ background: "linear-gradient(90deg, #e8f5e9 0%, #f1f8f1 50%, #e8f5e9 100%)" }}>
+              <p className="text-[#2C5F2E] font-black text-xl tracking-widest uppercase">Versandkostenfrei</p>
+              <p className="text-[#2C5F2E]/60 text-xs tracking-widest uppercase mt-0.5">Geschenkgutscheine – keine Versandkosten</p>
+            </div>
+            {/* Hinweise */}
+            <div className="p-6">
+              <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <Gift className="w-4 h-4 text-red-500" /> Hinweise zu Gutscheinen
+              </h2>
+              <ul className="space-y-2 list-disc list-inside text-sm">
+                <li>Nach Zahlungseingang erhalten Sie den Gutschein-Code per E-Mail.</li>
+                <li>Kein Mindestbestellwert. Nicht kombinierbar mit anderen Aktionen.</li>
+                <li>Kein Rückgeld auf Gutscheine.</li>
+                <li>Bei Fragen: <a href="mailto:info@usfh.ch" className="text-[#b40000] underline">info@usfh.ch</a></li>
+              </ul>
+            </div>
+          </div>
+          {/* Trust badges */}
+          <div className="flex flex-wrap justify-center gap-3 py-8">
+            {[
+              "100% Schweizer Shop",
+              "Schnelle Lieferung",
+              "14 Tage Rückgaberecht",
+              "500+ Artikel im Sortiment",
+            ].map((feat) => (
+              <div key={feat} className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-full px-4 py-2 shadow-sm">
+                <span className="w-5 h-5 rounded-full bg-[#2C5F2E] flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3 h-3 text-white stroke-[3]" />
+                </span>
+                <span className="text-xs font-semibold text-[#333]">{feat}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}

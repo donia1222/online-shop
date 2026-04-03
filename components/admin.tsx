@@ -40,6 +40,7 @@ import {
   ArrowUpRight,
   Users,
   XCircle,
+  Gift,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -158,6 +159,17 @@ export default function AdminPage() {
 export function Admin({ onClose }: AdminProps) {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("orders")
+
+  // Gutscheine State
+  const [giftCards, setGiftCards] = useState<any[]>([])
+  const [giftCardPurchases, setGiftCardPurchases] = useState<any[]>([])
+  const gcEnabled = false
+  const [gcLoading, setGcLoading] = useState(false)
+  const [gcPurchasesLoading, setGcPurchasesLoading] = useState(false)
+  const [markingGcPaidId, setMarkingGcPaidId] = useState<number | null>(null)
+  const [gcFormOpen, setGcFormOpen] = useState(false)
+  const [gcEditItem, setGcEditItem] = useState<any | null>(null)
+  const [gcFormData, setGcFormData] = useState({ name: "", description: "", amount: "", is_active: "1" })
 
   // Orders State
   const [orders, setOrders] = useState<Order[]>([])
@@ -397,6 +409,9 @@ export function Admin({ onClose }: AdminProps) {
       loadOrders()
     } else if (activeTab === "products") {
       loadProducts()
+    } else if (activeTab === "gutscheine") {
+      loadGiftCards()
+      loadGiftCardPurchases()
     }
   }, [activeTab, currentOrderPage, orderFilters])
 
@@ -727,6 +742,77 @@ export function Admin({ onClose }: AdminProps) {
     } finally {
       setMarkingPaidId(null)
     }
+  }
+
+  // ── Gutscheine functions ──
+  const loadGiftCards = async () => {
+    setGcLoading(true)
+    try {
+      const res = await fetch("/api/gutscheine?all=1")
+      const data = await res.json()
+      if (data.success) setGiftCards(data.gift_cards)
+    } catch {}
+    finally { setGcLoading(false) }
+  }
+
+  const loadGiftCardPurchases = async () => {
+    setGcPurchasesLoading(true)
+    try {
+      const res = await fetch("/api/gutscheine/purchases")
+      const data = await res.json()
+      if (data.success) setGiftCardPurchases(data.purchases)
+    } catch {}
+    finally { setGcPurchasesLoading(false) }
+  }
+
+  const handleGcFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const formData = new FormData()
+    formData.append("name", gcFormData.name)
+    formData.append("description", gcFormData.description)
+    formData.append("amount", gcFormData.amount)
+    formData.append("is_active", gcFormData.is_active)
+    if (gcEditItem) formData.append("id", gcEditItem.id)
+
+    const url = gcEditItem ? "/api/gutscheine/edit" : "/api/gutscheine/add"
+    const res = await fetch(url, { method: "POST", body: formData })
+    const data = await res.json()
+    if (data.success) {
+      toast({ title: gcEditItem ? "Gutschein aktualisiert" : "Gutschein erstellt" })
+      setGcFormOpen(false); setGcEditItem(null)
+      setGcFormData({ name: "", description: "", amount: "", is_active: "1" })
+      loadGiftCards()
+    } else {
+      toast({ title: "Fehler", description: data.error, variant: "destructive" })
+    }
+  }
+
+  const handleDeleteGiftCard = async (id: number) => {
+    if (!confirm("Gutschein löschen?")) return
+    const res = await fetch("/api/gutscheine/edit", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) })
+    const data = await res.json()
+    if (data.success) { toast({ title: "Gelöscht" }); loadGiftCards() }
+    else toast({ title: "Fehler", description: data.error, variant: "destructive" })
+  }
+
+  const handleMarkGcPaid = async (purchase: any) => {
+    setMarkingGcPaidId(purchase.id)
+    try {
+      const res = await fetch("/api/gutscheine/mark-paid", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: purchase.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast({ title: "Als bezahlt markiert", description: "E-Mail mit aktivem Code wurde versendet" })
+        loadGiftCardPurchases()
+        loadOrders()
+      } else {
+        toast({ title: "Fehler", description: data.error, variant: "destructive" })
+      }
+    } catch {}
+    finally { setMarkingGcPaidId(null) }
   }
 
   const loadOrders = async () => {
@@ -1275,7 +1361,9 @@ export function Admin({ onClose }: AdminProps) {
       doc.text(`${subtotal.toFixed(2)} CHF`, colTotal, y + 4, { align: "right" })
       doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(130, 130, 130)
       doc.text(`Art.-Nr: ${item.product_id}`, margin + 2, y + 10)
-      doc.text(`Steuersatz: ${itemMwst.toFixed(2)} CHF`, colTotal, y + 10, { align: "right" })
+      if (Number(item.product_id) >= 0) {
+        doc.text(`Steuersatz: ${itemMwst.toFixed(2)} CHF`, colTotal, y + 10, { align: "right" })
+      }
       doc.setTextColor(40, 40, 40)
       y += rowH
     })
@@ -1286,21 +1374,25 @@ export function Admin({ onClose }: AdminProps) {
     doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(40, 40, 40)
 
     const itemsSubtotal = items.reduce((s, i) => s + (Number(i.subtotal) || 0), 0)
-    const shipping = Number(order.shipping_cost) || 0
-    const netTotal = itemsSubtotal + shipping
-    const mwstAmount = Math.round(itemsSubtotal * 0.081 / 0.05) * 0.05
-    const grossTotal = netTotal + mwstAmount
-    const roundedTotal = Math.ceil(grossTotal / 0.5) * 0.5
+    const onlyGutscheine = items.length > 0 && items.every(i => Number(i.product_id) < 0)
+    const shipping = onlyGutscheine ? 0 : (Number(order.shipping_cost) || 0)
+    const mwstAmount = onlyGutscheine ? 0 : Math.round(itemsSubtotal * 0.081 / 0.05) * 0.05
+    const grossTotal = itemsSubtotal + shipping + mwstAmount
+    const roundedTotal = onlyGutscheine ? itemsSubtotal : Math.ceil(grossTotal / 0.5) * 0.5
 
     doc.text("Zwischensumme (Artikel):", pageW - 75, y)
     doc.text(`${itemsSubtotal.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
     y += 6
-    doc.text("MwSt. 8.1%:", pageW - 75, y)
-    doc.text(`${mwstAmount.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
-    y += 6
-    doc.text("Versandkosten:", pageW - 75, y)
-    doc.text(`${shipping.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
-    y += 6
+    if (!onlyGutscheine) {
+      doc.text("MwSt. 8.1%:", pageW - 75, y)
+      doc.text(`${mwstAmount.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+      y += 6
+      if (shipping > 0) {
+        doc.text("Versandkosten:", pageW - 75, y)
+        doc.text(`${shipping.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+        y += 6
+      }
+    }
     y -= 4
     doc.setDrawColor(44, 95, 46); doc.line(pageW - 75, y, pageW - margin, y); y += 5
     doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(44, 95, 46)
@@ -1452,14 +1544,7 @@ export function Admin({ onClose }: AdminProps) {
                   </span>
                 </button>
               )}
-              <button
-                onClick={activeTab === "orders" ? loadOrders : loadProducts}
-                disabled={ordersLoading || productsLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-[#2C5F2E] hover:bg-[#1A4520] text-white text-sm font-bold rounded-full transition-all disabled:opacity-60"
-              >
-                <RefreshCw className={`w-4 h-4 ${ordersLoading || productsLoading ? "animate-spin" : ""}`} />
-                <span className="hidden sm:inline">Aktualisieren</span>
-              </button>
+       
             </div>
           </div>
         </div>
@@ -1468,7 +1553,7 @@ export function Admin({ onClose }: AdminProps) {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="overflow-x-auto mb-8 -mx-2 px-2 pb-1">
-          <TabsList className="flex w-max lg:grid lg:grid-cols-7 lg:w-full bg-white border border-[#EBEBEB] rounded-2xl p-1 shadow-sm gap-1">
+          <TabsList className="flex w-max lg:grid lg:grid-cols-8 lg:w-full bg-white border border-[#EBEBEB] rounded-2xl p-1 shadow-sm gap-1">
             <TabsTrigger
               value="orders"
               className="flex items-center gap-2 font-semibold shrink-0 bg-blue-50 text-blue-700 data-[state=active]:bg-blue-400 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
@@ -1517,6 +1602,13 @@ export function Admin({ onClose }: AdminProps) {
             >
               <Images className="w-4 h-4" />
               <span>Galerie</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="gutscheine"
+              className="flex items-center gap-2 font-semibold shrink-0 bg-red-50 text-red-700 data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+            >
+              <Gift className="w-4 h-4" />
+              <span>Gutscheine</span>
             </TabsTrigger>
           </TabsList>
           </div>
@@ -2750,6 +2842,214 @@ export function Admin({ onClose }: AdminProps) {
             )}
           </TabsContent>
 
+          {/* ── Gutscheine Tab ── */}
+          <TabsContent value="gutscheine">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-black text-[#1A1A1A] flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-red-500" /> Geschenkgutscheine
+                </h2>
+                <p className="text-sm text-gray-500 mt-0.5">Verkäufe und Vorlagen verwalten</p>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => { loadGiftCards(); loadGiftCardPurchases() }} variant="outline" size="sm" className="rounded-xl">
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" /> Aktualisieren
+                </Button>
+                <Button
+                  onClick={() => { setGcEditItem(null); setGcFormData({ name: "", description: "", amount: "", is_active: "1" }); setGcFormOpen(true) }}
+                  size="sm"
+                  className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Neuer Gutschein
+                </Button>
+              </div>
+            </div>
+
+            {!gcEnabled ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-4 text-gray-400">
+                <RefreshCw className="w-10 h-10 animate-spin opacity-40" />
+                <p className="text-base font-semibold">Roberto arbeitet an dieser Funktion</p>
+              </div>
+            ) : <>
+
+            {/* Crear / Editar Gutschein modal */}
+            {gcFormOpen && (
+              <Card className="mb-6 border border-red-200 bg-red-50/30 rounded-2xl">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-red-500" />
+                    {gcEditItem ? "Gutschein bearbeiten" : "Neuen Gutschein erstellen"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleGcFormSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Name *</label>
+                        <input
+                          required
+                          value={gcFormData.name}
+                          onChange={e => setGcFormData(p => ({ ...p, name: e.target.value }))}
+                          placeholder="z.B. Gutschein CHF 50"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Betrag (CHF) *</label>
+                        <input
+                          required type="number" min="1" step="0.01"
+                          value={gcFormData.amount}
+                          onChange={e => setGcFormData(p => ({ ...p, amount: e.target.value }))}
+                          placeholder="50.00"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Beschreibung</label>
+                        <textarea
+                          value={gcFormData.description}
+                          onChange={e => setGcFormData(p => ({ ...p, description: e.target.value }))}
+                          rows={2}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-600 mb-1 block">Status</label>
+                        <select
+                          value={gcFormData.is_active}
+                          onChange={e => setGcFormData(p => ({ ...p, is_active: e.target.value }))}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        >
+                          <option value="1">Aktiv</option>
+                          <option value="0">Inaktiv</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button type="submit" className="bg-[#2C5F2E] hover:bg-[#1A4520] text-white rounded-xl flex-1">
+                        {gcEditItem ? "Speichern" : "Erstellen"}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => { setGcFormOpen(false); setGcEditItem(null) }} className="rounded-xl">
+                        Abbrechen
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Plantillas existentes */}
+            <Card className="mb-6 rounded-2xl border border-gray-100">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-bold text-gray-700">Gutschein-Vorlagen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {gcLoading ? (
+                  <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse" />)}</div>
+                ) : giftCards.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">Keine Vorlagen vorhanden</p>
+                ) : (
+                  <div className="space-y-2">
+                    {giftCards.map(gc => (
+                      <div key={gc.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100">
+                        <div className="flex items-center gap-3">
+                          <span className={`w-2 h-2 rounded-full ${gc.is_active ? "bg-emerald-500" : "bg-gray-300"}`} />
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800">{gc.name}</p>
+                            {gc.description && <p className="text-xs text-gray-400">{gc.description}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-black text-[#1A1A1A]">CHF {Number(gc.amount).toFixed(2)}</span>
+                          <Button
+                            size="sm" variant="outline"
+                            onClick={() => { setGcEditItem(gc); setGcFormData({ name: gc.name, description: gc.description ?? "", amount: String(gc.amount), is_active: String(gc.is_active) }); setGcFormOpen(true) }}
+                            className="rounded-lg h-7 px-2 text-xs"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm" variant="outline"
+                            onClick={() => handleDeleteGiftCard(gc.id)}
+                            className="rounded-lg h-7 px-2 text-xs border-red-200 text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Ventas / Purchases */}
+            <Card className="rounded-2xl border border-gray-100">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4" /> Verkäufe
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {gcPurchasesLoading ? (
+                  <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />)}</div>
+                ) : giftCardPurchases.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-6">Noch keine Verkäufe</p>
+                ) : (
+                  <div className="space-y-2">
+                    {giftCardPurchases.map(p => (
+                      <div key={p.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                        {/* Info */}
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">{p.buyer_name || "—"}</p>
+                          <p className="text-xs text-gray-400 truncate">{p.buyer_email || "—"} · {p.created_at?.slice(0,10)}</p>
+                          {(() => { const o = orders.find(o => o.id === p.order_id); return o ? <p className="text-xs text-gray-400 mt-0.5">Gutschein Code: <span className="font-mono font-bold text-gray-800">{o.order_number}</span></p> : null })()}
+                          {(p.status === "aktiv" || p.status === "used") ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 mt-1">
+                              <CheckCircle className="w-3 h-3" /> Aktiv
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500 ring-1 ring-red-200 mt-1">
+                              <Clock className="w-3 h-3" /> Inaktiv
+                            </span>
+                          )}
+                        </div>
+                        {/* Betrag */}
+                        <span className="text-sm font-black text-[#1A1A1A] shrink-0">
+                          CHF {Number(p.amount).toFixed(2)}
+                        </span>
+                        {/* Status chip */}
+                        {p.status === "aktiv" || p.status === "used" ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 shrink-0">
+                            <CheckCircle className="w-3 h-3" /> Bezahlt
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-600 ring-1 ring-amber-200 shrink-0">
+                            <Clock className="w-3 h-3" /> Offen
+                          </span>
+                        )}
+                        {/* Acción */}
+                        {p.status === "offen" ? (
+                          <Button
+                            onClick={() => handleMarkGcPaid(p)}
+                            disabled={markingGcPaidId === p.id}
+                            size="sm"
+                            className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white rounded-lg px-3 text-xs h-8 shrink-0"
+                          >
+                            {markingGcPaidId === p.id ? "..." : "Bezahlt"}
+                          </Button>
+                        ) : (
+                          <div className="w-16" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            </>}
+          </TabsContent>
+
           {/* ── Versand Tab ── */}
           <TabsContent value="versand">
             {/* Versand Header */}
@@ -3185,10 +3485,12 @@ export function Admin({ onClose }: AdminProps) {
                       <span className="font-medium">Gesamt:</span>{" "}
                       {(Number.parseFloat(selectedOrder.total_amount.toString()) || 0).toFixed(2)} CHF
                     </p>
-                    <p>
-                      <span className="font-medium">Versandkosten:</span>{" "}
-                      {(Number.parseFloat(selectedOrder.shipping_cost.toString()) || 0).toFixed(2)} CHF
-                    </p>
+                    {(Number.parseFloat(selectedOrder.shipping_cost.toString()) || 0) > 0 && (
+                      <p>
+                        <span className="font-medium">Versandkosten:</span>{" "}
+                        {(Number.parseFloat(selectedOrder.shipping_cost.toString()) || 0).toFixed(2)} CHF
+                      </p>
+                    )}
                     <p>
                       <span className="font-medium">Zahlungsmethode:</span> {selectedOrder.payment_method}
                     </p>
