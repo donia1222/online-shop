@@ -285,21 +285,21 @@ export default function GutscheineGrid() {
                   <div
                     key={card.id}
                     className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-[#DCDCDC] flex flex-row"
-                    style={{ minHeight: "160px" }}
+                    style={{ minHeight: "130px" }}
                   >
                     {/* Left: logo section */}
-                    <div className="flex items-center justify-center border-r border-[#E0E0E0] px-2 py-2 flex-shrink-0 overflow-hidden" style={{ width: "180px" }}>
+                    <div className="flex items-center justify-center border-r border-[#E0E0E0] px-1 py-2 flex-shrink-0 overflow-hidden w-[80px] sm:w-[140px] md:w-[180px]">
                       <img src="/icon-192x192.png" alt="US-Fishing & Huntingshop" className="w-full h-auto object-contain" />
                     </div>
 
                     {/* Center: card info */}
-                    <div className="flex flex-col justify-center flex-1 px-6 py-5 gap-1.5">
-                      <span className="text-[10px] font-black tracking-[0.2em] uppercase text-[#b40000] flex items-center gap-1"><Gift className="w-3 h-3" />Geschenkgutschein</span>
-                      <h3 className="text-xl font-black text-[#1A1A1A] leading-tight">{card.name}</h3>
+                    <div className="flex flex-col justify-center flex-1 px-3 sm:px-6 py-4 gap-1 min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-black tracking-[0.15em] uppercase text-[#b40000] flex items-center gap-1"><Gift className="w-3 h-3 flex-shrink-0" />Geschenkgutschein</span>
+                      <h3 className="text-base sm:text-xl font-black text-[#1A1A1A] leading-tight truncate">{card.name}</h3>
                       {card.description && (
-                        <p className="text-sm text-gray-500">{card.description}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 line-clamp-2">{card.description}</p>
                       )}
-                      <p className="text-[9px] font-bold tracking-[0.08em] uppercase text-[#AAA] mt-2 leading-relaxed">
+                      <p className="hidden sm:block text-[9px] font-bold tracking-[0.08em] uppercase text-[#AAA] mt-1 leading-relaxed">
                         ALLES FUER DIE BACH FLUSS UND SEEFISCHE<br />
                         ** ARMBRUESTE UND PFEILBOEG<br />
                         ** GROSSES MESSERSORTIME
@@ -307,26 +307,26 @@ export default function GutscheineGrid() {
                     </div>
 
                     {/* Right: price + CTA */}
-                    <div className="flex flex-col items-center justify-center px-6 py-5 gap-3 flex-shrink-0 border-l border-[#E0E0E0]" style={{ width: "140px" }}>
+                    <div className="flex flex-col items-center justify-center px-3 sm:px-6 py-4 gap-2 flex-shrink-0 border-l border-[#E0E0E0] w-[90px] sm:w-[130px]">
                       <div className="text-center">
-                        <span className="text-[11px] font-bold text-[#888] uppercase tracking-widest block">CHF</span>
-                        <span className="text-4xl font-black text-[#1A1A1A] leading-none">{card.amount % 1 === 0 ? card.amount.toFixed(0) : card.amount.toFixed(2)}</span>
+                        <span className="text-[10px] font-bold text-[#888] uppercase tracking-widest block">CHF</span>
+                        <span className="text-2xl sm:text-4xl font-black text-[#1A1A1A] leading-none">{card.amount % 1 === 0 ? card.amount.toFixed(0) : card.amount.toFixed(2)}</span>
                       </div>
                       {gcEnabled ? (
                         <button
                           onClick={() => addToCart(card)}
-                          className={`flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 active:scale-95 ${
+                          className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 active:scale-95 ${
                             isAdded
                               ? "bg-emerald-500 text-white"
                               : "bg-[#2C5F2E] hover:bg-[#1A4520] text-white hover:shadow-md"
                           }`}
                         >
-                          {isAdded ? <Check className="w-5 h-5" /> : <ShoppingCart className="w-5 h-5" />}
+                          {isAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
                         </button>
                       ) : (
                         <div className="flex flex-col items-center gap-1">
-                          <div className="flex items-center justify-center w-11 h-11 rounded-full bg-gray-100 opacity-50">
-                            <ShoppingCart className="w-5 h-5 text-gray-400" />
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 opacity-50">
+                            <ShoppingCart className="w-4 h-4 text-gray-400" />
                           </div>
                           <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wide text-center leading-tight">Demnächst<br/>verfügbar</span>
                         </div>
