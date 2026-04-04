@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, memo, useRef } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import {
   ShoppingCart, ChevronLeft, ChevronRight,
-  Search, X, Check, LayoutGrid, Home, ArrowLeft,
+  Search, X, Check, LayoutGrid, ArrowLeft,
   ArrowUp, ChevronDown, Heart, Menu, Newspaper, Download, Images, Gift
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -31,7 +31,6 @@ interface CartItem {
 }
 interface Category { id: number; parent_id: number | null; slug: string; name: string }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 // ─── Standalone helpers ────────────────────────────────────────────────────────
 
@@ -299,26 +298,6 @@ export default function ShopGrid() {
   const [showBackTop, setShowBackTop]       = useState(false)
   const [navMenuOpen, setNavMenuOpen]       = useState(false)
   const [showUserProfile, setShowUserProfile] = useState(false)
-  const [paySettings, setPaySettings] = useState<{
-    enable_paypal: boolean; enable_stripe: boolean; enable_twint: boolean; enable_invoice: boolean
-  } | null>(null)
-
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/get_payment_settings.php`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.success && data.settings) {
-          const s = data.settings
-          setPaySettings({
-            enable_paypal: !!s.enable_paypal,
-            enable_stripe: !!s.enable_stripe,
-            enable_twint: !!s.enable_twint,
-            enable_invoice: s.enable_invoice !== false,
-          })
-        }
-      })
-      .catch(() => {})
-  }, [])
 
   const handleDownloadVCard = () => {
     const imageUrl = "https://online-shop-seven-delta.vercel.app/Security_n.png"
@@ -700,8 +679,8 @@ export default function ShopGrid() {
             {/* Divider */}
             <div className="w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
 
-            {/* Logo */}
-            <img src="/Security_n.png" alt="Logo" className="h-12 w-auto object-contain flex-shrink-0" />
+            {/* Logo — hidden on mobile (too crowded) */}
+            <img src="/Security_n.png" alt="Logo" className="hidden sm:block h-12 w-auto object-contain flex-shrink-0" />
 
             {/* Title — mobile: simple, desktop: blog style */}
             <span className="sm:hidden flex-shrink-0" style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.1rem', color: '#333333' }}>Online-Shop</span>

@@ -151,7 +151,7 @@ export default function AngelnPage() {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="w-px h-6 bg-[#E5E5E5]" />
-          <img src="/Security_n.png" alt="Logo" className="h-12 w-auto object-contain" />
+          <img src="/Security_n.png" alt="Logo" className="hidden sm:block h-12 w-auto object-contain" />
           <span className="sm:hidden" style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.1rem', color: '#333333' }}>Angeln</span>
           <div className="hidden sm:block">
             <div className="leading-tight">

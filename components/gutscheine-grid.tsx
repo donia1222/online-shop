@@ -177,8 +177,8 @@ export default function GutscheineGrid() {
 
             <div className="w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
 
-            {/* Logo */}
-            <img src="/Security_n.png" alt="Logo" className="h-12 w-auto object-contain flex-shrink-0" />
+            {/* Logo — hidden on mobile */}
+            <img src="/Security_n.png" alt="Logo" className="hidden sm:block h-12 w-auto object-contain flex-shrink-0" />
 
             {/* Title — mobile: simple, desktop: blog style */}
             <span className="sm:hidden flex-shrink-0" style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.1rem', color: '#333333' }}>Gutscheine</span>
