@@ -327,6 +327,11 @@ export default function ShopGrid() {
   const PAGE_SIZE = 20
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
+  const [loadingMore, setLoadingMore] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const hasMoreRef = useRef(false)
+  const loadingMoreRef = useRef(false)
+
   const [cart, setCart]           = useState<CartItem[]>([])
   const [cartOpen, setCartOpen]   = useState(false)
   const [cartCount, setCartCount] = useState(0)
@@ -366,6 +371,26 @@ export default function ShopGrid() {
     const onScroll = () => setShowBackTop(window.scrollY > 500)
     window.addEventListener("scroll", onScroll)
     return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  // Infinite scroll: scroll event on window
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loadingMoreRef.current || !hasMoreRef.current) return
+      const scrolled = window.scrollY + window.innerHeight
+      const total = document.documentElement.scrollHeight
+      if (scrolled >= total - 400) {
+        loadingMoreRef.current = true
+        setLoadingMore(true)
+        setTimeout(() => {
+          setVisibleCount(c => c + PAGE_SIZE)
+          loadingMoreRef.current = false
+          setLoadingMore(false)
+        }, 400)
+      }
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   const loadProducts = async () => {
@@ -502,6 +527,8 @@ export default function ShopGrid() {
 
   const visibleProducts = filtered.slice(0, visibleCount)
   const hasMore = visibleCount < filtered.length
+  hasMoreRef.current = hasMore
+  // loadingMoreRef stays in sync with loadingMore state
 
   const handleSelect    = useCallback((p: Product) => router.push(`/product/${p.id}`), [])
   const handleAddToCart = useCallback((p: Product) => addToCart(p), [addedIds, cart]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1183,19 +1210,18 @@ export default function ShopGrid() {
                   ))}
                 </div>
 
-                {hasMore && (
-                  <div className="text-center mt-10">
-                    <button
-                      onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-                      className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-[#2C5F2E] hover:bg-[#1A4520] text-white border-2 border-[#2C5F2E] hover:border-[#1A4520] rounded-full text-sm font-bold transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-[#2C5F2E]/30 active:scale-[0.98]"
-                    >
-                      Mehr laden
-                      <span className="bg-white/20 text-white text-xs font-black px-2.5 py-0.5 rounded-full">
-                        +{filtered.length - visibleCount}
-                      </span>
-                    </button>
-                  </div>
-                )}
+                {/* Infinite scroll sentinel */}
+                <div ref={sentinelRef} className="mt-10 flex flex-col items-center gap-3 pb-6">
+                  {loadingMore && (
+                    <>
+                      <div className="w-8 h-8 rounded-full border-[3px] border-[#2C5F2E]/20 border-t-[#2C5F2E] animate-spin" />
+                      <span className="text-xs text-[#999] font-semibold">Mehr laden…</span>
+                    </>
+                  )}
+                  {!hasMore && visibleProducts.length > 0 && (
+                    <p className="text-xs text-[#CCC] font-semibold tracking-widest uppercase">— Alle {filtered.length} Produkte geladen —</p>
+                  )}
+                </div>
               </>
             )}
           </main>
