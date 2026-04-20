@@ -297,6 +297,8 @@ export default function ShopGrid() {
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [showBackTop, setShowBackTop]       = useState(false)
   const [navMenuOpen, setNavMenuOpen]       = useState(false)
+  const [headerVisible, setHeaderVisible]   = useState(true)
+  const [lastScrollY, setLastScrollY]       = useState(0)
   const [showUserProfile, setShowUserProfile] = useState(false)
 
   const handleDownloadVCard = () => {
@@ -368,10 +370,21 @@ export default function ShopGrid() {
   }, [activeCategory])
 
   useEffect(() => {
-    const onScroll = () => setShowBackTop(window.scrollY > 500)
-    window.addEventListener("scroll", onScroll)
+    const onScroll = () => {
+      const currentY = window.scrollY
+      setShowBackTop(currentY > 500)
+      if (currentY < 10) {
+        setHeaderVisible(true)
+      } else if (currentY > lastScrollY && currentY > 100) {
+        setHeaderVisible(false)
+      } else if (currentY < lastScrollY) {
+        setHeaderVisible(true)
+      }
+      setLastScrollY(currentY)
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [])
+  }, [lastScrollY])
 
   // Infinite scroll: scroll event on window
   useEffect(() => {
@@ -602,8 +615,8 @@ export default function ShopGrid() {
 <div className="min-h-screen bg-[#f7f7f8]">
 
         {/* ── Top bar ── */}
-        <div className="bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+        <div className={`bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm transition-transform duration-300 ${headerVisible ? "translate-y-0" : "-translate-y-full"}`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-32 flex items-center gap-3">
 
             {/* Mobile: Hamburger side menu */}
             <Sheet open={navMenuOpen} onOpenChange={setNavMenuOpen}>
@@ -707,19 +720,10 @@ export default function ShopGrid() {
             <div className="w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
 
             {/* Logo — hidden on mobile (too crowded) */}
-            <img src="/Security_n.png" alt="Logo" className="hidden sm:block h-12 w-auto object-contain flex-shrink-0" />
+            <img src="/Security_n.png" alt="Logo" className="hidden sm:block h-28 w-auto object-contain flex-shrink-0" />
 
-            {/* Title — mobile: simple, desktop: blog style */}
+            {/* Title — mobile only */}
             <span className="sm:hidden flex-shrink-0" style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.1rem', color: '#333333' }}>Online-Shop</span>
-            <div className="hidden sm:block flex-shrink-0">
-              <div className="leading-tight">
-                <span style={{ fontFamily: 'Impact, Arial Narrow, sans-serif', fontStyle: 'italic', fontWeight: 900, color: '#CC0000', fontSize: '1rem' }}>US-</span>
-                <span style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '0.9rem' }}> FISHING &amp; HUNTINGSHOP</span>
-              </div>
-              <div className="text-[11px] text-[#888] uppercase tracking-widest mt-0.5">Online-Shop</div>
-            </div>
-
-            <div className="hidden sm:block w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
 
             {/* Search — desktop only */}
             <div className="hidden sm:flex flex-1 max-w-lg relative mr-4">
@@ -1077,66 +1081,6 @@ export default function ShopGrid() {
                 </div>
               )
             })()}
-
-            {/* ── Supplier section ── */}
-            {suppliers.length > 0 && (
-              <div className="border-t border-[#E0E0E0] mt-6 pt-6">
-                <div className="flex items-start gap-2.5 mb-2.5">
-                  <div className="w-0.5 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
-                  <div>
-                    <p className="font-black text-[#2C5F2E] text-xl lg:text-2xl leading-tight">Lieferanten</p>
-                    <p className="text-sm text-[#888] mt-1">Qualitätsmarken aus aller Welt</p>
-                  </div>
-                </div>
-                <div className="overflow-x-auto mb-3 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  <div className="flex items-center gap-1.5 min-w-max pb-1">
-                    <button
-                      onClick={() => setActiveSupplier("all")}
-                      className={`px-2.5 py-1 rounded-full border transition-all whitespace-nowrap text-[11px] font-black uppercase tracking-wider ${
-                        activeSupplier === "all"
-                          ? "bg-[#1A1A1A] text-white border-[#1A1A1A]"
-                          : "border-[#E0E0E0] text-[#555] hover:border-[#555]"
-                      }`}
-                    >
-                      Alle
-                    </button>
-                    {suppliers.map(supplier => {
-                      const isActive = activeSupplier === supplier
-                      const COLORS: Record<string, string> = {
-                        "AIRSOFT":      "#1A1A1A",
-                        "BLACK FLASH":  "#333",
-                        "BLACKFLASH":   "#1A1A1A",
-                        "BÖKER":        "#8B0000",
-                        "FISHERMAN'S":  "#1A5276",
-                        "HALLER":       "#2C5F2E",
-                        "JENZI":        "#FF6600",
-                        "LINDER":       "#333",
-                        "NATURZONE":    "#2C5F2E",
-                        "POHLFORCE":    "#CC0000",
-                        "SMOKI":        "#8B6914",
-                        "STEAMBOW":     "#1A1A8C",
-                        "SYTONG":       "#003087",
-                        "WILTEC":       "#555",
-                      }
-                      const color = COLORS[supplier.toUpperCase()] ?? "#333"
-                      return (
-                        <button
-                          key={supplier}
-                          onClick={() => setActiveSupplier(prev => prev === supplier ? "all" : supplier)}
-                          className="px-2.5 py-1 rounded-full border transition-all whitespace-nowrap text-[11px] font-black uppercase tracking-wider"
-                          style={isActive
-                            ? { backgroundColor: color, color: "#fff", borderColor: color }
-                            : { borderColor: "#E0E0E0", color, opacity: 0.65 }
-                          }
-                        >
-                          {supplier}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* ── Search — mobile only, below brand badges ── */}
             <div className="sm:hidden relative mb-4">

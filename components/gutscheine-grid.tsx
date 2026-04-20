@@ -46,15 +46,31 @@ export default function GutscheineGrid() {
   const [cartOpen, setCartOpen] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
   const [showBackTop, setShowBackTop] = useState(false)
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
   const { toast } = useToast()
 
   useEffect(() => {
     loadCards()
     loadCart()
-    const onScroll = () => setShowBackTop(window.scrollY > 400)
-    window.addEventListener("scroll", onScroll)
-    return () => window.removeEventListener("scroll", onScroll)
   }, [])
+
+  useEffect(() => {
+    const onScroll = () => {
+      const currentY = window.scrollY
+      setShowBackTop(currentY > 400)
+      if (currentY < 10) {
+        setHeaderVisible(true)
+      } else if (currentY > lastScrollY && currentY > 100) {
+        setHeaderVisible(false)
+      } else if (currentY < lastScrollY) {
+        setHeaderVisible(true)
+      }
+      setLastScrollY(currentY)
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [lastScrollY])
 
   const loadCards = async () => {
     try {
@@ -163,8 +179,8 @@ export default function GutscheineGrid() {
       <div className="min-h-screen bg-[#F4F4F5]">
 
         {/* ── Top bar — same as shop ── */}
-        <div className="bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+        <div className={`bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm transition-transform duration-300 ${headerVisible ? "translate-y-0" : "-translate-y-full"}`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-32 flex items-center gap-3">
 
 
             {/* Back button (mobile + desktop) */}
@@ -178,17 +194,10 @@ export default function GutscheineGrid() {
             <div className="w-px h-6 bg-[#E5E5E5] flex-shrink-0" />
 
             {/* Logo — hidden on mobile */}
-            <img src="/Security_n.png" alt="Logo" className="hidden sm:block h-12 w-auto object-contain flex-shrink-0" />
+            <img src="/Security_n.png" alt="Logo" className="hidden sm:block h-28 w-auto object-contain flex-shrink-0" />
 
-            {/* Title — mobile: simple, desktop: blog style */}
+            {/* Title — mobile only */}
             <span className="sm:hidden flex-shrink-0" style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.1rem', color: '#333333' }}>Gutscheine</span>
-            <div className="hidden sm:block flex-shrink-0">
-              <div className="leading-tight">
-                <span style={{ fontFamily: 'Impact, Arial Narrow, sans-serif', fontStyle: 'italic', fontWeight: 900, color: '#CC0000', fontSize: '1rem' }}>US-</span>
-                <span style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '0.9rem' }}> FISHING &amp; HUNTINGSHOP</span>
-              </div>
-              <div className="text-[11px] text-[#888] uppercase tracking-widest mt-0.5">Geschenkgutscheine</div>
-            </div>
 
             {/* Spacer */}
             <div className="flex-1" />

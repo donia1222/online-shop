@@ -89,6 +89,24 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([])
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
+
+  useEffect(() => {
+    const onScroll = () => {
+      const currentY = window.scrollY
+      if (currentY < 10) {
+        setHeaderVisible(true)
+      } else if (currentY > lastScrollY && currentY > 100) {
+        setHeaderVisible(false)
+      } else if (currentY < lastScrollY) {
+        setHeaderVisible(true)
+      }
+      setLastScrollY(currentY)
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [lastScrollY])
 
   useEffect(() => {
     fetch("/api/gallery")
@@ -106,8 +124,8 @@ export default function GalleryPage() {
     <div className="min-h-screen bg-[#F4F4F5]">
 
       {/* Header */}
-      <div className="bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 h-20 flex items-center gap-3">
+      <div className={`bg-white border-b border-[#E0E0E0] sticky top-0 z-30 shadow-sm transition-transform duration-300 ${headerVisible ? "translate-y-0" : "-translate-y-full"}`}>
+        <div className="max-w-6xl mx-auto px-4 h-32 flex items-center gap-3">
           {/* Mobile: hamburger menu */}
           <Sheet>
             <SheetTrigger asChild>
@@ -176,15 +194,8 @@ export default function GalleryPage() {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="w-px h-6 bg-[#E5E5E5]" />
-          <img src="/Security_n.png" alt="Logo" className="hidden sm:block h-12 w-auto object-contain" />
+          <img src="/Security_n.png" alt="Logo" className="hidden sm:block h-28 w-auto object-contain" />
           <span className="sm:hidden" style={{ fontFamily: "'Rubik Dirt', sans-serif", fontSize: '1.1rem', color: '#333333' }}>Impressionen</span>
-          <div className="hidden sm:block">
-            <div className="leading-tight">
-              <span style={{ fontFamily: 'Impact, Arial Narrow, sans-serif', fontStyle: 'italic', fontWeight: 900, color: '#CC0000', fontSize: '1rem' }}>US-</span>
-              <span style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '0.9rem' }}> FISHING &amp; HUNTINGSHOP</span>
-            </div>
-            <div className="text-[11px] text-[#888] uppercase tracking-widest mt-0.5">Bilder · Impressionen · Outdoor</div>
-          </div>
         </div>
       </div>
 

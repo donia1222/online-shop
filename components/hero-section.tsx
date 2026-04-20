@@ -236,65 +236,6 @@ export function HeroSection() {
         <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-[#2C5F2E]/70 to-transparent" />
       </div>
 
-      {/* ── Unsere beliebtesten Marken ── */}
-      <div className="bg-white border-b border-[#E0E0E0] py-8">
-        <div className="container mx-auto px-4 mb-5">
-          <div className="flex items-center gap-4">
-            <div className="h-px flex-1 bg-gradient-to-l from-[#E0E0E0] to-transparent" />
-            <h2 className="text-xs font-black text-[#888] uppercase tracking-[0.18em] whitespace-nowrap">Unsere beliebtesten Marken</h2>
-            <div className="h-px flex-1 bg-gradient-to-r from-[#E0E0E0] to-transparent" />
-          </div>
-        </div>
-        {(() => {
-          const normalizeOrigin = (s: string) => s.toUpperCase().replace(/[`'']/g, "'").replace(/\s*&\s*/g, " & ").replace(/\s+/g, " ").trim()
-          const ORIGIN_ALIASES: Record<string, string> = {
-            "BLACKFIELD": "BLACK FIELD",
-            "BLACKFLASH": "BLACK FLASH",
-            "SMITH&WESSON": "SMITH & WESSON",
-          }
-          const BRAND_COLORS = [
-            "#2C5F2E", "#CC0000", "#1A5276", "#8B0000", "#FF6600",
-            "#003087", "#8B6914", "#1A1A8C", "#333", "#555",
-            "#0B6E4F", "#9B2335", "#D4A017", "#4A148C", "#00695C",
-          ]
-          const brands = Array.from(
-            new Set(
-              products
-                .map((p) => p.origin)
-                .filter((s): s is string => !!s && s.trim() !== "")
-                .map(s => {
-                  const n = normalizeOrigin(s)
-                  return ORIGIN_ALIASES[n] ?? n
-                })
-            )
-          ).sort()
-          if (brands.length === 0) return null
-          return (
-            <div className="overflow-hidden w-full">
-              <style>{`
-                @keyframes marquee {
-                  0%   { transform: translateX(0); }
-                  100% { transform: translateX(-50%); }
-                }
-                .marquee-track { animation: marquee ${Math.max(40, brands.length * 4)}s linear infinite; }
-              `}</style>
-              <div className="flex marquee-track w-max">
-                {[...Array(2)].flatMap((_, copy) =>
-                  brands.map((name, i) => (
-                    <div
-                      key={`${copy}-${name}`}
-                      className="flex-shrink-0 mx-[5px] px-4 py-2 rounded-full border border-[#EBEBEB] bg-white flex items-center gap-2.5 select-none"
-                    >
-                      <span className="font-black text-sm tracking-wide" style={{ color: BRAND_COLORS[i % BRAND_COLORS.length] }}>{name}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )
-        })()}
-      </div>
-
       {/* ── Unsere Top Kategorien (dinámico, solo 6) ── */}
       <div id="spice-discovery" className="bg-[#F0F1F3] border-b border-[#E0E0E0] py-10">
         <div className="container mx-auto px-4">
