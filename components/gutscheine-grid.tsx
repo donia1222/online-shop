@@ -52,9 +52,6 @@ export default function GutscheineGrid() {
   const [amountError, setAmountError] = useState<string>("")
   const { toast } = useToast()
 
-  const MIN_AMOUNT = 20
-  const MAX_AMOUNT = 2000
-
   useEffect(() => {
     loadCards()
     loadCart()
@@ -104,8 +101,8 @@ export default function GutscheineGrid() {
 
   const addCustomToCart = () => {
     const amount = parseFloat(customAmount.replace(",", "."))
-    if (isNaN(amount) || amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
-      setAmountError(`Betrag muss zwischen CHF ${MIN_AMOUNT} und CHF ${MAX_AMOUNT} liegen`)
+    if (isNaN(amount) || amount <= 0) {
+      setAmountError("Bitte geben Sie einen gültigen Betrag ein")
       return
     }
     const baseCard = cards[0]
@@ -279,7 +276,7 @@ export default function GutscheineGrid() {
               <div className="flex flex-col justify-center flex-1 px-4 sm:px-6 py-4 gap-1 min-w-0">
                 <span className="text-[10px] font-black tracking-[0.15em] uppercase text-[#b40000] flex items-center gap-1"><Gift className="w-3 h-3 flex-shrink-0" />Geschenkgutschein</span>
                 <h3 className="text-lg sm:text-xl font-black text-[#1A1A1A] leading-tight">Individueller Betrag</h3>
-                <p className="text-xs sm:text-sm text-gray-500">Wählen Sie den gewünschten Betrag zwischen CHF {MIN_AMOUNT} und CHF {MAX_AMOUNT}.</p>
+                <p className="text-xs sm:text-sm text-gray-500">Wählen Sie den gewünschten Betrag in CHF.</p>
                 <p className="text-[9px] font-bold tracking-[0.08em] uppercase text-[#2C5F2E] mt-1 leading-relaxed">
                   ALLES FUER DIE BACH FLUSS UND SEEFISCHE<br />
                   ** ARMBRUESTE UND PFEILBOEG<br />
@@ -292,13 +289,15 @@ export default function GutscheineGrid() {
                 <div className="w-full">
                   <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest block text-center mb-1">Betrag (CHF)</label>
                   <input
-                    type="number"
-                    min={MIN_AMOUNT}
-                    max={MAX_AMOUNT}
-                    step="1"
+                    type="text"
+                    inputMode="decimal"
                     value={customAmount}
-                    onChange={e => { setCustomAmount(e.target.value); if (amountError) setAmountError("") }}
-                    placeholder={`${MIN_AMOUNT} – ${MAX_AMOUNT}`}
+                    onChange={e => {
+                      const val = e.target.value.replace(/[^0-9.,]/g, "")
+                      setCustomAmount(val)
+                      if (amountError) setAmountError("")
+                    }}
+                    placeholder="z.B. 50"
                     className={`w-full text-center text-2xl font-black text-[#1A1A1A] border rounded-xl px-2 py-2 focus:outline-none focus:ring-2 ${amountError ? "border-red-400 focus:ring-red-200" : "border-[#E0E0E0] focus:ring-[#2C5F2E]/20 focus:border-[#2C5F2E]"}`}
                   />
                   {amountError && <p className="text-[10px] text-red-500 mt-1 text-center">{amountError}</p>}
