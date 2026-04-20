@@ -109,6 +109,7 @@ interface OrderStats {
 // Interfaces für Products
 interface Product {
   id: number
+  article_number?: string
   name: string
   description: string
   price: number | string
@@ -971,7 +972,9 @@ export function Admin({ onClose }: AdminProps) {
           product.name.toLowerCase().includes(searchTerm) ||
           product.description.toLowerCase().includes(searchTerm) ||
           (product.badge && product.badge.toLowerCase().includes(searchTerm)) ||
-          (product.origin && product.origin.toLowerCase().includes(searchTerm)),
+          (product.origin && product.origin.toLowerCase().includes(searchTerm)) ||
+          (product.article_number && product.article_number.toLowerCase().includes(searchTerm)) ||
+          String(product.id).includes(searchTerm),
       )
     }
 
@@ -2380,7 +2383,7 @@ export function Admin({ onClose }: AdminProps) {
             </div>
 
             {/* Excel Import */}
-            {false && showExcelImport && <Card className="mb-6 border border-emerald-200 bg-gradient-to-r from-emerald-50/50 to-white rounded-2xl shadow-sm">
+            {showExcelImport && <Card className="mb-6 border border-emerald-200 bg-gradient-to-r from-emerald-50/50 to-white rounded-2xl shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-base">
                   <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-2">

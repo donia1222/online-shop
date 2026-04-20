@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         let artikelCol = -1
         for (let c = range.s.c; c <= range.e.c; c++) {
           const h = (ws[XLSX.utils.encode_cell({ r: range.s.r, c })] as any)?.v
-          if (h === "Artikel-Nr.") { artikelCol = c; break }
+          if (h === "Artikel-Nr." || h === "ID" || h === "id") { artikelCol = c; break }
         }
         if (artikelCol >= 0) {
           for (let r = range.s.r + 1; r <= range.e.r; r++) {
@@ -88,17 +88,19 @@ export async function POST(request: NextRequest) {
       }
 
       for (const row of rows) {
-        const id = getCol(row, "Artikel-Nr.", "ID", "id")
+        const id = getCol(row, "ID", "id", "Artikel-Nr.")
         const name = getCol(row, "Name", "name")
 
         if (!id || !name) continue
 
-        let numId = parseInt(String(id), 10)
-        if (isNaN(numId) || numId <= 0) {
+        const articleNumber = String(id).trim()
+        let numId: number
+        if (/^\d+$/.test(articleNumber)) {
+          numId = parseInt(articleNumber, 10)
+        } else {
           let hash = 0
-          const str = String(id).trim()
-          for (let i = 0; i < str.length; i++) {
-            hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
+          for (let i = 0; i < articleNumber.length; i++) {
+            hash = ((hash << 5) - hash + articleNumber.charCodeAt(i)) | 0
           }
           numId = Math.abs(hash) || 1
         }
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
         const origin = String(getCol(row, "Hersteller") ?? "").trim()
         const weight_kg = parseFloat(String(getCol(row, "Gewicht kg", "Gewicht (kg)", "Gewicht", "weight_kg") ?? 0)) || 0.500
 
-        const artikelNr = String(id).trim()
+        const artikelNr = articleNumber
         const rawImage = artikelToUrl.get(artikelNr)
           || String(getCol(row, "URLs der Bilder", "Bild", "Bild URL", "Image", "image_url", "Foto") ?? "").trim()
         const folder = categorySlug.split("-")[0]
@@ -120,6 +122,7 @@ export async function POST(request: NextRequest) {
 
         allProducts.push({
           id: numId,
+          article_number: articleNumber,
           name: String(name).trim(),
           description,
           price,

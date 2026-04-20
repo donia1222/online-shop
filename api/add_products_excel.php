@@ -42,8 +42,9 @@ try {
 
     foreach ($products as $index => $p) {
         try {
-            $id           = isset($p['id'])          ? intval($p['id'])              : 0;
-            $name         = isset($p['name'])         ? trim($p['name'])              : '';
+            $id             = isset($p['id'])             ? intval($p['id'])            : 0;
+            $articleNumber  = isset($p['article_number']) ? trim($p['article_number']) : '';
+            $name           = isset($p['name'])           ? trim($p['name'])            : '';
             $description  = isset($p['description'])  ? trim($p['description'])       : '';
             $price        = isset($p['price'])        ? floatval($p['price'])         : 0.0;
             $stock        = isset($p['stock'])        ? intval($p['stock'])           : 0;
@@ -78,12 +79,13 @@ try {
 
             // UPSERT sin DELETE: solo inserta o actualiza, nunca borra
             $sql = "INSERT INTO products
-                        (id, name, description, price, stock, supplier, origin, category,
+                        (id, article_number, name, description, price, stock, supplier, origin, category,
                          heat_level, rating, badge, image_url, weight_kg)
                     VALUES
-                        (:id, :name, :description, :price, :stock, :supplier, :origin, :category,
+                        (:id, :article_number, :name, :description, :price, :stock, :supplier, :origin, :category,
                          1, 0.0, '', :image_url, COALESCE(:weight_kg_ins, 0.500))
                     ON DUPLICATE KEY UPDATE
+                        article_number = VALUES(article_number),
                         name        = VALUES(name),
                         description = VALUES(description),
                         price       = VALUES(price),
@@ -96,17 +98,18 @@ try {
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                ':id'          => $id,
-                ':name'        => $name,
-                ':description' => $description,
-                ':price'       => $price,
-                ':stock'       => $stock,
-                ':supplier'    => $supplier,
-                ':origin'      => $origin,
-                ':category'    => $category,
-                ':image_url'   => $image_url,
-                ':weight_kg_ins' => $weight_kg,
-                ':weight_kg_upd' => $weight_kg,
+                ':id'             => $id,
+                ':article_number' => $articleNumber !== '' ? $articleNumber : null,
+                ':name'           => $name,
+                ':description'    => $description,
+                ':price'          => $price,
+                ':stock'          => $stock,
+                ':supplier'       => $supplier,
+                ':origin'         => $origin,
+                ':category'       => $category,
+                ':image_url'      => $image_url,
+                ':weight_kg_ins'  => $weight_kg,
+                ':weight_kg_upd'  => $weight_kg,
             ]);
 
             $affected = $stmt->rowCount();

@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         let artikelCol = -1
         for (let c = range.s.c; c <= range.e.c; c++) {
           const h = (ws[XLSX.utils.encode_cell({ r: range.s.r, c })] as any)?.v
-          if (h === "Artikel-Nr.") { artikelCol = c; break }
+          if (h === "Artikel-Nr." || h === "ID" || h === "id") { artikelCol = c; break }
         }
         if (artikelCol >= 0) {
           // DEBUG: mostrar primeras 3 filas con sus celdas
@@ -111,18 +111,19 @@ export async function POST(request: NextRequest) {
       }
 
       for (const row of rows) {
-        const id = getCol(row, "Artikel-Nr.", "ID", "id")
+        const id = getCol(row, "ID", "id", "Artikel-Nr.")
         const name = getCol(row, "Name", "name")
 
         if (!id || !name) continue
 
-        let numId = parseInt(String(id), 10)
-        if (isNaN(numId) || numId <= 0) {
-          // ID alfanumérico — generar hash numérico positivo
+        const articleNumber = String(id).trim()
+        let numId: number
+        if (/^\d+$/.test(articleNumber)) {
+          numId = parseInt(articleNumber, 10)
+        } else {
           let hash = 0
-          const str = String(id).trim()
-          for (let i = 0; i < str.length; i++) {
-            hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
+          for (let i = 0; i < articleNumber.length; i++) {
+            hash = ((hash << 5) - hash + articleNumber.charCodeAt(i)) | 0
           }
           numId = Math.abs(hash) || 1
         }
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
         const weight_kg = isNaN(weightRaw) || weightRaw <= 0 ? 0.500 : weightRaw
 
         // Guardar URL sin extensión — frontend prueba .jpg / .JPG / .jpeg
-        const artikelNr = String(id).trim()
+        const artikelNr = articleNumber
         const rawImage = artikelToUrl.get(artikelNr)
           || String(getCol(row, "URLs der Bilder", "Bild", "Bild URL", "Image", "image_url", "Foto") ?? "").trim()
         const folder = categorySlug.split("-")[0]
@@ -146,6 +147,7 @@ export async function POST(request: NextRequest) {
 
         allProducts.push({
           id: numId,
+          article_number: articleNumber,
           name: String(name).trim(),
           description,
           price,
