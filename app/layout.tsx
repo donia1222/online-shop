@@ -4,7 +4,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { CookieBanner } from '@/components/cookie-banner'
 
 // ⚙️ MANTENIMIENTO: cambia a false para volver al estado normal
-const MAINTENANCE_MODE = false
+const MAINTENANCE_MODE = true
 
 
 export const metadata: Metadata = {
@@ -48,35 +48,41 @@ export default function RootLayout({
               padding: 'clamp(2rem, 5vw, 3.5rem)',
               maxWidth: '520px', width: '100%',
             }}>
-              {/* Logo */}
+              {/* Store Logo */}
               <img
-                src="/logolweb.png"
-                alt="Lweb Logo"
-                style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '50%', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '0.75rem', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
+                src="/Security_n.png"
+                alt="US - Fishing & Huntingshop"
+                style={{ maxWidth: '180px', width: '100%', height: 'auto', display: 'block', marginLeft: 'auto', marginRight: 'auto', marginBottom: '1.5rem' }}
               />
-              <p style={{ margin: '0 0 1.8rem', fontWeight: '700', fontSize: '1rem', color: '#111827' }}>Lweb Schweiz</p>
 
-      
+              {/* Maintenance notice */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                background: '#fff7ed',
+                border: '1px solid #fed7aa',
+                color: '#9a3412',
+                fontSize: '0.88rem', fontWeight: 500,
+                marginBottom: '1.8rem',
+              }}>
+                <span style={{ fontSize: '1.1rem' }}>🕒</span>
+                <span>Wir arbeiten an der Website – bald wieder verfügbar</span>
+              </div>
 
               {/* Divider */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.8rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
                 <span style={{ fontSize: '0.75rem', color: '#9ca3af', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Kontakt</span>
                 <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
               </div>
 
-              {/* Company info */}
-              <p style={{ margin: '0 0 0.2rem', fontSize: '0.88rem', color: '#6b7280' }}>App Entwickler &amp; Full-Stack Developer in Buchs SG</p>
-              <p style={{ margin: '0 0 1.5rem', fontSize: '0.82rem', color: '#9ca3af' }}>
-                Native iOS &amp; Android Apps, moderne Websites und KI-Lösungen.
-              </p>
-
-              {/* Contact links */}
+              {/* Store contact */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {[
-                  { href: 'mailto:info@lweb.ch', label: 'info@lweb.ch', icon: '✉' },
-                  { href: 'tel:+41765608645', label: '+41 76 560 86 45', icon: '📞' },
-                  { href: 'https://www.lweb.ch', label: 'www.lweb.ch', icon: '🌐', external: true },
+                  { href: 'https://maps.google.com/?q=Bahnhofstrasse+2,+9475+Sevelen', label: 'Bahnhofstrasse 2, 9475 Sevelen', icon: '📍', external: true },
+                  { href: 'tel:+41786066105', label: '078 606 61 05', icon: '📞' },
+                  { href: 'mailto:info@usfh.ch', label: 'info@usfh.ch', icon: '✉️' },
                 ].map(({ href, label, icon, external }) => (
                   <a
                     key={href}
@@ -98,10 +104,6 @@ export default function RootLayout({
                   </a>
                 ))}
               </div>
-
-              <p style={{ marginTop: '1.5rem', marginBottom: 0, fontSize: '0.78rem', color: '#d1d5db' }}>
-                9475 Sevelen, Schweiz
-              </p>
             </div>
           </div>
         </body>
