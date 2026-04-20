@@ -102,7 +102,7 @@ interface UserData {
 }
 
 // ⚠️ Cambiar a false para reactivar la tienda
-const STORE_UNDER_MAINTENANCE = false
+const STORE_UNDER_MAINTENANCE = true
 
 export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, onRemoveFromCart }: CheckoutPageProps) {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
@@ -154,6 +154,25 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   const [isCreatingAccount, setIsCreatingAccount] = useState(false)
   const [accountCreationStatus, setAccountCreationStatus] = useState<"idle" | "success" | "error">("idle")
   const [accountCreationMessage, setAccountCreationMessage] = useState("")
+
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
+
+  useEffect(() => {
+    const onScroll = () => {
+      const currentY = window.scrollY
+      if (currentY < 10) {
+        setHeaderVisible(true)
+      } else if (currentY > lastScrollY && currentY > 100) {
+        setHeaderVisible(false)
+      } else if (currentY < lastScrollY) {
+        setHeaderVisible(true)
+      }
+      setLastScrollY(currentY)
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [lastScrollY])
 
   // Login states
   const [showLogin, setShowLogin] = useState(false)
@@ -1347,8 +1366,8 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   return (
     <div className="min-h-screen bg-[#F0F1F3]">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-[#E0E0E0] sticky top-0 z-30 flex-shrink-0">
-        <div className="container mx-auto px-4 max-w-7xl py-3 sm:py-4 flex items-center justify-between">
+      <div className={`bg-white shadow-sm border-b border-[#E0E0E0] sticky top-0 z-30 flex-shrink-0 transition-transform duration-300 ${headerVisible ? "translate-y-0" : "-translate-y-full"}`}>
+        <div className="container mx-auto px-4 max-w-7xl h-32 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={onBackToStore}
@@ -1356,11 +1375,8 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <img src="/Security_n.png" alt="Logo" className="h-10 w-auto object-contain hidden sm:block" />
-            <div>
-              <span className="sm:hidden" style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '1.1rem' }}>Warenkorb</span>
-              <span className="hidden sm:inline" style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '1.1rem' }}>Warenkorb · Sicher &amp; verschlüsselt</span>
-            </div>
+            <img src="/Security_n.png" alt="Logo" className="h-28 w-auto object-contain hidden sm:block" />
+            <span className="sm:hidden" style={{ fontFamily: "'Rubik Dirt', sans-serif", color: '#1A1A1A', fontSize: '1.1rem' }}>Warenkorb</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-[#888]">
             <Shield className="w-4 h-4 text-[#2C5F2E]" />

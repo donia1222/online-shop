@@ -1419,7 +1419,28 @@ export function Admin({ onClose }: AdminProps) {
     doc.text(`${roundedTotal.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
 
     doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(150, 150, 150)
-    doc.text("Vielen Dank für Ihren Einkauf!", pageW / 2, 285, { align: "center" })
+    doc.text("Vielen Dank für Ihren Einkauf!", pageW / 2, 160, { align: "center" })
+
+    // Footer image
+    try {
+      const footer = new window.Image()
+      footer.src = "/images/checkcopia.png"
+      await new Promise<void>((res) => { footer.onload = () => res(); footer.onerror = () => res() })
+      if (footer.naturalWidth && footer.naturalHeight) {
+        const canvas = document.createElement("canvas")
+        canvas.width = footer.naturalWidth
+        canvas.height = footer.naturalHeight
+        canvas.getContext("2d")?.drawImage(footer, 0, 0)
+        const maxW = pageW - margin * 2
+        const maxH = 120
+        const ratio = footer.naturalWidth / footer.naturalHeight
+        let w = maxW, h = maxW / ratio
+        if (h > maxH) { h = maxH; w = maxH * ratio }
+        const x = (pageW - w) / 2
+        const y = 297 - h - 5
+        doc.addImage(canvas.toDataURL("image/png"), "PNG", x, y, w, h)
+      }
+    } catch (_) {/* sin footer */}
 
     doc.save(`Rechnung_${order.order_number}.pdf`)
   }
@@ -2893,13 +2914,6 @@ export function Admin({ onClose }: AdminProps) {
                 <Button onClick={() => { loadGiftCards(); loadGiftCardPurchases() }} variant="outline" size="sm" className="rounded-xl">
                   <RefreshCw className="w-3.5 h-3.5 mr-1" /> Aktualisieren
                 </Button>
-                <Button
-                  onClick={() => { setGcEditItem(null); setGcFormData({ name: "", description: "", amount: "", is_active: "1" }); setGcFormOpen(true) }}
-                  size="sm"
-                  className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Neuer Gutschein
-                </Button>
               </div>
             </div>
 
@@ -2997,23 +3011,7 @@ export function Admin({ onClose }: AdminProps) {
                             {gc.description && <p className="text-xs text-gray-400">{gc.description}</p>}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-black text-[#1A1A1A]">CHF {Number(gc.amount).toFixed(2)}</span>
-                          <Button
-                            size="sm" variant="outline"
-                            onClick={() => { setGcEditItem(gc); setGcFormData({ name: gc.name, description: gc.description ?? "", amount: String(gc.amount), is_active: String(gc.is_active) }); setGcFormOpen(true) }}
-                            className="rounded-lg h-7 px-2 text-xs"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm" variant="outline"
-                            onClick={() => handleDeleteGiftCard(gc.id)}
-                            className="rounded-lg h-7 px-2 text-xs border-red-200 text-red-500 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
+                        <div className="flex items-center gap-3" />
                       </div>
                     ))}
                   </div>

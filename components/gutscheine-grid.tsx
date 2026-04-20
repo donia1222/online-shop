@@ -48,7 +48,12 @@ export default function GutscheineGrid() {
   const [showBackTop, setShowBackTop] = useState(false)
   const [headerVisible, setHeaderVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [customAmount, setCustomAmount] = useState<string>("")
+  const [amountError, setAmountError] = useState<string>("")
   const { toast } = useToast()
+
+  const MIN_AMOUNT = 20
+  const MAX_AMOUNT = 2000
 
   useEffect(() => {
     loadCards()
@@ -97,31 +102,38 @@ export default function GutscheineGrid() {
     localStorage.setItem(CART_COUNT_KEY, c.reduce((s, i) => s + i.quantity, 0).toString())
   }, [])
 
-  const addToCart = (card: GiftCard) => {
-    const cartId = -card.id
-    setCart(prev => {
-      const exists = prev.find(i => i.id === cartId)
-      const next = exists
-        ? prev.map(i => i.id === cartId ? { ...i, quantity: i.quantity + 1 } : i)
-        : [...prev, {
-            id: cartId,
-            name: card.name,
-            price: card.amount,
-            image: "/icon-192x192.png",
-            description: card.description ?? "",
-            heatLevel: 0,
-            rating: 0,
-            quantity: 1,
-            item_type: "gutschein" as const,
-            gift_card_id: card.id,
-          }]
-      saveCart(next)
-      setCartCount(next.reduce((s, i) => s + i.quantity, 0))
-      return next
-    })
-    setAddedIds(prev => new Set([...prev, card.id]))
-    setTimeout(() => setAddedIds(prev => { const s = new Set(prev); s.delete(card.id); return s }), 2000)
-    toast({ title: "Gutschein hinzugefügt", description: card.name })
+  const addCustomToCart = () => {
+    const amount = parseFloat(customAmount.replace(",", "."))
+    if (isNaN(amount) || amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
+      setAmountError(`Betrag muss zwischen CHF ${MIN_AMOUNT} und CHF ${MAX_AMOUNT} liegen`)
+      return
+    }
+    const baseCard = cards[0]
+    if (!baseCard) {
+      toast({ title: "Fehler", description: "Kein Gutschein verfügbar" })
+      return
+    }
+    setAmountError("")
+    const cartId = -(Date.now())
+    const next: CartItem[] = [...cart, {
+      id: cartId,
+      name: `Geschenkgutschein CHF ${amount.toFixed(2)}`,
+      price: amount,
+      image: "/icon-192x192.png",
+      description: baseCard.description ?? "",
+      heatLevel: 0,
+      rating: 0,
+      quantity: 1,
+      item_type: "gutschein" as const,
+      gift_card_id: baseCard.id,
+    }]
+    setCart(next)
+    saveCart(next)
+    setCartCount(next.reduce((s, i) => s + i.quantity, 0))
+    setAddedIds(prev => new Set([...prev, baseCard.id]))
+    setTimeout(() => setAddedIds(prev => { const s = new Set(prev); s.delete(baseCard.id); return s }), 2000)
+    toast({ title: "Gutschein hinzugefügt", description: `CHF ${amount.toFixed(2)}` })
+    setCustomAmount("")
   }
 
   const removeFromCart = (cartId: number) => {
@@ -247,77 +259,67 @@ export default function GutscheineGrid() {
           </div>
         </div>
 
-        {/* Grid */}
+        {/* Single custom-amount card */}
         <div className="max-w-5xl mx-auto px-4 py-8">
           {loading ? (
-            <div className="flex flex-col gap-5">
-              {[1,2,3].map(i => (
-                <div key={i} className="bg-white rounded-2xl h-44 animate-pulse border border-gray-100" />
-              ))}
-            </div>
+            <div className="bg-white rounded-2xl h-44 animate-pulse border border-gray-100" />
           ) : cards.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <Gift className="w-12 h-12 mx-auto mb-4 opacity-30" />
               <p className="font-semibold">Keine Gutscheine verfügbar</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-5">
-              {cards.map(card => {
-                const isAdded = addedIds.has(card.id)
-                return (
-                  <div
-                    key={card.id}
-                    className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-[#DCDCDC] flex flex-row"
-                    style={{ minHeight: "130px" }}
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#DCDCDC] flex flex-col sm:flex-row">
+              {/* Left: logo */}
+              <div className="flex items-center justify-center border-b sm:border-b-0 sm:border-r border-[#E0E0E0] px-2 py-4 sm:py-2 flex-shrink-0 overflow-hidden sm:w-[180px]">
+                <img src="/icon-192x192.png" alt="US-Fishing & Huntingshop" className="w-24 sm:w-full h-auto object-contain" />
+              </div>
+
+              {/* Center: info */}
+              <div className="flex flex-col justify-center flex-1 px-4 sm:px-6 py-4 gap-1 min-w-0">
+                <span className="text-[10px] font-black tracking-[0.15em] uppercase text-[#b40000] flex items-center gap-1"><Gift className="w-3 h-3 flex-shrink-0" />Geschenkgutschein</span>
+                <h3 className="text-lg sm:text-xl font-black text-[#1A1A1A] leading-tight">Individueller Betrag</h3>
+                <p className="text-xs sm:text-sm text-gray-500">Wählen Sie den gewünschten Betrag zwischen CHF {MIN_AMOUNT} und CHF {MAX_AMOUNT}.</p>
+                <p className="text-[9px] font-bold tracking-[0.08em] uppercase text-[#2C5F2E] mt-1 leading-relaxed">
+                  ALLES FUER DIE BACH FLUSS UND SEEFISCHE<br />
+                  ** ARMBRUESTE UND PFEILBOEG<br />
+                  ** GROSSES MESSERSORTIME
+                </p>
+              </div>
+
+              {/* Right: input + CTA */}
+              <div className="flex flex-col items-center justify-center px-4 sm:px-6 py-4 gap-3 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-[#E0E0E0] sm:w-[220px]">
+                <div className="w-full">
+                  <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest block text-center mb-1">Betrag (CHF)</label>
+                  <input
+                    type="number"
+                    min={MIN_AMOUNT}
+                    max={MAX_AMOUNT}
+                    step="1"
+                    value={customAmount}
+                    onChange={e => { setCustomAmount(e.target.value); if (amountError) setAmountError("") }}
+                    placeholder={`${MIN_AMOUNT} – ${MAX_AMOUNT}`}
+                    className={`w-full text-center text-2xl font-black text-[#1A1A1A] border rounded-xl px-2 py-2 focus:outline-none focus:ring-2 ${amountError ? "border-red-400 focus:ring-red-200" : "border-[#E0E0E0] focus:ring-[#2C5F2E]/20 focus:border-[#2C5F2E]"}`}
+                  />
+                  {amountError && <p className="text-[10px] text-red-500 mt-1 text-center">{amountError}</p>}
+                </div>
+                {gcEnabled ? (
+                  <button
+                    onClick={addCustomToCart}
+                    className="flex items-center justify-center gap-2 w-full h-11 rounded-xl bg-[#2C5F2E] hover:bg-[#1A4520] text-white font-bold text-sm transition-all active:scale-95 hover:shadow-md"
                   >
-                    {/* Left: logo section */}
-                    <div className="flex items-center justify-center border-r border-[#E0E0E0] px-1 py-2 flex-shrink-0 overflow-hidden w-[80px] sm:w-[140px] md:w-[180px]">
-                      <img src="/icon-192x192.png" alt="US-Fishing & Huntingshop" className="w-full h-auto object-contain" />
+                    <ShoppingCart className="w-4 h-4" />
+                    In den Warenkorb
+                  </button>
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 opacity-50">
+                      <ShoppingCart className="w-4 h-4 text-gray-400" />
                     </div>
-
-                    {/* Center: card info */}
-                    <div className="flex flex-col justify-center flex-1 px-3 sm:px-6 py-4 gap-1 min-w-0">
-                      <span className="text-[9px] sm:text-[10px] font-black tracking-[0.15em] uppercase text-[#b40000] flex items-center gap-1"><Gift className="w-3 h-3 flex-shrink-0" />Geschenkgutschein</span>
-                      <h3 className="text-base sm:text-xl font-black text-[#1A1A1A] leading-tight truncate">{card.name}</h3>
-                      {card.description && (
-                        <p className="text-xs sm:text-sm text-gray-500 line-clamp-2">{card.description}</p>
-                      )}
-                      <p className="text-[9px] font-bold tracking-[0.08em] uppercase text-[#2C5F2E] mt-1 leading-relaxed">
-                        ALLES FUER DIE BACH FLUSS UND SEEFISCHE<br />
-                        ** ARMBRUESTE UND PFEILBOEG<br />
-                        ** GROSSES MESSERSORTIME
-                      </p>
-                    </div>
-
-                    {/* Right: price + CTA */}
-                    <div className="flex flex-col items-center justify-center px-3 sm:px-6 py-4 gap-2 flex-shrink-0 border-l border-[#E0E0E0] w-[90px] sm:w-[130px]">
-                      <div className="text-center">
-                        <span className="text-[10px] font-bold text-[#888] uppercase tracking-widest block">CHF</span>
-                        <span className="text-2xl sm:text-4xl font-black text-[#1A1A1A] leading-none">{card.amount % 1 === 0 ? card.amount.toFixed(0) : card.amount.toFixed(2)}</span>
-                      </div>
-                      {gcEnabled ? (
-                        <button
-                          onClick={() => addToCart(card)}
-                          className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 active:scale-95 ${
-                            isAdded
-                              ? "bg-emerald-500 text-white"
-                              : "bg-[#2C5F2E] hover:bg-[#1A4520] text-white hover:shadow-md"
-                          }`}
-                        >
-                          {isAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
-                        </button>
-                      ) : (
-                        <div className="flex flex-col items-center gap-1">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 opacity-50">
-                            <ShoppingCart className="w-4 h-4 text-gray-400" />
-                          </div>
-                          <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wide text-center leading-tight">Demnächst<br/>verfügbar</span>
-                        </div>
-                      )}
-                    </div>
+                    <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wide text-center leading-tight">Demnächst<br/>verfügbar</span>
                   </div>
-                )
-              })}
+                )}
+              </div>
             </div>
           )}
 
