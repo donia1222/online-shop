@@ -123,7 +123,7 @@ export default function ProductsGridCompact({
 
   // Note: activeCart variables will be defined after the handler functions
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+  // API_BASE_URL no longer needed — now using Next.js /api routes with caching
 
   // Cargar productos, categorías y carrito
   useEffect(() => {
@@ -247,7 +247,7 @@ export default function ProductsGridCompact({
 
   const loadCategories = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/get_categories.php`, { method: "POST" })
+      const response = await fetch(`/api/categories`)
       const data = await response.json()
       if (data.success) setCategories(data.categories)
     } catch (err) {
@@ -260,8 +260,8 @@ export default function ProductsGridCompact({
       setLoading(true)
       setError("")
 
-      const categoryParam = activeTab !== "all" ? `&category=${activeTab}` : ""
-      const response = await fetch(`${API_BASE_URL}/get_products.php?${categoryParam}`)
+      const categoryParam = activeTab !== "all" ? `category=${activeTab}` : ""
+      const response = await fetch(`/api/products${categoryParam ? `?${categoryParam}` : ""}`)
       const data: ApiResponse = await response.json()
 
       if (data.success) {
