@@ -86,42 +86,99 @@ try {
         // Obtener parámetros de filtro
         $search = $_GET['search'] ?? '';
         $category = $_GET['category'] ?? '';
-        $stock_status = $_GET['stock_status'] ?? ''; // Nuevo filtro por estado de stock
-        
-        // Construir consulta SQL base
-        $sql = "SELECT * FROM products WHERE 1=1";
+        $stock_status = $_GET['stock_status'] ?? ''; // Filtro por estado de stock
+        $supplier = $_GET['supplier'] ?? ''; // Filtro por fabricante (origin)
+        $sort     = $_GET['sort'] ?? '';     // Orden opcional
+
+        // Paginación
+        $hasLimit = isset($_GET['limit']);
+        $limit  = $hasLimit ? max(1, min(500, intval($_GET['limit']))) : 0;
+        $offset = isset($_GET['offset']) ? max(0, intval($_GET['offset'])) : 0;
+
+        // Construir WHERE común
+        $where = " WHERE 1=1";
         $params = [];
-        
-        // Añadir filtro de búsqueda
+
         if (!empty($search)) {
-            $sql .= " AND (name LIKE :search 
-                     OR description LIKE :search 
-                     OR badge LIKE :search 
-                     OR origin LIKE :search)";
+            $where .= " AND (name LIKE :search
+                     OR description LIKE :search
+                     OR badge LIKE :search
+                     OR origin LIKE :search
+                     OR article_number LIKE :search)";
             $params[':search'] = '%' . trim($search) . '%';
         }
-        
-        // Añadir filtro de categoría
+
         if (!empty($category)) {
-            $sql .= " AND category = :category";
+            $where .= " AND category = :category";
             $params[':category'] = $category;
         }
-        
-        // Añadir filtro de stock
+
+        if (!empty($supplier)) {
+            $where .= " AND origin = :supplier";
+            $params[':supplier'] = $supplier;
+        }
+
         if (!empty($stock_status)) {
             if ($stock_status === 'in_stock') {
-                $sql .= " AND stock > 0";
+                $where .= " AND stock > 0";
             } elseif ($stock_status === 'out_of_stock') {
-                $sql .= " AND stock = 0";
+                $where .= " AND stock = 0";
             } elseif ($stock_status === 'low_stock') {
-                $sql .= " AND stock > 0 AND stock <= 10"; // Considerar bajo stock si hay 10 o menos
+                $where .= " AND stock > 0 AND stock <= 10";
             }
         }
-        
-        $sql .= " ORDER BY category, created_at DESC";
-        
+
+        // Total de productos que coinciden con los filtros (sin paginación)
+        $countStmt = $pdo->prepare("SELECT COUNT(*) FROM products" . $where);
+        $countStmt->execute($params);
+        $totalMatched = intval($countStmt->fetchColumn());
+
+        // Lista de marcas (origins) disponibles para el filtro "Hersteller".
+        // Ignora el propio filtro de supplier para que el usuario siga viendo
+        // todas las marcas de la categoría aunque tenga una seleccionada.
+        $originsWhere = " WHERE 1=1";
+        $originsParams = [];
+        if (!empty($search)) {
+            $originsWhere .= " AND (name LIKE :search OR description LIKE :search OR badge LIKE :search OR origin LIKE :search OR article_number LIKE :search)";
+            $originsParams[':search'] = '%' . trim($search) . '%';
+        }
+        if (!empty($category)) {
+            $originsWhere .= " AND category = :category";
+            $originsParams[':category'] = $category;
+        }
+        if (!empty($stock_status)) {
+            if ($stock_status === 'in_stock')      $originsWhere .= " AND stock > 0";
+            elseif ($stock_status === 'out_of_stock') $originsWhere .= " AND stock = 0";
+            elseif ($stock_status === 'low_stock')    $originsWhere .= " AND stock > 0 AND stock <= 10";
+        }
+        $originsStmt = $pdo->prepare("SELECT DISTINCT origin FROM products" . $originsWhere . " AND origin IS NOT NULL AND origin <> '' ORDER BY origin ASC");
+        $originsStmt->execute($originsParams);
+        $allOrigins = array_map(function($r) { return $r['origin']; }, $originsStmt->fetchAll(PDO::FETCH_ASSOC));
+
+        // Orden: in-stock primero, luego según parámetro
+        switch ($sort) {
+            case 'name_asc':   $orderBy = "ORDER BY (stock = 0) ASC, name ASC"; break;
+            case 'name_desc':  $orderBy = "ORDER BY (stock = 0) ASC, name DESC"; break;
+            case 'price_asc':  $orderBy = "ORDER BY (stock = 0) ASC, price ASC"; break;
+            case 'price_desc': $orderBy = "ORDER BY (stock = 0) ASC, price DESC"; break;
+            default:           $orderBy = "ORDER BY (stock = 0) ASC, category, created_at DESC";
+        }
+
+        // Query principal
+        $sql = "SELECT * FROM products" . $where . " " . $orderBy;
+        if ($hasLimit) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+        }
+
         $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+        if ($hasLimit) {
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        }
+        $stmt->execute();
         $products = $stmt->fetchAll();
         
         // Procesar cada producto
@@ -180,37 +237,65 @@ try {
             }
         }
         
-        // Separar productos por categoría para estadísticas
-        $hot_sauces = array_filter($products, function($p) {
-            return $p['category'] === 'hot-sauce' || empty($p['category']);
-        });
-        
-        $bbq_sauces = array_filter($products, function($p) {
-            return $p['category'] === 'bbq-sauce';
-        });
-        
-        // Estadísticas de stock
-        $total_stock = array_sum(array_column($products, 'stock'));
-        $out_of_stock_count = count(array_filter($products, function($p) {
-            return $p['stock'] == 0;
-        }));
-        $low_stock_count = count(array_filter($products, function($p) {
-            return $p['stock'] > 0 && $p['stock'] <= 10;
-        }));
-        
-        echo json_encode([
-            'success' => true,
-            'products' => $products,
-            'total' => count($products),
-            'stats' => [
+        // Estadísticas GLOBALES (sobre todos los productos que coinciden con los filtros,
+        // no solo la página actual). Si no hay paginación, reutilizamos el array cargado.
+        if ($hasLimit) {
+            $statsStmt = $pdo->prepare("
+                SELECT
+                    COUNT(*) AS total_products,
+                    SUM(CASE WHEN category = 'hot-sauce' OR category IS NULL OR category = '' THEN 1 ELSE 0 END) AS hot_sauces,
+                    SUM(CASE WHEN category = 'bbq-sauce' THEN 1 ELSE 0 END) AS bbq_sauces,
+                    COALESCE(SUM(stock), 0) AS total_stock,
+                    SUM(CASE WHEN stock = 0 THEN 1 ELSE 0 END) AS out_of_stock,
+                    SUM(CASE WHEN stock > 0 AND stock <= 10 THEN 1 ELSE 0 END) AS low_stock,
+                    SUM(CASE WHEN stock > 0 THEN 1 ELSE 0 END) AS in_stock
+                FROM products" . $where);
+            $statsStmt->execute($params);
+            $s = $statsStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $stats = [
+                'total_products' => intval($s['total_products'] ?? 0),
+                'hot_sauces'     => intval($s['hot_sauces'] ?? 0),
+                'bbq_sauces'     => intval($s['bbq_sauces'] ?? 0),
+                'total_stock'    => intval($s['total_stock'] ?? 0),
+                'out_of_stock'   => intval($s['out_of_stock'] ?? 0),
+                'low_stock'      => intval($s['low_stock'] ?? 0),
+                'in_stock'       => intval($s['in_stock'] ?? 0),
+            ];
+        } else {
+            $hot_sauces = array_filter($products, function($p) {
+                return $p['category'] === 'hot-sauce' || empty($p['category']);
+            });
+            $bbq_sauces = array_filter($products, function($p) {
+                return $p['category'] === 'bbq-sauce';
+            });
+            $total_stock = array_sum(array_column($products, 'stock'));
+            $out_of_stock_count = count(array_filter($products, function($p) {
+                return $p['stock'] == 0;
+            }));
+            $low_stock_count = count(array_filter($products, function($p) {
+                return $p['stock'] > 0 && $p['stock'] <= 10;
+            }));
+            $stats = [
                 'total_products' => count($products),
-                'hot_sauces' => count($hot_sauces),
-                'bbq_sauces' => count($bbq_sauces),
-                'total_stock' => $total_stock,
-                'out_of_stock' => $out_of_stock_count,
-                'low_stock' => $low_stock_count,
-                'in_stock' => count($products) - $out_of_stock_count
-            ]
+                'hot_sauces'     => count($hot_sauces),
+                'bbq_sauces'     => count($bbq_sauces),
+                'total_stock'    => $total_stock,
+                'out_of_stock'   => $out_of_stock_count,
+                'low_stock'      => $low_stock_count,
+                'in_stock'       => count($products) - $out_of_stock_count,
+            ];
+        }
+
+        echo json_encode([
+            'success'     => true,
+            'products'    => $products,
+            'total'       => $totalMatched,
+            'count'       => count($products),
+            'offset'      => $offset,
+            'limit'       => $hasLimit ? $limit : null,
+            'has_more'    => $hasLimit ? (($offset + count($products)) < $totalMatched) : false,
+            'all_origins' => $allOrigins,
+            'stats'       => $stats,
         ]);
     }
     
