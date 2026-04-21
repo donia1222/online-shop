@@ -210,6 +210,12 @@ export function Admin({ onClose }: AdminProps) {
   const [bulkLoading, setBulkLoading] = useState(false)
   const [removedImages, setRemovedImages] = useState<boolean[]>([false, false, false, false])
 
+  // Brand management (Hersteller verwalten)
+  const [showBrandsModal, setShowBrandsModal] = useState(false)
+  const [renamingBrand, setRenamingBrand] = useState<string | null>(null)
+  const [newBrandName, setNewBrandName] = useState("")
+  const [brandSaving, setBrandSaving] = useState(false)
+
   // Categories State
   const [categories, setCategories] = useState<Category[]>([])
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
@@ -959,6 +965,36 @@ export function Admin({ onClose }: AdminProps) {
       }
     } catch (error: any) {
       toast({ title: "Fehler", description: error.message, variant: "destructive" })
+    }
+  }
+
+  const renameBrand = async (oldName: string, newName: string) => {
+    const trimmed = newName.trim()
+    if (!trimmed || trimmed === oldName) {
+      setRenamingBrand(null)
+      setNewBrandName("")
+      return
+    }
+    try {
+      setBrandSaving(true)
+      const response = await fetch(`${API_BASE_URL}/rename_brand.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ old_name: oldName, new_name: trimmed }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        toast({ title: "Erfolg", description: `${data.updated} Produkt(e) aktualisiert` })
+        setRenamingBrand(null)
+        setNewBrandName("")
+        loadProducts()
+      } else {
+        toast({ title: "Fehler", description: data.error || "Unbekannter Fehler", variant: "destructive" })
+      }
+    } catch (error: any) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" })
+    } finally {
+      setBrandSaving(false)
     }
   }
 
@@ -2347,7 +2383,7 @@ export function Admin({ onClose }: AdminProps) {
             <div className="mb-4">
               <h2 className="text-xl font-black text-gray-900 tracking-tight">Produkte hinzufügen</h2>
               <p className="text-xs text-gray-400 mt-0.5 mb-4">Produkte verwalten</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Banner: Neues Produkt */}
                 <button
                   onClick={showAddProductModal}
@@ -2377,6 +2413,22 @@ export function Admin({ onClose }: AdminProps) {
                     </div>
                     <p className="text-white font-bold text-base leading-tight">Excel importieren</p>
                     <p className="text-emerald-100 text-xs mt-1">{showExcelImport ? "Formular schließen" : "Produkte per Excel synchronisieren"}</p>
+                  </div>
+                </button>
+
+                {/* Banner: Hersteller verwalten */}
+                <button
+                  onClick={() => setShowBrandsModal(true)}
+                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 p-5 text-left shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-6 -translate-x-4" />
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                      <Edit className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-white font-bold text-base leading-tight">Hersteller verwalten</p>
+                    <p className="text-indigo-100 text-xs mt-1">Markennamen umbenennen</p>
                   </div>
                 </button>
               </div>
@@ -2452,7 +2504,7 @@ export function Admin({ onClose }: AdminProps) {
             </Card>}
 
             {/* Excel Add (sin borrar) — HIDDEN */}
-            {true && <Card className="mb-6 border border-blue-200 bg-gradient-to-r from-blue-50/50 to-white rounded-2xl shadow-sm">
+            {false && <Card className="mb-6 border border-blue-200 bg-gradient-to-r from-blue-50/50 to-white rounded-2xl shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-base">
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
@@ -4203,6 +4255,89 @@ export function Admin({ onClose }: AdminProps) {
                 Ja, senden
               </Button>
               <Button variant="outline" onClick={() => setShipConfirmOrder(null)} className="rounded-xl">Abbrechen</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── Hersteller verwalten ── */}
+        <Dialog open={showBrandsModal} onOpenChange={open => { setShowBrandsModal(open); if (!open) { setRenamingBrand(null); setNewBrandName("") } }}>
+          <DialogContent className="left-0 top-0 translate-x-0 translate-y-0 w-full max-w-full h-full max-h-full rounded-none flex flex-col overflow-hidden p-0 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-md sm:h-auto sm:max-h-[80vh] sm:rounded-lg bg-white">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">
+              <DialogTitle>Hersteller verwalten</DialogTitle>
+              <p className="text-xs text-gray-500 mt-1">Markennamen umbenennen. Der neue Name wird bei allen Produkten dieser Marke angewendet.</p>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {(() => {
+                const counts = new Map<string, number>()
+                products.forEach(p => {
+                  const o = (p.origin || "").trim()
+                  if (!o) return
+                  counts.set(o, (counts.get(o) || 0) + 1)
+                })
+                const brands = Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+                if (brands.length === 0) {
+                  return <p className="text-sm text-gray-500 text-center py-8">Keine Hersteller vorhanden.</p>
+                }
+                return (
+                  <ul className="divide-y divide-gray-100">
+                    {brands.map(([brand, count]) => (
+                      <li key={brand} className="py-2.5">
+                        {renamingBrand === brand ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={newBrandName}
+                              onChange={e => setNewBrandName(e.target.value)}
+                              placeholder={brand}
+                              autoFocus
+                              disabled={brandSaving}
+                              className="flex-1"
+                              onKeyDown={e => {
+                                if (e.key === "Enter") renameBrand(brand, newBrandName)
+                                if (e.key === "Escape") { setRenamingBrand(null); setNewBrandName("") }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => renameBrand(brand, newBrandName)}
+                              disabled={brandSaving || !newBrandName.trim() || newBrandName.trim() === brand}
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                              {brandSaving ? "…" : "Speichern"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => { setRenamingBrand(null); setNewBrandName("") }}
+                              disabled={brandSaving}
+                            >
+                              Abbrechen
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{brand}</p>
+                              <p className="text-xs text-gray-500">{count} Produkt{count === 1 ? "" : "e"}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => { setRenamingBrand(brand); setNewBrandName(brand) }}
+                              className="shrink-0"
+                            >
+                              <Edit className="w-3.5 h-3.5 mr-1.5" />
+                              Umbenennen
+                            </Button>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )
+              })()}
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 shrink-0">
+              <Button variant="outline" onClick={() => setShowBrandsModal(false)} className="w-full">Schließen</Button>
             </div>
           </DialogContent>
         </Dialog>
