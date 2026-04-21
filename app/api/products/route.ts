@@ -8,20 +8,21 @@ const cache = new Map<string, { data: unknown; at: number }>()
 const inflight = new Map<string, Promise<unknown>>()
 
 export async function GET(req: NextRequest) {
-  // Ignorar parámetro cache-buster _= para que no genere clave única cada vez
   const params = req.nextUrl.searchParams
+  // Si viene _= es un cache-buster del admin (quiere datos frescos): invalida el caché
+  const bustCache = params.has("_")
   params.delete("_")
   const qs = params.toString()
   const url = qs ? `${PHP_BASE}?${qs}` : PHP_BASE
   const hit = cache.get(qs)
 
-  if (hit && Date.now() - hit.at < CACHE_TTL) {
+  if (!bustCache && hit && Date.now() - hit.at < CACHE_TTL) {
     return NextResponse.json(hit.data)
   }
 
-  // Si ya hay una petición en vuelo para esta key, esperar su resultado
+  // Si hay petición en vuelo para esta key (y no es bust), esperar su resultado
   const existing = inflight.get(qs)
-  if (existing) {
+  if (!bustCache && existing) {
     try {
       const data = await existing
       return NextResponse.json(data)
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
     })
     .finally(() => inflight.delete(qs))
 
-  inflight.set(qs, promise)
+  if (!bustCache) inflight.set(qs, promise)
 
   try {
     const data = await promise
