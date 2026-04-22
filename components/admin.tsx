@@ -225,6 +225,7 @@ export function Admin({ onClose }: AdminProps) {
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importLoading, setImportLoading] = useState(false)
   const [showExcelImport, setShowExcelImport] = useState(false)
+  const [showAddImport, setShowAddImport] = useState(false)
   const [categoryDeleteWarning, setCategoryDeleteWarning] = useState<string | null>(null)
   const [importResult, setImportResult] = useState<{
     success: boolean

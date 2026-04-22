@@ -79,13 +79,12 @@ try {
 
             // UPSERT sin DELETE: solo inserta o actualiza, nunca borra
             $sql = "INSERT INTO products
-                        (id, article_number, name, description, price, stock, supplier, origin, category,
+                        (id, name, description, price, stock, supplier, origin, category,
                          heat_level, rating, badge, image_url, weight_kg)
                     VALUES
-                        (:id, :article_number, :name, :description, :price, :stock, :supplier, :origin, :category,
+                        (:id, :name, :description, :price, :stock, :supplier, :origin, :category,
                          1, 0.0, '', :image_url, COALESCE(:weight_kg_ins, 0.500))
                     ON DUPLICATE KEY UPDATE
-                        article_number = VALUES(article_number),
                         name        = VALUES(name),
                         description = VALUES(description),
                         price       = VALUES(price),
@@ -99,7 +98,6 @@ try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':id'             => $id,
-                ':article_number' => $articleNumber !== '' ? $articleNumber : null,
                 ':name'           => $name,
                 ':description'    => $description,
                 ':price'          => $price,
