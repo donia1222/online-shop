@@ -34,10 +34,44 @@ export async function fetchProductsCached(
 }
 
 // ── Image URL resolution cache ──
-// Once we know which candidate URL actually loads for a given base src,
-// remember it so we never retry the failing candidates again.
+// Once we know which candidate URL actually loads, remember it
+// in memory AND in localStorage so subsequent page loads skip the 404s.
+
+const LS_KEY = "fk-img-resolved"
+const MAX_ENTRIES = 3000
 
 const resolvedImages = new Map<string, string>()
+
+// Load from localStorage once at module init (client-only)
+if (typeof window !== "undefined") {
+  try {
+    const stored = localStorage.getItem(LS_KEY)
+    if (stored) {
+      const obj = JSON.parse(stored) as Record<string, string>
+      for (const [k, v] of Object.entries(obj)) resolvedImages.set(k, v)
+    }
+  } catch {}
+}
+
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+
+function persistToLocalStorage() {
+  if (typeof window === "undefined") return
+  if (saveTimer) return
+  saveTimer = setTimeout(() => {
+    saveTimer = null
+    try {
+      // Trim to MAX_ENTRIES if needed (keep newest by evicting oldest keys)
+      if (resolvedImages.size > MAX_ENTRIES) {
+        const keys = Array.from(resolvedImages.keys())
+        keys.slice(0, resolvedImages.size - MAX_ENTRIES).forEach(k => resolvedImages.delete(k))
+      }
+      const obj: Record<string, string> = {}
+      resolvedImages.forEach((v, k) => { obj[k] = v })
+      localStorage.setItem(LS_KEY, JSON.stringify(obj))
+    } catch {}
+  }, 1000) // batch writes: wait 1s after last resolve
+}
 
 /** Get previously resolved image URL for a source */
 export function getResolvedImage(src: string): string | undefined {
@@ -47,4 +81,5 @@ export function getResolvedImage(src: string): string | undefined {
 /** Store a resolved image URL */
 export function setResolvedImage(src: string, resolvedUrl: string): void {
   resolvedImages.set(src, resolvedUrl)
+  persistToLocalStorage()
 }

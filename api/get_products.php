@@ -1,6 +1,39 @@
 <?php
 require_once 'config.php';
 
+/**
+ * Genera candidates de imagen probando extensiones comunes
+ * y la variante con el nombre de archivo en MAYÚSCULAS,
+ * para cubrir servidores Linux case-sensitive.
+ */
+function buildImageCandidates(?string $base_url): array {
+    if (!$base_url) return [];
+
+    $dir  = substr($base_url, 0, strrpos($base_url, '/') + 1);
+    $file = substr($base_url, strrpos($base_url, '/') + 1);
+
+    // Si ya tiene extensión: devolver original + lower + upper
+    if (preg_match('/\.(jpg|JPG|jpeg|JPEG|png|PNG)$/i', $file)) {
+        return array_values(array_unique([
+            $base_url,
+            $dir . strtolower($file),
+            $dir . strtoupper($file),
+        ]));
+    }
+
+    // Sin extensión: probar lower.jpg, UPPER.jpg, lower.JPG, lower.png
+    $lower = strtolower($file);
+    $upper = strtoupper($file);
+    return array_values(array_unique([
+        $dir . $lower . '.jpg',
+        $dir . $upper . '.jpg',
+        $dir . $file  . '.jpg',
+        $dir . $lower . '.JPG',
+        $dir . $lower . '.png',
+        $dir . $upper . '.png',
+    ]));
+}
+
 // Configurar CORS
 setCORSHeaders();
 header('Content-Type: application/json; charset=utf-8');
@@ -57,18 +90,8 @@ try {
         $base_url = $image_urls[0] ?? $db_image_url;
         $product['image_url'] = $base_url;
 
-        if ($base_url && !preg_match('/\.(jpg|JPG|jpeg|JPEG|png|PNG)$/', $base_url)) {
-            $product['image_url_candidates'] = [
-                $base_url . '.jpg',
-                $base_url . '.JPG',
-                $base_url . '.jpeg',
-                $base_url . '.JPEG',
-                $base_url . '.png',
-            ];
-        } else {
-            $product['image_url_candidates'] = $base_url ? [$base_url] : [];
-        }
-        
+        $product['image_url_candidates'] = buildImageCandidates($base_url);
+
         // Convertir tipos de datos
         $product['id'] = intval($product['id']);
         $product['price'] = floatval($product['price']);
@@ -202,17 +225,7 @@ try {
             $product['image_url'] = $base_url;
 
             // Generar variantes de extensión para que el frontend pruebe en orden
-            if ($base_url && !preg_match('/\.(jpg|JPG|jpeg|JPEG|png|PNG)$/', $base_url)) {
-                $product['image_url_candidates'] = [
-                    $base_url . '.jpg',
-                    $base_url . '.JPG',
-                    $base_url . '.jpeg',
-                    $base_url . '.JPEG',
-                    $base_url . '.png',
-                ];
-            } else {
-                $product['image_url_candidates'] = $base_url ? [$base_url] : [];
-            }
+            $product['image_url_candidates'] = buildImageCandidates($base_url);
             
             // Convertir tipos de datos
             $product['id'] = intval($product['id']);
