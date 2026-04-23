@@ -161,6 +161,7 @@ export default function AdminPage() {
 export function Admin({ onClose }: AdminProps) {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("orders")
+  const loadedTabsRef = useRef(new Set<string>())
 
   // Gutscheine State
   const [giftCards, setGiftCards] = useState<any[]>([])
@@ -401,24 +402,30 @@ export function Admin({ onClose }: AdminProps) {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // Load all data on mount
+  // On mount: only load the initial tab (orders) — lazy-load the rest on first visit
   useEffect(() => {
     loadOrders()
-    loadProducts()
-    loadCategories()
-    loadBlogPosts()
-    loadGalleryImages()
-    loadShippingSettings()
-    loadPaymentSettings()
-    loadAnnouncements()
+    loadedTabsRef.current.add("orders")
   }, [])
 
-  // Reload specific tab data when tab changes or filters change
+  // Lazy-load tab data on first visit; reload orders/products on every visit
   useEffect(() => {
+    const loaded = loadedTabsRef.current
     if (activeTab === "orders") {
       loadOrders()
     } else if (activeTab === "products") {
       loadProducts()
+      if (!loaded.has("categories")) { loadCategories(); loaded.add("categories") }
+    } else if (activeTab === "blog") {
+      if (!loaded.has("blog")) { loadBlogPosts(); loaded.add("blog") }
+    } else if (activeTab === "gallery") {
+      if (!loaded.has("gallery")) { loadGalleryImages(); loaded.add("gallery") }
+    } else if (activeTab === "anuncios") {
+      if (!loaded.has("anuncios")) { loadAnnouncements(); loaded.add("anuncios") }
+    } else if (activeTab === "versand") {
+      if (!loaded.has("versand")) { loadShippingSettings(); loaded.add("versand") }
+    } else if (activeTab === "einstellungen") {
+      if (!loaded.has("einstellungen")) { loadPaymentSettings(); loaded.add("einstellungen") }
     } else if (activeTab === "gutscheine") {
       loadGiftCards()
       loadGiftCardPurchases()
@@ -2504,8 +2511,8 @@ export function Admin({ onClose }: AdminProps) {
               </CardContent>
             </Card>}
 
-            {/* Excel Add (sin borrar) — HIDDEN */}
-            {false && <Card className="mb-6 border border-blue-200 bg-gradient-to-r from-blue-50/50 to-white rounded-2xl shadow-sm">
+            {/* Excel Add (sin borrar) */}
+            {<Card className="mb-6 border border-blue-200 bg-gradient-to-r from-blue-50/50 to-white rounded-2xl shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-base">
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
