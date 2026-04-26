@@ -8,6 +8,7 @@ const MAINTENANCE_MODE = false
 
 
 
+
 export const metadata: Metadata = {
   title: 'US - Fishing & Huntingshop',
   description: 'Ihr Spezialist für Jagd- und Angelausrüstung. Premium Outdoor-Ausrüstung zu fairen Preisen.',
