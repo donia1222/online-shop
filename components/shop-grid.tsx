@@ -1044,7 +1044,7 @@ export default function ShopGrid() {
             })()}
 
             {/* ── Supplier / Hersteller chips ── */}
-            {suppliers.length > 1 && (
+            {false && suppliers.length > 1 && (
               <div className="border-t border-[#E0E0E0] mt-6 pt-6">
                 <div className="flex items-start gap-2.5 mb-2.5">
                   <div className="w-0.5 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
