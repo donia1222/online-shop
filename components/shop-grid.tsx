@@ -1043,7 +1043,45 @@ export default function ShopGrid() {
               )
             })()}
 
-            {/* ── Supplier section ── */}
+            {/* ── Supplier / Hersteller chips ── */}
+            {suppliers.length > 1 && (
+              <div className="border-t border-[#E0E0E0] mt-6 pt-6">
+                <div className="flex items-start gap-2.5 mb-2.5">
+                  <div className="w-0.5 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
+                  <div>
+                    <p className="font-black text-[#2C5F2E] text-xl lg:text-2xl leading-tight">Hersteller</p>
+                    <p className="text-sm text-[#888] mt-1">Nach Marke filtern</p>
+                  </div>
+                </div>
+                <div className="overflow-x-auto -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  <div className="flex items-center gap-1.5 min-w-max pb-1">
+                    <button
+                      onClick={() => setActiveSupplier("all")}
+                      className="px-2.5 py-1 rounded-full border transition-all whitespace-nowrap text-[11px] font-black uppercase tracking-wider"
+                      style={activeSupplier === "all"
+                        ? { backgroundColor: "#2C5F2E", color: "#fff", borderColor: "#2C5F2E" }
+                        : { backgroundColor: "#fff", color: "#555", borderColor: "#D1D5DB" }
+                      }
+                    >
+                      Alle
+                    </button>
+                    {suppliers.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setActiveSupplier(prev => prev === s ? "all" : s)}
+                        className="px-2.5 py-1 rounded-full border transition-all whitespace-nowrap text-[11px] font-black uppercase tracking-wider"
+                        style={activeSupplier === s
+                          ? { backgroundColor: "#2C5F2E", color: "#fff", borderColor: "#2C5F2E" }
+                          : { backgroundColor: "#fff", color: "#555", borderColor: "#D1D5DB" }
+                        }
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ── Search — mobile only, below brand badges ── */}
             <div className="sm:hidden relative mb-4">

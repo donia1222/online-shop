@@ -61,6 +61,7 @@ try {
             continue;
         }
 
+        $articleNumber = isset($p['article_number']) ? trim($p['article_number']) : '';
         $description  = isset($p['description'])  ? trim($p['description'])  : '';
         $price        = isset($p['price'])        ? floatval($p['price'])    : 0.0;
         $stock        = isset($p['stock'])        ? intval($p['stock'])      : 0;
@@ -69,7 +70,6 @@ try {
         $category     = isset($p['category'])     ? trim($p['category'])     : '';
         $categoryName = isset($p['category_name']) ? trim($p['category_name']) : $category;
         $image_url    = isset($p['image_url']) && $p['image_url'] !== '' ? trim($p['image_url']) : null;
-        // Si no viene weight_kg usamos 0.500 como fallback
         $weight_kg    = isset($p['weight_kg']) && floatval($p['weight_kg']) > 0 ? floatval($p['weight_kg']) : 0.500;
 
         // Auto-crear categoría si no existe (pocas por import, coste mínimo)
@@ -84,9 +84,10 @@ try {
         }
 
         $newIds[] = $id;
-        $valuePlaceholders[] = "(?,?,?,?,?,?,?,?,1,0.0,'',?,?)";
+        $valuePlaceholders[] = "(?,?,?,?,?,?,?,?,?,1,0.0,'',?,?)";
         array_push($params,
             $id,
+            $articleNumber !== '' ? $articleNumber : null,
             $name,
             $description,
             $price,
@@ -113,10 +114,11 @@ try {
 
         // Bulk INSERT — sin DELETE, este endpoint solo añade/actualiza
         $sql = "INSERT INTO products
-                    (id, name, description, price, stock, supplier, origin, category,
+                    (id, article_number, name, description, price, stock, supplier, origin, category,
                      heat_level, rating, badge, image_url, weight_kg)
                 VALUES " . implode(',', $valuePlaceholders) . "
                 ON DUPLICATE KEY UPDATE
+                    article_number = VALUES(article_number),
                     name        = VALUES(name),
                     description = VALUES(description),
                     price       = VALUES(price),

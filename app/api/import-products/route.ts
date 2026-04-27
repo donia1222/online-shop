@@ -136,14 +136,16 @@ export async function POST(request: NextRequest) {
 
         if (!id || !name) continue
 
-        const articleNumber = String(id).trim()
+        const idStr = String(id).trim()
+        // article_number: prefer "Artikel-Nr." column; fall back to "ID"
+        const articleNumber = String(getCol(row, "Artikel-Nr.", "article_number") ?? id).trim()
         let numId: number
-        if (/^\d+$/.test(articleNumber)) {
-          numId = parseInt(articleNumber, 10)
+        if (/^\d+$/.test(idStr)) {
+          numId = parseInt(idStr, 10)
         } else {
           let hash = 0
-          for (let i = 0; i < articleNumber.length; i++) {
-            hash = ((hash << 5) - hash + articleNumber.charCodeAt(i)) | 0
+          for (let i = 0; i < idStr.length; i++) {
+            hash = ((hash << 5) - hash + idStr.charCodeAt(i)) | 0
           }
           numId = Math.abs(hash) || 1
         }
