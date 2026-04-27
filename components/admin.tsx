@@ -1273,8 +1273,7 @@ export function Admin({ onClose }: AdminProps) {
       if (data.success) {
         toast({ title: "Import erfolgreich", description: `${data.inserted} neu, ${data.updated} aktualisiert, ${data.deleted ?? 0} gelöscht` })
         loadProducts(true)
-        if (categories.length === 0) loadCategories()
-        else loadCategories()
+        loadCategories(true)
       } else {
         toast({ title: "Import fehlgeschlagen", description: data.error, variant: "destructive" })
       }
@@ -1298,7 +1297,7 @@ export function Admin({ onClose }: AdminProps) {
       if (data.success) {
         toast({ title: "Hinzufügen erfolgreich", description: `${data.inserted} neu, ${data.updated} aktualisiert — nichts gelöscht` })
         loadProducts(true)
-        loadCategories()
+        loadCategories(true)
         if (data.processedIds?.length > 0) {
           const batch = { filename: addFile.name, date: new Date().toLocaleString("de-CH"), ids: data.processedIds, count: data.processedIds.length }
           const updated = [batch, ...importHistory].slice(0, 20)

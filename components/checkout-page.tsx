@@ -37,7 +37,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { UserProfile } from "./user-profile"
 import { StripePayment } from "./stripe-payment"
 import { StripeTwintPayment } from "./stripe-twint-payment"
-import { ProductImage } from "./product-image"
 
 interface Product {
   id: number
@@ -2127,16 +2126,11 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                 <div className="space-y-4">
                   {cart.map((item) => (
                     <div key={item.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-white border border-gray-100">
-                        <ProductImage
-                          src={item.image_url || item.image}
-                          candidates={item.image_url_candidates}
-                          alt={item.name}
-                          className="w-full h-full object-contain p-1"
-                        />
-                      </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-sm line-clamp-2">{item.name}</h4>
+                        <h4
+                          className="font-semibold text-sm line-clamp-2 cursor-pointer hover:text-[#2C5F2E] transition-colors"
+                          onClick={() => router.push(`/product/${item.id}`)}
+                        >{item.name}</h4>
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center space-x-2">
                             <Button

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { getResolvedImage, setResolvedImage } from "@/lib/product-cache"
 
-const EXTENSIONS = [".jpg", ".JPG", ".jpeg", ".JPEG", ".png", ".webp"]
-const HAS_EXT = /\.(jpg|jpeg|png|gif|webp|svg)$/i
+const EXTENSIONS = [".jpg", ".JPG", ".jpeg", ".JPEG", ".png", ".webp", ".avif"]
+const HAS_EXT = /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i
 const PLACEHOLDER = "/Security_n.png"
 
 interface ProductImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> {
@@ -23,9 +23,22 @@ export function ProductImage({ src, candidates, alt, onAllFailed, ...props }: Pr
     : candidates && candidates.length > 0
       ? candidates
       : src
-        ? HAS_EXT.test(src)
-          ? [src]
-          : EXTENSIONS.map(ext => src + ext)
+        ? (() => {
+            // Para cada URL base generamos variante original + filename en minúsculas
+            // así funciona tanto 09CN007.jpg como 09cn007.jpg en servidor Linux
+            const toLower = (u: string) => u.replace(/\/([^/?#]+)(\?.*)?$/, (_, f, q) => `/${f.toLowerCase()}${q ?? ""}`)
+            if (HAS_EXT.test(src)) {
+              const low = toLower(src)
+              return low === src ? [src] : [src, low]
+            }
+            const variants: string[] = []
+            for (const ext of EXTENSIONS) {
+              variants.push(src + ext)
+              const low = toLower(src) + ext
+              if (low !== src + ext) variants.push(low)
+            }
+            return variants
+          })()
         : []
 
   const [attempt, setAttempt] = useState(0)

@@ -2,7 +2,7 @@
 
 import { ShoppingCart, Plus, Minus, X, Trash2, ArrowRight, Package } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { ProductImage } from "./product-image"
+import { useRouter } from "next/navigation"
 
 interface Product {
   id: number
@@ -41,6 +41,7 @@ export function ShoppingCartComponent({
   onGoToCheckout,
   onClearCart,
 }: ShoppingCartProps) {
+  const router = useRouter()
   const total = cart.reduce((s, i) => s + i.price * i.quantity, 0)
   const totalItems = cart.reduce((s, i) => s + i.quantity, 0)
 
@@ -86,19 +87,12 @@ export function ShoppingCartComponent({
                     key={item.id}
                     className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100/80 rounded-2xl border border-gray-100 transition-colors group"
                   >
-                    {/* Image */}
-                    <div className="w-14 h-14 bg-white rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
-                      <ProductImage
-                        src={item.image_url || item.image}
-                        candidates={item.image_url_candidates}
-                        alt={item.name}
-                        className="w-full h-full object-contain p-1"
-                      />
-                    </div>
-
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-gray-900 line-clamp-2 leading-tight">{item.name}</p>
+                      <p
+                        className="text-xs font-bold text-gray-900 line-clamp-2 leading-tight cursor-pointer hover:text-[#2C5F2E] transition-colors"
+                        onClick={() => { onOpenChange(false); router.push(`/product/${item.id}`) }}
+                      >{item.name}</p>
                       <p className="text-sm font-black text-[#2C5F2E] mt-1">{item.price.toFixed(2)} <span className="text-xs font-semibold text-gray-400">CHF</span></p>
                     </div>
 

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { type NextRequest, NextResponse } from "next/server"
 import * as XLSX from "xlsx"
-import { phpFetch } from "@/lib/php-queue"
+import { clearPhpBlock, reportPhpError } from "@/lib/php-guard"
 
 
 function toSlug(sheetName: string): string {
@@ -117,9 +117,18 @@ export async function POST(request: NextRequest) {
         const rawImage = artikelToUrl.get(artikelNr)
           || String(getCol(row, "URLs der Bilder", "Bild", "Bild URL", "Image", "image_url", "Foto") ?? "").trim()
         const folder = categorySlug.split("-")[0]
-        const image_url = rawImage
-          ? transformImageUrl(rawImage).replace(/\.(jpg|JPG|jpeg|JPEG|png|PNG)$/, "")
-          : `https://web.lweb.ch/usa/img/${folder}/${artikelNr}`
+        const BASE = `https://web.lweb.ch/usa/img/${folder}/`
+
+        let image_url: string
+        if (!rawImage) {
+          // Sin imagen en Excel: URL sin extensión, ProductImage prueba .jpg/.JPG/.png/.webp/.avif
+          image_url = BASE + artikelNr
+        } else {
+          const transformed = transformImageUrl(rawImage)
+          // Quitar extensión: la extensión del Excel puede no coincidir con el archivo real
+          const noExt = transformed.replace(/\.(jpg|JPG|jpeg|JPEG|png|PNG|webp|avif)$/, "")
+          image_url = noExt.startsWith("http") ? noExt : BASE + noExt
+        }
 
         allProducts.push({
           id: numId,
@@ -144,18 +153,25 @@ export async function POST(request: NextRequest) {
 
     // Llama al PHP que NO borra nada
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-    const phpResponse = await phpFetch(`${apiBase}/add_products_excel.php`, {
+    const phpResponse = await fetch(`${apiBase}/add_products_excel.php`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products: allProducts }),
     })
 
-    const result = await phpResponse.json()
+    const text = await phpResponse.text()
+    let result: any
+    try {
+      result = JSON.parse(text)
+    } catch {
+      reportPhpError(phpResponse.status)
+      return NextResponse.json({ success: false, error: `PHP error (${phpResponse.status})` }, { status: 502 })
+    }
 
-    return NextResponse.json({
-      ...result,
-      parsed: allProducts.length,
-    })
+    if (phpResponse.ok && result.success) clearPhpBlock()
+    else reportPhpError(phpResponse.status)
+
+    return NextResponse.json({ ...result, parsed: allProducts.length })
   } catch (error) {
     console.error("Error añadiendo productos:", error)
     return NextResponse.json({ success: false, error: "Error interno al procesar el archivo" }, { status: 500 })

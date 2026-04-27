@@ -65,7 +65,7 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
         className="relative aspect-square bg-[#F8F8F8] overflow-hidden cursor-pointer"
         onClick={() => onSelect(product)}
       >
-        {images.length > 0 ? (
+        {images.length > 1 ? (
           <img
             src={images[idx]}
             alt={product.name}
@@ -81,7 +81,7 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
           />
         ) : (
           <ProductImage
-            src={product.image_url}
+            src={images[0] ?? product.image_url}
             candidates={product.image_url_candidates}
             alt={product.name}
             loading="lazy"
