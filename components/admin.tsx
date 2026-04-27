@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { getCachedProducts, bustProductsCache, updateProductInCache, removeProductFromCache } from "@/lib/products-cache"
 import { getCachedCategories, bustCategoriesCache } from "@/lib/categories-cache"
+import { ProductImage } from "@/components/product-image"
 import {
   ArrowLeft,
   RefreshCw,
@@ -1194,7 +1195,6 @@ export function Admin({ onClose }: AdminProps) {
         })
         setIsProductModalOpen(false)
         if (isEditing && currentEditingProduct) {
-          // Actualizar en caché y en estado local sin fetch a PHP
           const ss = (formData.get("stock_status") as string || currentEditingProduct.stock_status) as Product["stock_status"]
           const updated: Product = {
             ...currentEditingProduct,
@@ -1203,6 +1203,9 @@ export function Admin({ onClose }: AdminProps) {
             stock: parseInt(formData.get("stock") as string) || currentEditingProduct.stock,
             description: (formData.get("description") as string) || currentEditingProduct.description,
             stock_status: ss,
+            // Tomar imágenes de la respuesta del servidor si las devuelve
+            ...(data.image_url   !== undefined ? { image_url: data.image_url }     : {}),
+            ...(data.image_urls  !== undefined ? { image_urls: data.image_urls }   : {}),
           }
           updateProductInCache(updated)
           setProducts(prev => prev.map(p => p.id === updated.id ? updated : p))
@@ -2502,6 +2505,19 @@ export function Admin({ onClose }: AdminProps) {
                     <RefreshCw className={`w-4 h-4 mr-2 ${importLoading ? "animate-spin" : ""}`} />
                     {importLoading ? "Importiere..." : "Importieren"}
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                    onClick={async () => {
+                      await fetch("/api/cache-reset", { method: "POST" })
+                      loadProducts(true)
+                      loadCategories(true)
+                      toast({ title: "429-Guard zurückgesetzt", description: "PHP-Sperre aufgehoben, Daten neu geladen" })
+                    }}
+                  >
+                    429 Reset
+                  </Button>
                 </div>
 
                 {importResult && (
@@ -2788,11 +2804,11 @@ export function Admin({ onClose }: AdminProps) {
 
                   {/* Product Image */}
                   <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-                    <img
-                      src={product.image_url ? (product.image_url.match(/\.(jpg|jpeg|png|webp)$/i) ? product.image_url : product.image_url + ".jpg") : "/Security_n.png"}
+                    <ProductImage
+                      src={product.image_url}
+                      candidates={(product as any).image_urls?.filter(Boolean)}
                       alt={product.name}
                       loading="lazy"
-                      onError={(e) => { (e.target as HTMLImageElement).src = "/Security_n.png" }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     {/* Stock dot */}

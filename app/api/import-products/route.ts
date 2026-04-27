@@ -44,11 +44,16 @@ function getCol(row: Record<string, unknown>, ...keys: string[]): unknown {
 
 // Transforma la URL de imagen del formato antiguo al nuevo
 // http://usfh.ch/img/Messer/file.jpg → https://web.lweb.ch/usa/img/messer/file.jpg
+function normalizeFolder(folder: string): string {
+  return folder.toLowerCase()
+    .replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss")
+}
+
 function transformImageUrl(url: string): string {
   if (!url) return ""
   return url.replace(
     /^https?:\/\/usfh\.ch\/img\/([^/]+)\//i,
-    (_, folder) => `https://web.lweb.ch/usa/img/${folder.toLowerCase()}/`
+    (_, folder) => `https://web.lweb.ch/usa/img/${normalizeFolder(folder)}/`
   )
 }
 

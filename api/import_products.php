@@ -131,7 +131,7 @@ try {
                     supplier       = VALUES(supplier),
                     origin         = VALUES(origin),
                     category       = VALUES(category),
-                    image_url      = IF(VALUES(image_url) IS NOT NULL, VALUES(image_url), image_url),
+                    image_url      = IF(image_url IS NULL OR image_url = '', VALUES(image_url), image_url),
                     weight_kg      = VALUES(weight_kg),
                     updated_at     = CURRENT_TIMESTAMP";
 
