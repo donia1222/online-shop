@@ -19,7 +19,7 @@ export function Footer() {
   } | null>(null)
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/get_payment_settings.php`)
+    fetch(`/api/payment-settings`)
       .then(r => r.json())
       .then(data => {
         if (data.success && data.settings) {

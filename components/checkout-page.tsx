@@ -215,7 +215,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   // Load payment settings + enabled countries on mount
   useEffect(() => {
     // Payment settings
-    fetch(`${API_BASE_URL}/get_payment_settings.php`)
+    fetch(`/api/payment-settings`)
       .then(r => r.json())
       .then(data => {
         if (data.success && data.settings) {
@@ -231,7 +231,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
       .catch(() => {})
 
     // Shipping countries
-    fetch(`${API_BASE_URL}/get_shipping_settings.php`)
+    fetch(`/api/shipping-settings`)
       .then(r => r.json())
       .then(data => {
         if (data.success && data.zones) {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { getCachedCategories } from "@/lib/categories-cache"
 import { ShoppingCart, ChevronDown, Menu, ArrowUp, Newspaper, Download, Images, Mail, Gift } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { LoginAuth } from "./login-auth"
@@ -38,10 +39,7 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
   }, [lastScrollY])
 
   useEffect(() => {
-    fetch("/api/categories")
-      .then(r => r.json())
-      .then(data => { if (data.success) setBackendCategories(data.categories) })
-      .catch(() => {})
+    getCachedCategories().then(setBackendCategories).catch(() => {})
   }, [])
 
   const categories: { label: string; href: string; highlight?: boolean }[] = [

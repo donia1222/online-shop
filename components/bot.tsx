@@ -6,6 +6,7 @@ import { marked } from "marked"
 import DOMPurify from "dompurify"
 import { X, Trash2, SendHorizontal, Loader2, Flame, MessageSquare, Plus, ChevronLeft, ChevronRight, Minus } from "lucide-react"
 import { systemPrompt } from "./chatPrompt"
+import { getCachedProducts } from "@/lib/products-cache"
 
 // Extendemos el tipo Message para incluir productos detectados
 type Message = {
@@ -33,37 +34,19 @@ type DetectedProduct = {
 // Base de datos de productos que se carga dinámicamente desde la API
 let productDatabase: DetectedProduct[] = []
 
-// Función para cargar productos desde la API
 async function loadProductsFromAPI(): Promise<DetectedProduct[]> {
   try {
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/get_products.php`
-    console.log('🔗 Cargando productos desde API:', apiUrl)
-    
-    const response = await fetch(apiUrl)
-    const data = await response.json()
-    
-    console.log('📦 Respuesta de la API:', data)
-    
-    if (data.success && data.products) {
-      const products = data.products.map((product: any) => ({
-        id: product.id,
-        name: product.name,
-        image: product.image_url || "/placeholder.svg?height=128&width=128", // Usar image_url de la API
-        price: product.price,
-        badge: product.badge,
-        heatLevel: product.heat_level,
-        stock: product.stock
-      }))
-      
-      console.log('✅ Productos cargados exitosamente:', products.length)
-      console.log('🔍 Primeros 3 productos:', products.slice(0, 3))
-      return products
-    }
-    
-    console.log('❌ No se pudieron cargar productos. Respuesta:', data)
-    return []
-  } catch (error) {
-    console.error('❌ Error loading products from API:', error)
+    const { products } = await getCachedProducts()
+    return products.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      image: p.image_url || "/placeholder.svg?height=128&width=128",
+      price: p.price,
+      badge: p.badge,
+      heatLevel: p.heat_level,
+      stock: p.stock
+    }))
+  } catch {
     return []
   }
 }

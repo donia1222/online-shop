@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { getCachedCategories } from "@/lib/categories-cache"
 import { ArrowLeft, ChevronLeft, X, ChevronRight, Images, Menu, Newspaper, Download, ShoppingCart } from "lucide-react"
 import { Footer } from "@/components/footer"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -114,10 +115,7 @@ export default function GalleryPage() {
       .then(d => { if (d.success) setImages(d.images) })
       .catch(() => {})
       .finally(() => setLoading(false))
-    fetch("/api/categories")
-      .then(r => r.json())
-      .then(d => { if (d.success) setCategories(d.categories) })
-      .catch(() => {})
+    getCachedCategories().then(setCategories).catch(() => {})
   }, [])
 
   return (

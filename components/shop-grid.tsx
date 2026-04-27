@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback, memo, useRef } from "react"
+import { getCachedProducts } from "@/lib/products-cache"
+import { getCachedCategories } from "@/lib/categories-cache"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import {
   ShoppingCart, ChevronLeft, ChevronRight,
-  Search, X, Check, LayoutGrid, ArrowLeft,
+  Search, X, Check, ArrowLeft,
   ArrowUp, ChevronDown, Heart, Menu, Newspaper, Download, Images, Gift
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -227,6 +229,27 @@ function MobileCatCard({ srcs, displayName, isActive, onClick, id }: {
   )
 }
 
+// Imagen para tarjetas de categoría:
+// 1) productos con image_urls[] (URLs completas subidas, más fiables)
+// 2) fallback: image_url con extensiones
+function catImageSrc(catProds: any[]): string[] {
+  // Primero buscar productos con image_urls completas
+  for (const p of catProds) {
+    const urls = (p.image_urls ?? []).filter(Boolean)
+    if (urls.length > 0) return [urls[0] as string]
+  }
+  // Si ninguno tiene image_urls, intentar con image_url + extensiones (todos los productos)
+  const srcs: string[] = []
+  for (const p of catProds) {
+    if (srcs.length >= 20) break
+    const raw = p.image_url
+    if (!raw) continue
+    if (raw.match(/\.(jpg|jpeg|png|webp)$/i)) srcs.push(raw)
+    else srcs.push(raw + ".jpg", raw + ".png")
+  }
+  return srcs
+}
+
 // ─── CatCard: category card with image fallback chain ─────────────────────────
 
 function CatCard({ srcs, displayName, isActive, onClick }: {
@@ -298,7 +321,7 @@ export default function ShopGrid() {
   const [showBackTop, setShowBackTop]       = useState(false)
   const [navMenuOpen, setNavMenuOpen]       = useState(false)
   const [headerVisible, setHeaderVisible]   = useState(true)
-  const [lastScrollY, setLastScrollY]       = useState(0)
+  const lastScrollYRef                      = useRef(0)
   const [showUserProfile, setShowUserProfile] = useState(false)
 
   const handleDownloadVCard = () => {
@@ -326,13 +349,8 @@ export default function ShopGrid() {
       })
   }
 
-  const PAGE_SIZE = 20
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-
-  const [loadingMore, setLoadingMore] = useState(false)
-  const sentinelRef = useRef<HTMLDivElement>(null)
-  const hasMoreRef = useRef(false)
-  const loadingMoreRef = useRef(false)
+  const PAGE_SIZE = 50
+  const [currentPage, setCurrentPage] = useState(0)
 
   const [cart, setCart]           = useState<CartItem[]>([])
   const [cartOpen, setCartOpen]   = useState(false)
@@ -343,20 +361,19 @@ export default function ShopGrid() {
   const [showWishlist, setShowWishlist] = useState(false)
 
   useEffect(() => { loadProducts(); loadCategories(); loadCart(); loadWishlist() }, [])
-  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [search, activeCategory, activeSupplier, stockFilter, sortBy])
+  useEffect(() => { setCurrentPage(0) }, [search, activeCategory, activeSupplier, stockFilter, sortBy])
 
-  // Apply category filter from URL param once categories are loaded
+  // Set default category to first root category once categories load
   useEffect(() => {
+    if (categories.length === 0) return
     const catParam = searchParams.get("cat")
-    if (!catParam || categories.length === 0) return
-    // Match against category name (API names like "Messer 2026" contain the display name)
-    const matched = categories.find((c) =>
-      c.name.toLowerCase().includes(catParam.toLowerCase())
-    )
-    if (matched) {
-      setActiveCategory(matched.slug)
+    if (catParam) {
+      const matched = categories.find((c) =>
+        c.name.toLowerCase().includes(catParam.toLowerCase())
+      )
+      if (matched) { setActiveCategory(matched.slug); return }
     }
-  }, [categories, searchParams])
+  }, [categories])
 
   // Scroll horizontal automático al card de categoría activa en móvil
   useEffect(() => {
@@ -375,52 +392,29 @@ export default function ShopGrid() {
       setShowBackTop(currentY > 500)
       if (currentY < 10) {
         setHeaderVisible(true)
-      } else if (currentY > lastScrollY && currentY > 100) {
+      } else if (currentY > lastScrollYRef.current && currentY > 100) {
         setHeaderVisible(false)
-      } else if (currentY < lastScrollY) {
+      } else if (currentY < lastScrollYRef.current) {
         setHeaderVisible(true)
       }
-      setLastScrollY(currentY)
+      lastScrollYRef.current = currentY
     }
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [lastScrollY])
-
-  // Infinite scroll: scroll event on window
-  useEffect(() => {
-    const handleScroll = () => {
-      if (loadingMoreRef.current || !hasMoreRef.current) return
-      const scrolled = window.scrollY + window.innerHeight
-      const total = document.documentElement.scrollHeight
-      if (scrolled >= total - 1500) {
-        loadingMoreRef.current = true
-        setLoadingMore(true)
-        setTimeout(() => {
-          setVisibleCount(c => c + PAGE_SIZE)
-          loadingMoreRef.current = false
-          setLoadingMore(false)
-        }, 400)
-      }
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   const loadProducts = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/products`)
-      const data = await res.json()
-      if (data.success) setProducts(data.products)
-      else throw new Error(data.error)
+      const { products } = await getCachedProducts()
+      setProducts(products)
     } catch (e: any) { setError(e.message || "Fehler") }
     finally { setLoading(false) }
   }
   const loadCategories = async () => {
     try {
-      const res = await fetch(`/api/categories`)
-      const data = await res.json()
-      if (data.success) setCategories(data.categories)
+      const cats = await getCachedCategories()
+      setCategories(cats)
     } catch {}
   }
   const loadCart = () => {
@@ -538,10 +532,8 @@ export default function ShopGrid() {
       }
     })
 
-  const visibleProducts = filtered.slice(0, visibleCount)
-  const hasMore = visibleCount < filtered.length
-  hasMoreRef.current = hasMore
-  // loadingMoreRef stays in sync with loadingMore state
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const pagedProducts = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE)
 
   const handleSelect    = useCallback((p: Product) => router.push(`/product/${p.id}`), [])
   const handleAddToCart = useCallback((p: Product) => addToCart(p), [addedIds, cart]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -927,7 +919,7 @@ export default function ShopGrid() {
               </button>
               <div ref={desktopCatScrollRef} className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div className="flex gap-3" style={{ flexWrap: "nowrap" }}>
-              {/* Alle — default card */}
+              {/* Alle */}
               <button
                 onClick={() => setActiveCategory("all")}
                 className="relative overflow-hidden rounded-2xl group text-left transition-all duration-300 flex flex-col justify-between p-4"
@@ -938,23 +930,12 @@ export default function ShopGrid() {
                   boxShadow: activeCategory === "all" ? "0 8px 32px rgba(44,95,46,0.2)" : "none",
                 }}
               >
-                {/* Decorative circles */}
                 <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.08)" }} />
                 <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.06)" }} />
-                <div className="absolute top-1/2 right-6 -translate-y-1/2 w-14 h-14 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.05)" }} />
-
-                {/* Icon */}
-                <div className="relative w-11 h-11 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: "#2C5F2E1A" }}>
-                  <LayoutGrid className="w-6 h-6" style={{ color: "#2C5F2E" }} />
+                <div className="relative w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#2C5F2E1A" }}>
+                  <Check className="w-6 h-6" style={{ color: "#2C5F2E" }} />
                 </div>
-                {/* Text */}
                 <div className="relative">
-                  {activeCategory === "all" && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#2C5F2E" }}>
-                      <Check className="w-3 h-3" /> Aktiv
-                    </span>
-                  )}
                   <p className="font-black text-base leading-tight tracking-tight" style={{ color: "#2C5F2E" }}>Alle Kategorien</p>
                   <p className="text-[11px] mt-0.5 font-medium text-[#999]">Alles anzeigen →</p>
                 </div>
@@ -963,21 +944,12 @@ export default function ShopGrid() {
                 const catProds = products.filter(p =>
                   p.category === cat.slug || p.category === cat.name
                 )
-                // collect all image sources with fallbacks
-                const srcs: string[] = []
-                for (const p of catProds) {
-                  const fromUrls = (p.image_urls ?? []).filter((u): u is string => !!u)
-                  srcs.push(...fromUrls)
-                  if (p.image_url) srcs.push(p.image_url)
-                  if (p.image_url_candidates?.length) srcs.push(...p.image_url_candidates)
-                }
-                const uniqueSrcs = [...new Set(srcs)]
                 const isActive = activeCategory === cat.slug
                 const displayName = cat.name.replace(/\s*\d{4}$/, "")
                 return (
                   <CatCard
                     key={cat.slug}
-                    srcs={uniqueSrcs}
+                    srcs={catImageSrc(catProds)}
                     displayName={displayName}
                     isActive={isActive}
                     onClick={() => setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug)}
@@ -991,8 +963,7 @@ export default function ShopGrid() {
             {/* ── Category cards — mobile only ── */}
             <div ref={mobileCatScrollRef} className="lg:hidden overflow-x-auto mb-3 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div className="flex gap-2.5 pb-1" style={{ flexWrap: "nowrap" }}>
-
-                {/* Alle card — mobile */}
+                {/* Alle mobile */}
                 <button
                   onClick={() => setActiveCategory("all")}
                   className="relative overflow-hidden rounded-xl flex-shrink-0 flex flex-col justify-between p-3 transition-all duration-200"
@@ -1004,33 +975,23 @@ export default function ShopGrid() {
                   }}
                 >
                   <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.07)" }} />
-                  <div className="absolute -bottom-3 -left-3 w-12 h-12 rounded-full" style={{ backgroundColor: "rgba(44,95,46,0.05)" }} />
                   <div className="relative w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(44,95,46,0.12)" }}>
-                    <LayoutGrid className="w-4 h-4" style={{ color: "#2C5F2E" }} />
+                    <Check className="w-4 h-4" style={{ color: "#2C5F2E" }} />
                   </div>
                   <div className="relative">
                     <p className="font-black text-[15px] leading-tight" style={{ color: "#2C5F2E" }}>Alle</p>
                     <p className="text-[12px] text-[#999] mt-0.5">Anzeigen</p>
                   </div>
                 </button>
-
                 {categories.map(cat => {
                   const catProds = products.filter(p => p.category === cat.slug || p.category === cat.name)
-                  const srcs: string[] = []
-                  for (const p of catProds) {
-                    const fromUrls = (p.image_urls ?? []).filter((u): u is string => !!u)
-                    srcs.push(...fromUrls)
-                    if (p.image_url) srcs.push(p.image_url)
-                    if (p.image_url_candidates?.length) srcs.push(...p.image_url_candidates)
-                  }
-                  const uniqueSrcs = [...new Set(srcs)]
                   const isActive = activeCategory === cat.slug
                   const displayName = cat.name.replace(/\s*\d{4}$/, "")
                   return (
                     <MobileCatCard
                       key={cat.slug}
                       id={`mobile-cat-${cat.slug}`}
-                      srcs={uniqueSrcs}
+                      srcs={catImageSrc(catProds)}
                       displayName={displayName}
                       isActive={isActive}
                       onClick={() => setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug)}
@@ -1142,8 +1103,8 @@ export default function ShopGrid() {
               </div>
             ) : (
               <>
-<div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-                  {visibleProducts.map(product => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                  {pagedProducts.map(product => (
                     <ProductCard
                       key={product.id}
                       product={product}
@@ -1156,18 +1117,38 @@ export default function ShopGrid() {
                   ))}
                 </div>
 
-                {/* Infinite scroll sentinel */}
-                <div ref={sentinelRef} className="mt-10 flex flex-col items-center gap-3 pb-6">
-                  {loadingMore && (
-                    <>
-                      <div className="w-8 h-8 rounded-full border-[3px] border-[#2C5F2E]/20 border-t-[#2C5F2E] animate-spin" />
-                      <span className="text-xs text-[#999] font-semibold">Mehr laden…</span>
-                    </>
-                  )}
-                  {!hasMore && visibleProducts.length > 0 && (
-                    <p className="text-xs text-[#CCC] font-semibold tracking-widest uppercase">— Alle {filtered.length} Produkte geladen —</p>
-                  )}
-                </div>
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-8 flex items-center justify-center gap-2 pb-6">
+                    <button
+                      onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: "smooth" }) }}
+                      disabled={currentPage === 0}
+                      className="w-9 h-9 rounded-full flex items-center justify-center border border-[#E0E0E0] bg-white text-[#555] hover:bg-[#2C5F2E] hover:text-white hover:border-[#2C5F2E] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setCurrentPage(i); window.scrollTo({ top: 0, behavior: "smooth" }) }}
+                        className={`w-9 h-9 rounded-full text-sm font-bold transition-all ${
+                          i === currentPage
+                            ? "bg-[#2C5F2E] text-white shadow-md"
+                            : "border border-[#E0E0E0] bg-white text-[#555] hover:bg-[#F5F5F5]"
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }) }}
+                      disabled={currentPage === totalPages - 1}
+                      className="w-9 h-9 rounded-full flex items-center justify-center border border-[#E0E0E0] bg-white text-[#555] hover:bg-[#2C5F2E] hover:text-white hover:border-[#2C5F2E] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </main>

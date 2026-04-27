@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { getCachedCategories } from "@/lib/categories-cache"
 import { ArrowLeft, ChevronLeft, Calendar, X, ChevronRight, Menu, Newspaper, Images, Download, ShoppingCart } from "lucide-react"
 import { Footer } from "@/components/footer"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -220,10 +221,7 @@ export default function BlogPage() {
       .then(d => { if (d.success) setPosts(d.posts) })
       .catch(() => {})
       .finally(() => setLoading(false))
-    fetch("/api/categories")
-      .then(r => r.json())
-      .then(d => { if (d.success) setCategories(d.categories) })
-      .catch(() => {})
+    getCachedCategories().then(setCategories).catch(() => {})
   }, [])
 
   return (

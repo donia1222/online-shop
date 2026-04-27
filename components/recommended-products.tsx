@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ProductImage } from "./product-image"
-import { fetchProductsCached } from "@/lib/product-cache"
+import { getCachedProducts } from "@/lib/products-cache"
 
 interface Product {
   id: number
@@ -32,10 +32,8 @@ export function RecommendedProducts() {
 
     const load = async (retries = 2): Promise<void> => {
       try {
-        const data = await fetchProductsCached()
-        if (!data.success || cancelled) return
-
-        const allProducts = data.products as unknown as Product[]
+        const { products: allProducts } = await getCachedProducts()
+        if (cancelled) return
 
         const hasImage = (p: Product) =>
           !!(p.image_url && /\.(jpg|jpeg|png|webp|gif)$/i.test(p.image_url))

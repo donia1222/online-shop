@@ -3,6 +3,8 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, useMemo } from "react"
+import { getCachedProducts, bustProductsCache, updateProductInCache, removeProductFromCache } from "@/lib/products-cache"
+import { getCachedCategories, bustCategoriesCache } from "@/lib/categories-cache"
 import {
   ArrowLeft,
   RefreshCw,
@@ -41,6 +43,8 @@ import {
   Users,
   XCircle,
   Gift,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -52,7 +56,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { ProductImage } from "@/components/product-image"
 import {
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from "recharts"
@@ -189,8 +192,10 @@ export function Admin({ onClose }: AdminProps) {
   const [shipConfirmOrder, setShipConfirmOrder] = useState<Order | null>(null)
 
   // Products State
+  const PRODS_PER_PAGE = 24
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
+  const [productsPage, setProductsPage] = useState(0)
   const [productStats, setProductStats] = useState<ProductStats | null>(null)
   const [productsLoading, setProductsLoading] = useState(false)
   const [productsError, setProductsError] = useState("")
@@ -402,9 +407,8 @@ export function Admin({ onClose }: AdminProps) {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // On mount: only load the initial tab (orders) — lazy-load the rest on first visit
+  // On mount: mark orders as loaded (the tab effect handles the actual fetch)
   useEffect(() => {
-    loadOrders()
     loadedTabsRef.current.add("orders")
   }, [])
 
@@ -643,7 +647,7 @@ export function Admin({ onClose }: AdminProps) {
   const loadShippingSettings = async () => {
     setShippingLoading(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/get_shipping_settings.php`)
+      const res = await fetch(`/api/shipping-settings`)
       const d = await res.json()
       if (d.success) {
         setShippingZones(d.zones)
@@ -673,7 +677,7 @@ export function Admin({ onClose }: AdminProps) {
     setIsSavingShipping(true)
     setShippingSavedMsg("")
     try {
-      const res = await fetch(`${API_BASE_URL}/save_shipping_settings.php`, {
+      const res = await fetch(`/api/shipping-settings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ zones: shippingZones, ranges: shippingRanges, rates: shippingRates }),
@@ -691,7 +695,7 @@ export function Admin({ onClose }: AdminProps) {
   const loadPaymentSettings = async () => {
     setPayLoading(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/get_payment_settings.php`)
+      const res = await fetch(`/api/payment-settings`)
       const d = await res.json()
       if (d.success) setPaySettings(d.settings)
     } catch {}
@@ -702,7 +706,7 @@ export function Admin({ onClose }: AdminProps) {
     setIsSavingPay(true)
     setPaySavedMsg("")
     try {
-      const res = await fetch(`${API_BASE_URL}/save_payment_settings.php`, {
+      const res = await fetch(`/api/payment-settings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(paySettings),
@@ -861,13 +865,13 @@ export function Admin({ onClose }: AdminProps) {
         ...Object.fromEntries(Object.entries(orderFilters).filter(([_, value]) => value && value !== "all")),
       })
 
-      const response = await fetch(`${API_BASE_URL}/get_orders.php?${params}`)
+      const response = await fetch(`/api/orders?${params}`)
       const data = await response.json()
 
       if (data.success) {
         setOrders(data.data)
         setOrderStats(data.stats)
-        setTotalOrderPages(data.pagination.total_pages)
+        setTotalOrderPages(data.pagination?.total_pages ?? 1)
       } else {
         setOrdersError("Fehler beim Laden der Bestellungen")
       }
@@ -890,26 +894,30 @@ export function Admin({ onClose }: AdminProps) {
   }
 
   // Products Functions
-  const loadProducts = async () => {
+  const loadProducts = async (bust = false) => {
     try {
       setProductsLoading(true)
       setProductsError("")
 
-      const params = new URLSearchParams()
-      if (productFilters.stock_status) {
+      const hasFilter = !!productFilters.stock_status
+
+      if (bust) bustProductsCache()
+
+      if (hasFilter) {
+        // Filtros especiales: va directo a PHP con params
+        const params = new URLSearchParams()
         params.append("stock_status", productFilters.stock_status)
+        params.append("_", Date.now().toString())
+        const response = await fetch(`/api/products?${params}`)
+        const data = await response.json()
+        if (data.success) { setProducts(data.products); setProductStats(data.stats) }
+        else setProductsError("Fehler beim Laden der Produkte")
+        return
       }
 
-      params.append("_", Date.now().toString())
-      const response = await fetch(`/api/products?${params}`)
-      const data = await response.json()
-
-      if (data.success) {
-        setProducts(data.products)
-        setProductStats(data.stats)
-      } else {
-        setProductsError("Fehler beim Laden der Produkte")
-      }
+      const { products, stats } = await getCachedProducts(bust)
+      setProducts(products)
+      setProductStats(stats)
     } catch (err) {
       setProductsError("Verbindungsfehler")
       console.error("Error loading products:", err)
@@ -918,13 +926,11 @@ export function Admin({ onClose }: AdminProps) {
     }
   }
 
-  const loadCategories = async () => {
+  const loadCategories = async (bust = false) => {
     try {
-      const response = await fetch(`/api/categories`)
-      const data = await response.json()
-      if (data.success) {
-        setCategories(data.categories)
-      }
+      if (bust) bustCategoriesCache()
+      const cats = await getCachedCategories(bust)
+      setCategories(cats)
     } catch (err) {
       console.error("Error loading categories:", err)
     }
@@ -946,7 +952,7 @@ export function Admin({ onClose }: AdminProps) {
         if (isEditing && data.category) {
           setCategories(prev => prev.map(c => c.id === data.category.id ? data.category : c))
         } else {
-          loadCategories()
+          loadCategories(true)
         }
         ;(e.target as HTMLFormElement).reset()
       } else {
@@ -967,7 +973,7 @@ export function Admin({ onClose }: AdminProps) {
       const data = await response.json()
       if (data.success) {
         toast({ title: "Erfolg", description: "Kategorie gelöscht" })
-        loadCategories()
+        loadCategories(true)
       } else {
         toast({ title: "Nicht möglich", description: data.error, variant: "destructive" })
       }
@@ -985,7 +991,7 @@ export function Admin({ onClose }: AdminProps) {
     }
     try {
       setBrandSaving(true)
-      const response = await fetch(`${API_BASE_URL}/rename_brand.php`, {
+      const response = await fetch(`/api/rename-brand`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ old_name: oldName, new_name: trimmed }),
@@ -995,7 +1001,7 @@ export function Admin({ onClose }: AdminProps) {
         toast({ title: "Erfolg", description: `${data.updated} Produkt(e) aktualisiert` })
         setRenamingBrand(null)
         setNewBrandName("")
-        loadProducts()
+        loadProducts(true)
       } else {
         toast({ title: "Fehler", description: data.error || "Unbekannter Fehler", variant: "destructive" })
       }
@@ -1052,6 +1058,7 @@ export function Admin({ onClose }: AdminProps) {
     })
 
     setFilteredProducts(filtered)
+    setProductsPage(0)
   }
 
   const showAddProductModal = () => {
@@ -1063,28 +1070,19 @@ export function Admin({ onClose }: AdminProps) {
 
   const showEditProductModal = async (id: number) => {
     try {
-      const response = await fetch(`/api/products?id=${id}&_=${Date.now()}`)
-      const data = await response.json()
-
-      if (data.success) {
-        setCurrentEditingProduct(data.product)
-        setImagePreviews(data.product.image_urls || [data.product.image_url, null, null, null])
+      const { products } = await getCachedProducts()
+      const product = products.find((p: any) => p.id === id)
+      if (product) {
+        setCurrentEditingProduct(product as any)
+        setImagePreviews((product as any).image_urls || [(product as any).image_url, null, null, null])
         setRemovedImages([false, false, false, false])
         setIsProductModalOpen(true)
       } else {
-        toast({
-          title: "Fehler",
-          description: "Fehler beim Laden des Produkts",
-          variant: "destructive",
-        })
+        toast({ title: "Fehler", description: "Produkt nicht gefunden", variant: "destructive" })
       }
     } catch (error) {
       console.error("Error loading product:", error)
-      toast({
-        title: "Fehler",
-        description: "Fehler beim Laden des Produkts",
-        variant: "destructive",
-      })
+      toast({ title: "Fehler", description: "Fehler beim Laden des Produkts", variant: "destructive" })
     }
   }
 
@@ -1116,30 +1114,38 @@ export function Admin({ onClose }: AdminProps) {
     if (!bulkStatus || selectedProductIds.size === 0) return
     setBulkLoading(true)
     try {
-      await Promise.all(
-        Array.from(selectedProductIds).map((id) => {
-          const product = products.find((p) => p.id === id)
-          if (!product) return Promise.resolve()
-          const formData = new FormData()
-          formData.append("id", id.toString())
-          formData.append("name", product.name)
-          formData.append("price", product.price.toString())
-          formData.append("stock_status", bulkStatus)
-          if (bulkStatus === "out_of_stock") {
-            formData.append("stock", "0")
-          } else if (bulkStatus === "in_stock" && Number(product.stock) === 0) {
-            formData.append("stock", "5")
-          } else {
-            formData.append("stock", product.stock.toString())
-          }
-          formData.append("keep_image_0", "true")
-          return fetch(`${API_BASE_URL}/edit_product.php`, { method: "POST", body: formData })
-        })
-      )
+      // Sequential — never flood PHP with parallel requests
+      for (const id of Array.from(selectedProductIds)) {
+        const product = products.find((p) => p.id === id)
+        if (!product) continue
+        const formData = new FormData()
+        formData.append("id", id.toString())
+        formData.append("name", product.name)
+        formData.append("price", product.price.toString())
+        formData.append("stock_status", bulkStatus)
+        if (bulkStatus === "out_of_stock") {
+          formData.append("stock", "0")
+        } else if (bulkStatus === "in_stock" && Number(product.stock) === 0) {
+          formData.append("stock", "5")
+        } else {
+          formData.append("stock", product.stock.toString())
+        }
+        formData.append("keep_image_0", "true")
+        const res = await fetch(`/api/edit-product`, { method: "POST", body: formData })
+        if (!res.ok) throw new Error(`${res.status}`)
+      }
       toast({ title: "Erfolg", description: `${selectedProductIds.size} Produkte aktualisiert` })
+      // Actualizar estado local y caché sin fetch a PHP
+      const updatedIds = new Set(selectedProductIds)
+      const newStock = bulkStatus === "out_of_stock" ? 0 : undefined
+      setProducts(prev => prev.map(p => {
+        if (!updatedIds.has(p.id)) return p
+        const updated: Product = { ...p, stock_status: bulkStatus as Product["stock_status"], ...(newStock !== undefined ? { stock: newStock } : {}) }
+        updateProductInCache(updated)
+        return updated
+      }))
       setSelectedProductIds(new Set())
       setBulkStatus("")
-      loadProducts()
     } catch {
       toast({ title: "Fehler", description: "Fehler beim Aktualisieren", variant: "destructive" })
     } finally {
@@ -1172,7 +1178,7 @@ export function Admin({ onClose }: AdminProps) {
     }
 
     try {
-      const url = isEditing ? `${API_BASE_URL}/edit_product.php` : `${API_BASE_URL}/add_product.php`
+      const url = isEditing ? `/api/edit-product` : `/api/add-product`
 
       const response = await fetch(url, {
         method: "POST",
@@ -1187,7 +1193,23 @@ export function Admin({ onClose }: AdminProps) {
           description: isEditing ? "Produkt erfolgreich aktualisiert" : "Produkt erfolgreich hinzugefügt",
         })
         setIsProductModalOpen(false)
-        loadProducts()
+        if (isEditing && currentEditingProduct) {
+          // Actualizar en caché y en estado local sin fetch a PHP
+          const ss = (formData.get("stock_status") as string || currentEditingProduct.stock_status) as Product["stock_status"]
+          const updated: Product = {
+            ...currentEditingProduct,
+            name: (formData.get("name") as string) || currentEditingProduct.name,
+            price: parseFloat(formData.get("price") as string) || currentEditingProduct.price,
+            stock: parseInt(formData.get("stock") as string) || currentEditingProduct.stock,
+            description: (formData.get("description") as string) || currentEditingProduct.description,
+            stock_status: ss,
+          }
+          updateProductInCache(updated)
+          setProducts(prev => prev.map(p => p.id === updated.id ? updated : p))
+        } else {
+          // Producto nuevo: bust cliente + servidor para traer el ID real de PHP
+          loadProducts(true)
+        }
       } else {
         throw new Error(data.error || "Fehler beim Speichern des Produkts")
       }
@@ -1205,7 +1227,7 @@ export function Admin({ onClose }: AdminProps) {
     if (!deleteProductId) return
 
     try {
-      const response = await fetch(`${API_BASE_URL}/edit_product.php`, {
+      const response = await fetch(`/api/edit-product`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -1221,8 +1243,10 @@ export function Admin({ onClose }: AdminProps) {
           description: "Produkt erfolgreich gelöscht",
         })
         setIsDeleteModalOpen(false)
+        const removedId = deleteProductId!
         setDeleteProductId(null)
-        loadProducts()
+        removeProductFromCache(removedId)
+        setProducts(prev => prev.filter(p => p.id !== removedId))
       } else {
         throw new Error(data.error || "Fehler beim Löschen des Produkts")
       }
@@ -1248,7 +1272,7 @@ export function Admin({ onClose }: AdminProps) {
       setImportResult(data)
       if (data.success) {
         toast({ title: "Import erfolgreich", description: `${data.inserted} neu, ${data.updated} aktualisiert, ${data.deleted ?? 0} gelöscht` })
-        loadProducts()
+        loadProducts(true)
         if (categories.length === 0) loadCategories()
         else loadCategories()
       } else {
@@ -1273,7 +1297,7 @@ export function Admin({ onClose }: AdminProps) {
       setAddResult(data)
       if (data.success) {
         toast({ title: "Hinzufügen erfolgreich", description: `${data.inserted} neu, ${data.updated} aktualisiert — nichts gelöscht` })
-        loadProducts()
+        loadProducts(true)
         loadCategories()
         if (data.processedIds?.length > 0) {
           const batch = { filename: addFile.name, date: new Date().toLocaleString("de-CH"), ids: data.processedIds, count: data.processedIds.length }
@@ -1301,7 +1325,7 @@ export function Admin({ onClose }: AdminProps) {
         const updated = importHistory.filter(b => b.date !== batch.date)
         setImportHistory(updated)
         localStorage.setItem("excel-import-history", JSON.stringify(updated))
-        loadProducts()
+        loadProducts(true)
         loadCategories()
       } else {
         toast({ title: "Fehler", description: data.error, variant: "destructive" })
@@ -2613,9 +2637,9 @@ export function Admin({ onClose }: AdminProps) {
               {/* Category chips row */}
               <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-b border-gray-100">
                 <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Kategorie:</span>
-                {[{ value: "", label: "Alle" }, ...categories.map(c => ({ value: c.slug, label: c.name }))].map(opt => (
+                {categories.map(c => ({ value: c.slug, label: c.name })).map(opt => (
                   <button
-                    key={opt.value || "all"}
+                    key={opt.value}
                     onClick={() => setProductFilters(prev => ({ ...prev, category: opt.value }))}
                     className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
                       (productFilters.category || "") === opt.value
@@ -2738,7 +2762,7 @@ export function Admin({ onClose }: AdminProps) {
 
             {/* Products Grid — 5 columns compact */}
             <div ref={productsGridRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {filteredProducts.map((product) => (
+              {filteredProducts.slice(productsPage * PRODS_PER_PAGE, (productsPage + 1) * PRODS_PER_PAGE).map((product) => (
                 <div
                   key={product.id}
                   className={`group relative rounded-xl bg-white border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden ${
@@ -2765,10 +2789,11 @@ export function Admin({ onClose }: AdminProps) {
 
                   {/* Product Image */}
                   <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-                    <ProductImage
-                      src={product.image_url}
-                      candidates={product.image_url_candidates}
+                    <img
+                      src={product.image_url ? (product.image_url.match(/\.(jpg|jpeg|png|webp)$/i) ? product.image_url : product.image_url + ".jpg") : "/Security_n.png"}
                       alt={product.name}
+                      loading="lazy"
+                      onError={(e) => { (e.target as HTMLImageElement).src = "/Security_n.png" }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     {/* Stock dot */}
@@ -2819,6 +2844,39 @@ export function Admin({ onClose }: AdminProps) {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {filteredProducts.length > PRODS_PER_PAGE && (
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => { setProductsPage(p => p - 1); productsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) }}
+                  disabled={productsPage === 0}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center border border-gray-200 bg-white text-gray-500 hover:bg-[#2C5F2E] hover:text-white hover:border-[#2C5F2E] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: Math.ceil(filteredProducts.length / PRODS_PER_PAGE) }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setProductsPage(i); productsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) }}
+                    className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
+                      i === productsPage
+                        ? "bg-[#2C5F2E] text-white shadow-md"
+                        : "border border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setProductsPage(p => p + 1); productsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) }}
+                  disabled={productsPage === Math.ceil(filteredProducts.length / PRODS_PER_PAGE) - 1}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center border border-gray-200 bg-white text-gray-500 hover:bg-[#2C5F2E] hover:text-white hover:border-[#2C5F2E] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
             {filteredProducts.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 px-6">

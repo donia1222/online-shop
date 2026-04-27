@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { getCachedProducts } from "@/lib/products-cache"
+import { getCachedCategories } from "@/lib/categories-cache"
 import { Flashlight, Sword, Target, Wrench, Axe, Shield } from "lucide-react"
 
 interface Product {
@@ -98,13 +100,8 @@ export function HeroSection() {
   }, [])
 
   useEffect(() => {
-    Promise.all([fetch("/api/categories"), fetch("/api/products")])
-      .then(([r1, r2]) => Promise.all([r1.json(), r2.json()]))
-      .then(([catData, prodData]) => {
-        if (catData.success)  setCategories(catData.categories)
-        if (prodData.success) setProducts(prodData.products)
-      })
-      .catch(() => {})
+    getCachedCategories().then(setCategories).catch(() => {})
+    getCachedProducts().then(({ products }) => setProducts(products)).catch(() => {})
   }, [])
 
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
 import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, Check, X, ZoomIn, Heart } from "lucide-react"
 import { ProductImage } from "@/components/product-image"
-import { fetchProductsCached } from "@/lib/product-cache"
+import { getCachedProducts } from "@/lib/products-cache"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -91,7 +91,7 @@ export default function ProductPage() {
   } | null>(null)
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/get_payment_settings.php`)
+    fetch(`/api/payment-settings`)
       .then(r => r.json())
       .then(data => {
         if (data.success && data.settings) {
@@ -147,22 +147,18 @@ export default function ProductPage() {
     setLoading(true)
     setError("")
 
-    fetchProductsCached(`id=${id}`)
-      .then(data => {
-        if (data.success && data.product) {
-          setProduct(data.product as unknown as Product)
-          fetchProductsCached()
-            .then(all => {
-              if (!all.success || !all.products) return
-              const cat = (data.product as unknown as Product).category
-              const hasImage = (p: Product) =>
-                getImages(p).length > 0 || !!(p.image_url) || !!(p.image_url_candidates?.length)
-              const others = (all.products as unknown as Product[]).filter(
-                (p: Product) => p.id !== (data.product as unknown as Product).id && p.category === cat && (p.stock ?? 0) > 0 && hasImage(p)
-              )
-              setSimilar(others.slice(0, 10))
-            })
-            .catch(() => {})
+    getCachedProducts()
+      .then(({ products }) => {
+        const found = products.find((p: any) => String(p.id) === String(id))
+        if (found) {
+          setProduct(found as unknown as Product)
+          const cat = (found as any).category
+          const hasImage = (p: Product) =>
+            getImages(p).length > 0 || !!(p.image_url) || !!(p.image_url_candidates?.length)
+          const others = (products as unknown as Product[]).filter(
+            (p: Product) => p.id !== (found as any).id && p.category === cat && (p.stock ?? 0) > 0 && hasImage(p)
+          )
+          setSimilar(others.slice(0, 10))
         } else {
           setError("Produkt nicht gefunden")
         }

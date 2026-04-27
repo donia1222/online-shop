@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { getCachedProducts } from "@/lib/products-cache"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -121,21 +122,15 @@ export default function SpiceDiscovery({
         setLoading(true)
         setError("")
 
-        const response = await fetch(`${API_BASE_URL}/get_products.php`)
-        const data: ApiResponse = await response.json()
-
-        if (data.success) {
-          const normalizedProducts: Product[] = data.products.map((product: ApiProduct) => ({
-            ...product,
-            heatLevel: product.heat_level || 0,
-            stock: product.stock || 0,
-            badge: product.badge || "SALSA",
-            origin: product.origin || "Desconocido"
-          }))
-          setApiProducts(normalizedProducts)
-        } else {
-          throw new Error(data.error || "Error al cargar productos")
-        }
+        const { products } = await getCachedProducts()
+        const normalizedProducts: Product[] = products.map((product: ApiProduct) => ({
+          ...product,
+          heatLevel: product.heat_level || 0,
+          stock: product.stock || 0,
+          badge: product.badge || "SALSA",
+          origin: product.origin || "Desconocido"
+        }))
+        setApiProducts(normalizedProducts)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error al cargar productos")
         console.error("Error loading products:", err)

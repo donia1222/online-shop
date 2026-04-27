@@ -4,6 +4,8 @@ require_once 'config.php';
 setCORSHeaders();
 header('Content-Type: application/json; charset=utf-8');
 
+@set_time_limit(120);
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -32,101 +34,102 @@ try {
     $pdo = getDBConnection();
     $pdo->beginTransaction();
 
-    $inserted = 0;
-    $updated  = 0;
     $skipped  = 0;
     $errors   = [];
-    $processedIds = [];
 
+    // Desduplicar por ID: si el mismo ID aparece en varias hojas del Excel, quedarse con la última
+    $seen = [];
+    foreach ($products as $p) {
+        $id = isset($p['id']) ? intval($p['id']) : 0;
+        if ($id > 0) $seen[$id] = $p;
+    }
+    $deduped = array_values($seen);
+    $skipped += count($products) - count($deduped);
+
+    $valuePlaceholders = [];
+    $params            = [];
+    $newIds            = [];
     $categoriesCreated = [];
 
-    foreach ($products as $index => $p) {
-        try {
-            $id             = isset($p['id'])             ? intval($p['id'])            : 0;
-            $articleNumber  = isset($p['article_number']) ? trim($p['article_number']) : '';
-            $name           = isset($p['name'])           ? trim($p['name'])            : '';
-            $description  = isset($p['description'])  ? trim($p['description'])       : '';
-            $price        = isset($p['price'])        ? floatval($p['price'])         : 0.0;
-            $stock        = isset($p['stock'])        ? intval($p['stock'])           : 0;
-            $supplier     = isset($p['supplier'])     ? trim($p['supplier'])          : '';
-            $origin       = isset($p['origin'])       ? trim($p['origin'])            : '';
-            $category     = isset($p['category'])     ? trim($p['category'])          : '';
-            $categoryName = isset($p['category_name']) ? trim($p['category_name'])    : $category;
-            $image_url    = isset($p['image_url']) && $p['image_url'] !== '' ? trim($p['image_url']) : null;
-            $weight_kg    = isset($p['weight_kg']) && floatval($p['weight_kg']) > 0 ? floatval($p['weight_kg']) : null;
+    foreach ($deduped as $index => $p) {
+        $id   = isset($p['id'])   ? intval($p['id'])   : 0;
+        $name = isset($p['name']) ? trim($p['name'])   : '';
 
-            if ($id <= 0 || $name === '') {
-                $skipped++;
-                $errors[] = "Fila $index: ID o nombre vacío, omitido.";
-                continue;
-            }
-
-            // Auto-crear categoría si no existe
-            if ($category !== '' && !isset($categoriesCreated[$category])) {
-                $stmtCat = $pdo->prepare("SELECT id FROM categories WHERE slug = :slug");
-                $stmtCat->execute([':slug' => $category]);
-                if (!$stmtCat->fetch()) {
-                    $stmtInsertCat = $pdo->prepare(
-                        "INSERT INTO categories (slug, name) VALUES (:slug, :name)"
-                    );
-                    $stmtInsertCat->execute([
-                        ':slug' => $category,
-                        ':name' => $categoryName
-                    ]);
-                }
-                $categoriesCreated[$category] = true;
-            }
-
-            // UPSERT sin DELETE: solo inserta o actualiza, nunca borra
-            $sql = "INSERT INTO products
-                        (id, name, description, price, stock, supplier, origin, category,
-                         heat_level, rating, badge, image_url, weight_kg)
-                    VALUES
-                        (:id, :name, :description, :price, :stock, :supplier, :origin, :category,
-                         1, 0.0, '', :image_url, COALESCE(:weight_kg_ins, 0.500))
-                    ON DUPLICATE KEY UPDATE
-                        name        = VALUES(name),
-                        description = VALUES(description),
-                        price       = VALUES(price),
-                        stock       = VALUES(stock),
-                        supplier    = VALUES(supplier),
-                        origin      = VALUES(origin),
-                        category    = VALUES(category),
-                        weight_kg   = IF(:weight_kg_upd IS NOT NULL, :weight_kg_upd, weight_kg),
-                        updated_at  = CURRENT_TIMESTAMP";
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':id'             => $id,
-                ':name'           => $name,
-                ':description'    => $description,
-                ':price'          => $price,
-                ':stock'          => $stock,
-                ':supplier'       => $supplier,
-                ':origin'         => $origin,
-                ':category'       => $category,
-                ':image_url'      => $image_url,
-                ':weight_kg_ins'  => $weight_kg,
-                ':weight_kg_upd'  => $weight_kg,
-            ]);
-
-            $affected = $stmt->rowCount();
-            if ($affected === 1) {
-                $inserted++;
-                $processedIds[] = $id; // solo productos nuevos
-            } elseif ($affected === 2) {
-                $updated++;
-            } else {
-                $skipped++;
-            }
-
-        } catch (Exception $e) {
-            $errors[] = "Fila $index (ID {$p['id']}): " . $e->getMessage();
+        if ($id <= 0 || $name === '') {
             $skipped++;
+            $errors[] = "Fila $index: ID o nombre vacío, omitido.";
+            continue;
         }
+
+        $description  = isset($p['description'])  ? trim($p['description'])  : '';
+        $price        = isset($p['price'])        ? floatval($p['price'])    : 0.0;
+        $stock        = isset($p['stock'])        ? intval($p['stock'])      : 0;
+        $supplier     = isset($p['supplier'])     ? trim($p['supplier'])     : '';
+        $origin       = isset($p['origin'])       ? trim($p['origin'])       : '';
+        $category     = isset($p['category'])     ? trim($p['category'])     : '';
+        $categoryName = isset($p['category_name']) ? trim($p['category_name']) : $category;
+        $image_url    = isset($p['image_url']) && $p['image_url'] !== '' ? trim($p['image_url']) : null;
+        // Si no viene weight_kg usamos 0.500 como fallback
+        $weight_kg    = isset($p['weight_kg']) && floatval($p['weight_kg']) > 0 ? floatval($p['weight_kg']) : 0.500;
+
+        // Auto-crear categoría si no existe (pocas por import, coste mínimo)
+        if ($category !== '' && !isset($categoriesCreated[$category])) {
+            $stmtCat = $pdo->prepare("SELECT id FROM categories WHERE slug = :slug");
+            $stmtCat->execute([':slug' => $category]);
+            if (!$stmtCat->fetch()) {
+                $stmtInsertCat = $pdo->prepare("INSERT INTO categories (slug, name) VALUES (:slug, :name)");
+                $stmtInsertCat->execute([':slug' => $category, ':name' => $categoryName]);
+            }
+            $categoriesCreated[$category] = true;
+        }
+
+        $newIds[] = $id;
+        $valuePlaceholders[] = "(?,?,?,?,?,?,?,?,1,0.0,'',?,?)";
+        array_push($params,
+            $id,
+            $name,
+            $description,
+            $price,
+            $stock,
+            $supplier,
+            $origin,
+            $category,
+            $image_url,
+            $weight_kg
+        );
     }
 
-    // NO HAY DELETE — este endpoint solo añade, nunca elimina
+    $inserted = 0;
+    $updated  = 0;
+
+    if (!empty($valuePlaceholders)) {
+        // Contar cuáles IDs ya existen para calcular inserted vs updated
+        $checkPH = implode(',', array_fill(0, count($newIds), '?'));
+        $stmtChk = $pdo->prepare("SELECT id FROM products WHERE id IN ($checkPH)");
+        $stmtChk->execute($newIds);
+        $existingCount = $stmtChk->rowCount();
+        $updated  = $existingCount;
+        $inserted = count($newIds) - $existingCount;
+
+        // Bulk INSERT — sin DELETE, este endpoint solo añade/actualiza
+        $sql = "INSERT INTO products
+                    (id, name, description, price, stock, supplier, origin, category,
+                     heat_level, rating, badge, image_url, weight_kg)
+                VALUES " . implode(',', $valuePlaceholders) . "
+                ON DUPLICATE KEY UPDATE
+                    name        = VALUES(name),
+                    description = VALUES(description),
+                    price       = VALUES(price),
+                    stock       = VALUES(stock),
+                    supplier    = VALUES(supplier),
+                    origin      = VALUES(origin),
+                    category    = VALUES(category),
+                    weight_kg   = VALUES(weight_kg),
+                    updated_at  = CURRENT_TIMESTAMP";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+    }
 
     $pdo->commit();
 
@@ -138,19 +141,15 @@ try {
         'deleted'      => 0,
         'total'        => count($products),
         'errors'       => $errors,
-        'processedIds' => $processedIds
+        'processedIds' => $newIds,
     ]);
 
 } catch (Exception $e) {
-    if (isset($pdo) && $pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 } catch (PDOException $e) {
-    if (isset($pdo) && $pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Error de base de datos: ' . $e->getMessage()]);
 }

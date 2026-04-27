@@ -1,54 +1,61 @@
-import { NextResponse } from "next/server"
-import { cache, setCache } from "./cache"
+import { NextRequest, NextResponse } from "next/server"
+import { isPhpBlocked, reportPhpError, clearPhpBlock } from "@/lib/php-guard"
+import { phpFetch } from "@/lib/php-queue"
 
 const PHP_URL = process.env.NEXT_PUBLIC_API_BASE_URL + "/get_categories.php"
-const CACHE_TTL = 300_000   // 5 min — categorías cambian rarísimo
-const ERROR_COOLDOWN = 20_000 // tras un error PHP, no reintentar 20s
+const CACHE_TTL = 1_800_000
 
-let inflight: Promise<unknown> | null = null
-let lastErrorAt: number | null = null
+// global para sobrevivir HMR y aislamiento de módulos de Next.js
+declare global {
+  var __catsCache: { data: unknown; at: number } | null | undefined
+  var __catsInflight: Promise<unknown> | null | undefined
+}
+if (global.__catsCache === undefined) global.__catsCache = null
+if (global.__catsInflight === undefined) global.__catsInflight = null
 
-export async function GET() {
-  // 1. Caché fresco
-  if (cache && Date.now() - cache.at < CACHE_TTL) {
-    return NextResponse.json(cache.data)
+export async function GET(req: NextRequest) {
+  const bust = req.nextUrl.searchParams.has("_")
+  if (!bust && global.__catsCache && Date.now() - global.__catsCache.at < CACHE_TTL) {
+    return NextResponse.json(global.__catsCache.data)
   }
+  if (bust) global.__catsCache = null
 
-  // 2. Cooldown: si PHP falló hace menos de 20s, servir stale o 429 sin tocar PHP
-  if (lastErrorAt && Date.now() - lastErrorAt < ERROR_COOLDOWN) {
-    if (cache) return NextResponse.json(cache.data)
+  if (isPhpBlocked()) {
+    if (global.__catsCache) return NextResponse.json(global.__catsCache.data)
     return NextResponse.json({ success: false, error: "rate limited" }, { status: 429 })
   }
 
-  // 3. Single-flight
-  if (inflight) {
+  if (global.__catsInflight) {
     try {
-      const data = await inflight
+      const data = await global.__catsInflight
       return NextResponse.json(data)
     } catch {
-      if (cache) return NextResponse.json(cache.data)
+      if (global.__catsCache) return NextResponse.json(global.__catsCache.data)
       return NextResponse.json({ success: false, error: "upstream error" }, { status: 502 })
     }
   }
 
-  const promise = fetch(PHP_URL, { method: "POST", cache: "no-store" })
+  const promise = phpFetch(PHP_URL, { cache: "no-store" })
     .then(async (res) => {
       if (!res.ok) throw new Error(`${res.status}`)
       const data = await res.json()
-      setCache(data)
-      lastErrorAt = null
+      global.__catsCache = { data, at: Date.now() }
+      clearPhpBlock()
       return data
     })
-    .catch((e) => { lastErrorAt = Date.now(); throw e })
-    .finally(() => { inflight = null })
+    .catch((e) => {
+      reportPhpError(parseInt(e.message) || 0)
+      throw e
+    })
+    .finally(() => { global.__catsInflight = null })
 
-  inflight = promise
+  global.__catsInflight = promise
 
   try {
     const data = await promise
     return NextResponse.json(data)
   } catch (e: any) {
-    if (cache) return NextResponse.json(cache.data)
+    if (global.__catsCache) return NextResponse.json(global.__catsCache.data)
     return NextResponse.json({ success: false, error: e.message }, { status: 502 })
   }
 }

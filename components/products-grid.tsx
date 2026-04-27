@@ -3,6 +3,8 @@
 import type React from "react"
 
 import { useState, useEffect, useRef, useCallback, memo } from "react"
+import { getCachedProducts } from "@/lib/products-cache"
+import { getCachedCategories } from "@/lib/categories-cache"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -247,47 +249,25 @@ export default function ProductsGridCompact({
 
   const loadCategories = async () => {
     try {
-      const response = await fetch(`/api/categories`)
-      const data = await response.json()
-      if (data.success) setCategories(data.categories)
-    } catch (err) {
-      console.error("Error loading categories:", err)
-    }
+      const cats = await getCachedCategories()
+      setCategories(cats)
+    } catch {}
   }
 
   const loadProducts = async () => {
     try {
       setLoading(true)
       setError("")
-
-      const categoryParam = activeTab !== "all" ? `category=${activeTab}` : ""
-      const response = await fetch(`/api/products${categoryParam ? `?${categoryParam}` : ""}`)
-      const data: ApiResponse = await response.json()
-
-      if (data.success) {
-        const normalizedProducts: Product[] = data.products.map((product: ApiProduct) => {
-          // Debug: Log de la respuesta de la API
-          console.log(`API Response para producto ${product.name}:`, {
-            image_urls: product.image_urls,
-            image_url: product.image_url,
-            image: product.image
-          })
-          
-          return {
-            ...product,
-            heatLevel: product.heat_level || 0,
-            stock: product.stock || 0,
-            image_url: product.image_url || product.image || "/placeholder.svg",
-            image_urls: product.image_urls || [],
-          }
-        })
-        setProducts(normalizedProducts)
-        if (data.stats) {
-          setStats(data.stats)
-        }
-      } else {
-        throw new Error(data.error || "Error al cargar productos")
-      }
+      const { products: raw, stats } = await getCachedProducts()
+      const normalizedProducts: Product[] = raw.map((product: ApiProduct) => ({
+        ...product,
+        heatLevel: product.heat_level || 0,
+        stock: product.stock || 0,
+        image_url: product.image_url || product.image || "/placeholder.svg",
+        image_urls: product.image_urls || [],
+      }))
+      setProducts(normalizedProducts)
+      if (stats) setStats(stats)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar productos")
       console.error("Error loading products:", err)

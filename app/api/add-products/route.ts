@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { type NextRequest, NextResponse } from "next/server"
 import * as XLSX from "xlsx"
+import { phpFetch } from "@/lib/php-queue"
 
 
 function toSlug(sheetName: string): string {
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
 
     // Llama al PHP que NO borra nada
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-    const phpResponse = await fetch(`${apiBase}/add_products_excel.php`, {
+    const phpResponse = await phpFetch(`${apiBase}/add_products_excel.php`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products: allProducts }),

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { getCachedCategories } from "@/lib/categories-cache"
 import { ArrowLeft, Fish, Menu, Newspaper, Images, ShoppingCart, Anchor, Waves, Package } from "lucide-react"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { LoginAuth } from "@/components/login-auth"
@@ -71,7 +72,7 @@ export default function AngelnPage() {
   } | null>(null)
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/get_payment_settings.php`)
+    fetch(`/api/payment-settings`)
       .then(r => r.json())
       .then(data => {
         if (data.success && data.settings) {
@@ -88,10 +89,7 @@ export default function AngelnPage() {
   }, [])
 
   useEffect(() => {
-    fetch("/api/categories")
-      .then(r => r.json())
-      .then(d => { if (d.success) setCategories(d.categories) })
-      .catch(() => {})
+    getCachedCategories().then(setCategories).catch(() => {})
   }, [])
 
   return (

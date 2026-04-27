@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ProductImage } from "./product-image"
-import { fetchProductsCached } from "@/lib/product-cache"
+import { getCachedProducts } from "@/lib/products-cache"
+import { getCachedCategories } from "@/lib/categories-cache"
 
 interface Product {
   id: number
@@ -73,15 +74,13 @@ export function CategoryPreviewSection() {
     let cancelled = false
     const load = async (retries = 2): Promise<void> => {
       try {
-        const [prodData, catRes] = await Promise.all([
-          fetchProductsCached(),
-          fetch("/api/categories"),
+        const [{ products: allProds }, categories] = await Promise.all([
+          getCachedProducts(),
+          getCachedCategories(),
         ])
-        if (!catRes.ok) throw new Error("not ok")
-        const catData = await catRes.json()
         if (cancelled) return
-        if (prodData.success && prodData.products) setProducts(prodData.products as unknown as Product[])
-        if (catData.success) setCategories(catData.categories)
+        setProducts(allProds as unknown as Product[])
+        if (categories.length > 0) setCategories(categories)
       } catch {
         if (!cancelled && retries > 0) {
           await new Promise(r => setTimeout(r, 1500))

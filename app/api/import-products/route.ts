@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { type NextRequest, NextResponse } from "next/server"
 import * as XLSX from "xlsx"
+import { phpFetch } from "@/lib/php-queue"
 
 // Convierte el nombre de una hoja en un slug de categoría
 // "Messer 2026" → "messer-2026"  |  " Rauch+Grill 2026" → "rauch-grill-2026"
@@ -168,7 +169,7 @@ export async function POST(request: NextRequest) {
 
     // Enviar al endpoint PHP
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-    const phpResponse = await fetch(`${apiBase}/import_products.php`, {
+    const phpResponse = await phpFetch(`${apiBase}/import_products.php`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products: allProducts }),

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { announcementCache } from "./cache"
+import { phpFetch } from "@/lib/php-queue"
 
 const TTL = 60_000
 
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
     ? `${apiBase}/get_announcement.php?active=1`
     : `${apiBase}/get_announcement.php`
 
-  const promise = fetch(url, { cache: "no-store" })
+  const promise = phpFetch(url, { cache: "no-store" })
     .then(async (res) => {
       const text = await res.text()
       if (!res.ok) {
