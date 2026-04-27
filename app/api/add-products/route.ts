@@ -17,6 +17,20 @@ function toSlug(sheetName: string): string {
     .replace(/^-+|-+$/g, "")
 }
 
+// Para la carpeta de imágenes en el servidor: ö→o, ü→u, ä→a, espacios→_
+function toFolder(sheetName: string): string {
+  return sheetName
+    .trim()
+    .replace(/\s*\d{4}$/, "")   // quitar año al final
+    .toLowerCase()
+    .replace(/ä/g, "a")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+}
+
 
 function getCol(row: Record<string, unknown>, ...keys: string[]): unknown {
   for (const key of keys) {
@@ -27,11 +41,16 @@ function getCol(row: Record<string, unknown>, ...keys: string[]): unknown {
   return undefined
 }
 
+function normalizeFolder(folder: string): string {
+  return folder.toLowerCase()
+    .replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss")
+}
+
 function transformImageUrl(url: string): string {
   if (!url) return ""
   return url.replace(
     /^https?:\/\/usfh\.ch\/img\/([^/]+)\//i,
-    (_, folder) => `https://web.lweb.ch/usa/img/${folder.toLowerCase()}/`
+    (_, folder) => `https://web.lweb.ch/usa/img/${normalizeFolder(folder)}/`
   )
 }
 
@@ -116,7 +135,7 @@ export async function POST(request: NextRequest) {
         const artikelNr = articleNumber
         const rawImage = artikelToUrl.get(artikelNr)
           || String(getCol(row, "URLs der Bilder", "Bild", "Bild URL", "Image", "image_url", "Foto") ?? "").trim()
-        const folder = categorySlug.split("-")[0]
+        const folder = toFolder(sheetName)
         const BASE = `https://web.lweb.ch/usa/img/${folder}/`
 
         let image_url: string
