@@ -11,6 +11,7 @@ import { Footer } from "@/components/footer"
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 
+
 interface FishingCard {
   id: number
   image: string
