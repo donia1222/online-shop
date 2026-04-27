@@ -315,7 +315,7 @@ export default function ShopGrid() {
   const mobileCatScrollRef = useRef<HTMLDivElement>(null)
   const desktopCatScrollRef = useRef<HTMLDivElement>(null)
   const [activeSupplier, setActiveSupplier] = useState("all")
-  const [stockFilter, setStockFilter]       = useState<"all" | "out_of_stock">("all")
+  const [stockFilter, setStockFilter]       = useState<"all" | "out_of_stock">("out_of_stock")
   const [sortBy, setSortBy]                 = useState<"default"|"name_asc"|"name_desc"|"price_asc"|"price_desc">("default")
   const [sidebarOpen, setSidebarOpen]       = useState(false)
   const [showBackTop, setShowBackTop]       = useState(false)
@@ -793,7 +793,7 @@ export default function ShopGrid() {
               <div>
                 <p className="text-[10px] font-black text-[#AAAAAA] uppercase tracking-[0.15em] mb-3">Verfügbarkeit</p>
                 <ul className="space-y-0.5">
-                  {([["all", "Alle"], ["out_of_stock", "An Lager"]] as const).map(([val, label]) => {
+                  {([["out_of_stock", "An Lager"], ["all", "Alle"]] as const).map(([val, label]) => {
                     const count = val === "all" ? products.length : products.filter(p => (p.stock ?? 0) > 0).length
                     const isActive = stockFilter === val
                     return (
