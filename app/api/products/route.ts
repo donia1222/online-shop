@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { isPhpBlocked, reportPhpError, clearPhpBlock } from "@/lib/php-guard"
 import { phpFetch } from "@/lib/php-queue"
+import { cache } from "./cache"
 
 const PHP_BASE = process.env.NEXT_PUBLIC_API_BASE_URL + "/get_products.php"
 const CACHE_TTL = 1_800_000  // 30 min
 
-const cache = new Map<string, { data: unknown; at: number }>()
 const inflight = new Map<string, Promise<unknown>>()
 
 export async function GET(req: NextRequest) {
@@ -14,7 +14,9 @@ export async function GET(req: NextRequest) {
   const bustCache = params.has("_")
   params.delete("_")
   const qs = params.toString()
-  const url = qs ? `${PHP_BASE}?${qs}` : PHP_BASE
+  // Al hacer bust, pasar ?_ a PHP para que también invalide su caché de archivo
+  const phpQs = bustCache ? (qs ? `_=1&${qs}` : `_=1`) : qs
+  const url = phpQs ? `${PHP_BASE}?${phpQs}` : PHP_BASE
   const hit = cache.get(qs)
 
   // 1. Caché fresco

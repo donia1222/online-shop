@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import { type NextRequest, NextResponse } from "next/server"
 import * as XLSX from "xlsx"
 import { clearPhpBlock, reportPhpError } from "@/lib/php-guard"
+import { clearCache as clearProductsCache } from "@/app/api/products/cache"
 
 // Convierte el nombre de una hoja en un slug de categoría
 // "Messer 2026" → "messer-2026"  |  " Rauch+Grill 2026" → "rauch-grill-2026"
@@ -213,7 +214,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: `PHP error (${phpResponse.status})` }, { status: 502 })
     }
 
-    if (phpResponse.ok && result.success) clearPhpBlock()
+    if (phpResponse.ok && result.success) { clearPhpBlock(); clearProductsCache() }
     else reportPhpError(phpResponse.status)
 
     return NextResponse.json({ ...result, parsed: allProducts.length })

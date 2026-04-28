@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import { type NextRequest, NextResponse } from "next/server"
 import * as XLSX from "xlsx"
 import { clearPhpBlock, reportPhpError } from "@/lib/php-guard"
+import { clearCache as clearProductsCache } from "@/app/api/products/cache"
 
 
 function toSlug(sheetName: string): string {
@@ -189,8 +190,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: `PHP error (${phpResponse.status})` }, { status: 502 })
     }
 
-    if (phpResponse.ok && result.success) clearPhpBlock()
-    else reportPhpError(phpResponse.status)
+    if (phpResponse.ok && result.success) {
+      clearPhpBlock()
+      clearProductsCache()  // borra caché de servidor para que el próximo GET devuelva datos frescos
+    } else {
+      reportPhpError(phpResponse.status)
+    }
 
     return NextResponse.json({ ...result, parsed: allProducts.length })
   } catch (error) {
