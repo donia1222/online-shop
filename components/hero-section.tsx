@@ -21,19 +21,53 @@ interface Category {
   name: string
 }
 
-function getCategoryImage(catProds: Product[]): string[] {
-  const urls: string[] = []
-  for (const p of catProds) {
-    // uploaded images (most reliable — have full URL with extension)
-    const fromUrls = (p.image_urls ?? []).filter((u): u is string => !!u)
-    urls.push(...fromUrls)
-    // direct image_url
-    if (p.image_url) urls.push(p.image_url)
-    // candidates with extensions appended
-    if (p.image_url_candidates?.length) urls.push(...p.image_url_candidates)
+const HAS_EXT = /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i
+const EXTS = [".jpg", ".JPG", ".jpeg", ".png", ".webp"]
+
+function toLocalImg(url: string): string | null {
+  if (url.startsWith("/img/")) return url
+  const m = url.match(/^https?:\/\/web\.lweb\.ch\/usa\/img\/([^/]+)\/(.+)$/i)
+  if (!m) return null
+  return `/img/${m[1].toLowerCase()}/${m[2]}`
+}
+
+function expandLocal(url: string): string[] {
+  const local = toLocalImg(url)
+  if (!local) return []
+  if (HAS_EXT.test(local)) {
+    const lower = local.replace(/\/([^/]+)$/, (_, f) => `/${f.toLowerCase()}`)
+    return lower !== local ? [local, lower] : [local]
   }
-  // deduplicate
-  return [...new Set(urls)]
+  const result: string[] = []
+  for (const ext of EXTS) result.push(local + ext)
+  const localLower = local.replace(/\/([^/]+)$/, (_, f) => `/${f.toLowerCase()}`)
+  if (localLower !== local) for (const ext of EXTS) result.push(localLower + ext)
+  return result
+}
+
+function getCategoryImage(catProds: Product[]): string[] {
+  const result: string[] = []
+  const seen = new Set<string>()
+  const add = (u: string) => { if (!seen.has(u)) { seen.add(u); result.push(u) } }
+
+  for (const p of catProds) {
+    const all: string[] = [
+      ...(p.image_urls ?? []).filter((u): u is string => !!u),
+      ...(p.image_url ? [p.image_url] : []),
+      ...(p.image_url_candidates ?? []),
+    ]
+    for (const u of all) {
+      const local = expandLocal(u)
+      if (local.length > 0) {
+        // usa/img → solo rutas locales, sin petición externa
+        local.forEach(add)
+      } else {
+        // imagen subida u otra URL externa → usar directamente
+        add(u)
+      }
+    }
+  }
+  return result
 }
 
 function CatImageCard({

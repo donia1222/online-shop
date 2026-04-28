@@ -2815,7 +2815,7 @@ export function Admin({ onClose }: AdminProps) {
                   <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
                     <ProductImage
                       src={product.image_url}
-                      candidates={(product as any).image_urls?.filter(Boolean)}
+                      candidates={(product as any).image_url_candidates}
                       alt={product.name}
                       loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

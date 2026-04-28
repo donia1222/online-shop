@@ -26,6 +26,7 @@ function slim(p: any) {
     article_number: p.article_number,
     description: typeof p.description === "string" ? p.description.slice(0, 150) : "",
     image_urls: Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean).slice(0, 2) : [],
+    image_url_candidates: Array.isArray(p.image_url_candidates) ? p.image_url_candidates.slice(0, 3) : [],
     heat_level: p.heat_level,
   }
 }

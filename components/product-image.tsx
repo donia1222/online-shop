@@ -23,21 +23,25 @@ function buildCandidates(src: string | null | undefined, candidates?: string[]):
   for (const u of inputs) {
     const local = toLocalPath(u)
     if (local) {
-      // local primero
       if (HAS_EXT.test(local)) {
         result.push(local)
         const lower = local.replace(/\/([^/]+)$/, (_, f) => `/${f.toLowerCase()}`)
         if (lower !== local) result.push(lower)
       } else {
+        // sin extensión: probar original y minúsculas con cada ext
         for (const ext of EXTS) result.push(local + ext)
+        const localLower = local.replace(/\/([^/]+)$/, (_, f) => `/${f.toLowerCase()}`)
+        if (localLower !== local) {
+          for (const ext of EXTS) result.push(localLower + ext)
+        }
       }
-    }
-    // URL externa como fallback si no estaba ya en la lista
-    if (!u.startsWith("/img/") && !result.includes(u)) {
+      // las imágenes usa/img tienen copia local → no hacer petición al servidor externo
+    } else if (!result.includes(u)) {
+      // URLs no-usa/img (imágenes subidas manualmente, etc): usar directamente
       result.push(u)
     }
   }
-  return result
+  return [...new Set(result)]
 }
 
 interface ProductImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> {
