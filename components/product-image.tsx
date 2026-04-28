@@ -6,11 +6,9 @@ const PLACEHOLDER = "/Security_n.png"
 const HAS_EXT = /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i
 const EXTS = [".jpg", ".JPG", ".jpeg", ".png", ".webp"]
 
-// Convierte URL externa → ruta local en /public/img/
-// https://web.lweb.ch/usa/img/Messer/foo.jpg → /img/messer/foo.jpg
+// Convierte URL externa → ruta local /img/categoria/archivo.jpg
 function toLocalPath(url: string): string | null {
   if (!url) return null
-  // Ya es ruta local
   if (url.startsWith("/img/")) return url
   const m = url.match(/^https?:\/\/web\.lweb\.ch\/usa\/img\/([^/]+)\/(.+)$/i)
   if (!m) return null
@@ -24,14 +22,19 @@ function buildCandidates(src: string | null | undefined, candidates?: string[]):
   const result: string[] = []
   for (const u of inputs) {
     const local = toLocalPath(u)
-    if (!local) continue
-    if (HAS_EXT.test(local)) {
-      result.push(local)
-      // variante lowercase del filename por si hay diferencia de mayúsculas
-      const lower = local.replace(/\/([^/]+)$/, (_, f) => `/${f.toLowerCase()}`)
-      if (lower !== local) result.push(lower)
-    } else {
-      for (const ext of EXTS) result.push(local + ext)
+    if (local) {
+      // local primero
+      if (HAS_EXT.test(local)) {
+        result.push(local)
+        const lower = local.replace(/\/([^/]+)$/, (_, f) => `/${f.toLowerCase()}`)
+        if (lower !== local) result.push(lower)
+      } else {
+        for (const ext of EXTS) result.push(local + ext)
+      }
+    }
+    // URL externa como fallback si no estaba ya en la lista
+    if (!u.startsWith("/img/") && !result.includes(u)) {
+      result.push(u)
     }
   }
   return result
