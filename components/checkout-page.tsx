@@ -442,8 +442,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   const getShippingCost = () => shippingCost
 
   const isOnlyGutscheine = () => cart.length > 0 && cart.every(item => (item as any).item_type === "gutschein")
-  const getMwst = () => isOnlyGutscheine() ? 0 : Math.round(getTotalPrice() * 0.081 / 0.05) * 0.05
-  const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((getTotalPrice() + shippingCost + getMwst()) / 0.5) * 0.5
+const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((getTotalPrice() + shippingCost) / 0.5) * 0.5
 
   const createUserAccount = async () => {
     try {
@@ -2127,10 +2126,15 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                   {cart.map((item) => (
                     <div key={item.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
                       <div className="flex-1">
-                        <h4
-                          className="font-semibold text-sm line-clamp-2 cursor-pointer hover:text-[#2C5F2E] transition-colors"
-                          onClick={() => router.push(`/product/${item.id}`)}
-                        >{item.name}</h4>
+                        <div className="flex items-start justify-between gap-2">
+                          <h4
+                            className="font-semibold text-sm line-clamp-2 cursor-pointer hover:text-[#2C5F2E] transition-colors"
+                            onClick={() => router.push(`/product/${item.id}`)}
+                          >{item.name}</h4>
+                          <span className="text-sm font-bold text-[#2C5F2E] whitespace-nowrap flex-shrink-0">
+                            {(item.price * item.quantity).toFixed(2)} CHF
+                          </span>
+                        </div>
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center space-x-2">
                             <Button
@@ -2175,10 +2179,6 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
                   <div className="flex justify-between">
                     <span>Zwischensumme:</span>
                     <span>{getTotalPrice().toFixed(2)} CHF</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>MwSt. 8.1%:</span>
-                    <span>{getMwst().toFixed(2)} CHF</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Versand:</span>
