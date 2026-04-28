@@ -443,6 +443,15 @@ export function Admin({ onClose }: AdminProps) {
     }
   }, [products, productFilters])
 
+  // Al entrar en products, selecciona la primera categoría por defecto
+  const defaultCatApplied = useRef(false)
+  useEffect(() => {
+    if (activeTab === "products" && categories.length > 0 && !defaultCatApplied.current) {
+      defaultCatApplied.current = true
+      setProductFilters(prev => prev.category ? prev : { ...prev, category: categories[0].slug })
+    }
+  }, [categories, activeTab])
+
   // Blog Functions
   const loadBlogPosts = async () => {
     setBlogLoading(true)
