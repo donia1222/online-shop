@@ -1213,8 +1213,11 @@ export function Admin({ onClose }: AdminProps) {
             description: (formData.get("description") as string) || currentEditingProduct.description,
             stock_status: ss,
             // Tomar imágenes de la respuesta del servidor si las devuelve
-            ...(data.image_url   !== undefined ? { image_url: data.image_url }     : {}),
-            ...(data.image_urls  !== undefined ? { image_urls: data.image_urls }   : {}),
+            ...(data.image_url !== undefined ? {
+              image_url: data.image_url,
+              image_url_candidates: (data as any).image_url_candidates ?? [],
+              image_urls: data.image_urls ?? [],
+            } : {}),
           }
           updateProductInCache(updated)
           setProducts(prev => prev.map(p => p.id === updated.id ? updated : p))

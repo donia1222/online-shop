@@ -118,6 +118,19 @@ try {
         $limit  = $hasLimit ? max(1, min(500, intval($_GET['limit']))) : 0;
         $offset = isset($_GET['offset']) ? max(0, intval($_GET['offset'])) : 0;
 
+        // Caché de archivo para la llamada sin filtros (la del shop)
+        $isNoFilter = !$hasLimit && empty($search) && empty($category)
+                   && empty($supplier) && empty($stock_status) && empty($sort);
+        $isBust     = isset($_GET['_']); // admin bust: ?_=timestamp
+        $cacheFile  = sys_get_temp_dir() . '/fk_products_all.json';
+        $cacheTTL   = 120; // segundos
+
+        if ($isNoFilter && !$isBust && file_exists($cacheFile)
+            && (time() - filemtime($cacheFile)) < $cacheTTL) {
+            echo file_get_contents($cacheFile);
+            exit();
+        }
+
         // Construir WHERE común
         $where = " WHERE 1=1";
         $params = [];
@@ -299,7 +312,7 @@ try {
             ];
         }
 
-        echo json_encode([
+        $json = json_encode([
             'success'     => true,
             'products'    => $products,
             'total'       => $totalMatched,
@@ -310,6 +323,11 @@ try {
             'all_origins' => $allOrigins,
             'stats'       => $stats,
         ]);
+        // Guardar en caché si es la llamada sin filtros (incluye bust para actualizar)
+        if ($isNoFilter) {
+            @file_put_contents($cacheFile, $json, LOCK_EX);
+        }
+        echo $json;
     }
     
 } catch (Exception $e) {
