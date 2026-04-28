@@ -2459,21 +2459,7 @@ export function Admin({ onClose }: AdminProps) {
                   </div>
                 </button>
 
-                {/* Banner: Hersteller verwalten */}
-                <button
-                  onClick={() => setShowBrandsModal(true)}
-                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 p-5 text-left shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200"
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
-                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-6 -translate-x-4" />
-                  <div className="relative">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
-                      <Edit className="w-5 h-5 text-white" />
-                    </div>
-                    <p className="text-white font-bold text-base leading-tight">Hersteller verwalten</p>
-                    <p className="text-indigo-100 text-xs mt-1">Markennamen umbenennen</p>
-                  </div>
-                </button>
+
               </div>
             </div>
 
