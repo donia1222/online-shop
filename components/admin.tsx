@@ -1030,7 +1030,7 @@ export function Admin({ onClose }: AdminProps) {
       filtered = filtered.filter(
         (product) =>
           product.name.toLowerCase().includes(searchTerm) ||
-          product.description.toLowerCase().includes(searchTerm) ||
+          (product.description ?? "").toLowerCase().includes(searchTerm) ||
           (product.badge && product.badge.toLowerCase().includes(searchTerm)) ||
           (product.origin && product.origin.toLowerCase().includes(searchTerm)) ||
           (product.article_number && product.article_number.toLowerCase().includes(searchTerm)) ||
