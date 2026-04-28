@@ -49,9 +49,10 @@ interface ProductCardProps {
   onSelect: (p: Product) => void
   onAddToCart: (p: Product) => void
   onToggleWishlist: (id: number) => void
+  onNoImage?: (id: number) => void
 }
 
-const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onSelect, onAddToCart, onToggleWishlist }: ProductCardProps) {
+const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onSelect, onAddToCart, onToggleWishlist, onNoImage }: ProductCardProps) {
   const [idx, setIdx] = useState(0)
   const images  = getImages(product)
   const inStock = (product.stock ?? 0) > 0
@@ -86,6 +87,7 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
             alt={product.name}
             loading="lazy"
             className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+            onAllFailed={() => onNoImage?.(product.id)}
           />
         )}
 
@@ -359,6 +361,16 @@ export default function ShopGrid() {
 
   const PAGE_SIZE = 50
   const [currentPage, setCurrentPage] = useState(0)
+  const noImageIdsRef  = useRef<Set<number>>(new Set())
+  const [noImageTick, setNoImageTick] = useState(0)
+  const noImageDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const markNoImage = useCallback((id: number) => {
+    if (!noImageIdsRef.current.has(id)) {
+      noImageIdsRef.current.add(id)
+      if (noImageDebounce.current) clearTimeout(noImageDebounce.current)
+      noImageDebounce.current = setTimeout(() => setNoImageTick(t => t + 1), 400)
+    }
+  }, [])
 
   const [cart, setCart]           = useState<CartItem[]>([])
   const [cartOpen, setCartOpen]   = useState(false)
@@ -531,6 +543,9 @@ export default function ShopGrid() {
       const aInStock = (a.stock ?? 0) > 0 ? 0 : 1
       const bInStock = (b.stock ?? 0) > 0 ? 0 : 1
       if (aInStock !== bInStock) return aInStock - bInStock
+      const aNoImg = noImageIdsRef.current.has(a.id) ? 1 : 0
+      const bNoImg = noImageIdsRef.current.has(b.id) ? 1 : 0
+      if (aNoImg !== bNoImg) return aNoImg - bNoImg
       switch (sortBy) {
         case "name_asc":   return a.name.localeCompare(b.name)
         case "name_desc":  return b.name.localeCompare(a.name)
@@ -1159,6 +1174,7 @@ export default function ShopGrid() {
                       onSelect={handleSelect}
                       onAddToCart={handleAddToCart}
                       onToggleWishlist={toggleWishlist}
+                      onNoImage={markNoImage}
                     />
                   ))}
                 </div>
