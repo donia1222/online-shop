@@ -961,11 +961,7 @@ export function Admin({ onClose }: AdminProps) {
         toast({ title: "Erfolg", description: isEditing ? "Kategorie aktualisiert" : "Kategorie erstellt" })
         setIsCategoryModalOpen(false)
         setEditingCategory(null)
-        if (isEditing && data.category) {
-          setCategories(prev => prev.map(c => c.id === data.category.id ? data.category : c))
-        } else {
-          loadCategories(true)
-        }
+        loadCategories(true)
         ;(e.target as HTMLFormElement).reset()
       } else {
         throw new Error(data.error || "Fehler")

@@ -4,7 +4,7 @@
 // Si ambos fallan: fetch a /api/products (1 sola petición gracias a single-flight).
 
 const LS_KEY = "fk-p2"
-const TTL = 600_000  // 10 min
+const TTL = 120_000  // 2 min
 
 let _cache: { products: any[]; stats: any; at: number } | null = null
 let _inflight: Promise<{ products: any[]; stats: any }> | null = null

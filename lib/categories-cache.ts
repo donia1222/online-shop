@@ -2,7 +2,7 @@
 // Una sola petición por sesión, persiste en localStorage.
 
 const LS_KEY = "fk-cats"
-const TTL = 1_800_000  // 30 min
+const TTL = 120_000  // 2 min
 
 let _cache: { categories: any[]; at: number } | null = null
 let _inflight: Promise<any[]> | null = null

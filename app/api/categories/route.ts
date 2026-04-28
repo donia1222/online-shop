@@ -3,7 +3,7 @@ import { isPhpBlocked, reportPhpError, clearPhpBlock } from "@/lib/php-guard"
 import { phpFetch } from "@/lib/php-queue"
 
 const PHP_URL = process.env.NEXT_PUBLIC_API_BASE_URL + "/get_categories.php"
-const CACHE_TTL = 1_800_000
+const CACHE_TTL = 120_000  // 2 min
 
 // global para sobrevivir HMR y aislamiento de módulos de Next.js
 declare global {
