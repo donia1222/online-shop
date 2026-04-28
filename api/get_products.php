@@ -123,7 +123,7 @@ try {
                    && empty($supplier) && empty($stock_status) && empty($sort);
         $isBust     = isset($_GET['_']); // admin bust: ?_=timestamp
         $cacheFile  = sys_get_temp_dir() . '/fk_products_all.json';
-        $cacheTTL   = 120; // segundos
+        $cacheTTL   = 300; // segundos
 
         if ($isNoFilter && !$isBust && file_exists($cacheFile)
             && (time() - filemtime($cacheFile)) < $cacheTTL) {

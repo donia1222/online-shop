@@ -4,7 +4,7 @@ import { phpFetch } from "@/lib/php-queue"
 import { cache } from "./cache"
 
 const PHP_BASE = process.env.NEXT_PUBLIC_API_BASE_URL + "/get_products.php"
-const CACHE_TTL = 120_000  // 2 min
+const CACHE_TTL = 300_000  // 5 min
 
 const inflight = new Map<string, Promise<unknown>>()
 
