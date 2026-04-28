@@ -305,6 +305,14 @@ export default function ShopGrid() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+
+  // F5 automático la primera vez por sesión
+  useEffect(() => {
+    if (!sessionStorage.getItem("sr")) {
+      sessionStorage.setItem("sr", "1")
+      window.location.reload()
+    }
+  }, [])
   const [products, setProducts]     = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading]       = useState(true)

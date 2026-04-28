@@ -1,11 +1,41 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getResolvedImage, setResolvedImage } from "@/lib/product-cache"
 
-const EXTENSIONS = [".jpg", ".JPG", ".jpeg", ".JPEG", ".png", ".webp", ".avif"]
-const HAS_EXT = /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i
 const PLACEHOLDER = "/Security_n.png"
+const HAS_EXT = /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i
+const EXTS = [".jpg", ".JPG", ".jpeg", ".png", ".webp"]
+
+// Convierte URL externa → ruta local en /public/img/
+// https://web.lweb.ch/usa/img/Messer/foo.jpg → /img/messer/foo.jpg
+function toLocalPath(url: string): string | null {
+  if (!url) return null
+  // Ya es ruta local
+  if (url.startsWith("/img/")) return url
+  const m = url.match(/^https?:\/\/web\.lweb\.ch\/usa\/img\/([^/]+)\/(.+)$/i)
+  if (!m) return null
+  return `/img/${m[1].toLowerCase()}/${m[2]}`
+}
+
+function buildCandidates(src: string | null | undefined, candidates?: string[]): string[] {
+  const inputs = candidates && candidates.length > 0 ? candidates : src ? [src] : []
+  if (inputs.length === 0) return []
+
+  const result: string[] = []
+  for (const u of inputs) {
+    const local = toLocalPath(u)
+    if (!local) continue
+    if (HAS_EXT.test(local)) {
+      result.push(local)
+      // variante lowercase del filename por si hay diferencia de mayúsculas
+      const lower = local.replace(/\/([^/]+)$/, (_, f) => `/${f.toLowerCase()}`)
+      if (lower !== local) result.push(lower)
+    } else {
+      for (const ext of EXTS) result.push(local + ext)
+    }
+  }
+  return result
+}
 
 interface ProductImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> {
   src: string | null | undefined
@@ -15,45 +45,18 @@ interface ProductImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElemen
 }
 
 export function ProductImage({ src, candidates, alt, onAllFailed, ...props }: ProductImageProps) {
-  const cacheKey = src || candidates?.[0] || ""
-  const cached = cacheKey ? getResolvedImage(cacheKey) : undefined
-
-  const urls: string[] = cached
-    ? [cached]
-    : candidates && candidates.length > 0
-      ? candidates
-      : src
-        ? (() => {
-            // Para cada URL base generamos variante original + filename en minúsculas
-            // así funciona tanto 09CN007.jpg como 09cn007.jpg en servidor Linux
-            const toLower = (u: string) => u.replace(/\/([^/?#]+)(\?.*)?$/, (_, f, q) => `/${f.toLowerCase()}${q ?? ""}`)
-            if (HAS_EXT.test(src)) {
-              const low = toLower(src)
-              return low === src ? [src] : [src, low]
-            }
-            const variants: string[] = []
-            for (const ext of EXTENSIONS) {
-              variants.push(src + ext)
-              const low = toLower(src) + ext
-              if (low !== src + ext) variants.push(low)
-            }
-            return variants
-          })()
-        : []
-
+  const urls = buildCandidates(src, candidates)
   const [attempt, setAttempt] = useState(0)
 
-  const allFailed = urls.length === 0 || attempt >= urls.length
+  useEffect(() => { setAttempt(0) }, [src])
+
+  const failed = urls.length === 0 || attempt >= urls.length
 
   useEffect(() => {
-    if (allFailed && onAllFailed) onAllFailed()
-  }, [allFailed, onAllFailed])
+    if (failed && onAllFailed) onAllFailed()
+  }, [failed, onAllFailed])
 
-  useEffect(() => {
-    setAttempt(0)
-  }, [src])
-
-  if (allFailed) {
+  if (failed) {
     const { className, ...rest } = props
     return (
       <img
@@ -64,17 +67,12 @@ export function ProductImage({ src, candidates, alt, onAllFailed, ...props }: Pr
       />
     )
   }
-  
 
   return (
     <img
       src={urls[attempt]}
       alt={alt}
-      loading="lazy"
-      onLoad={() => {
-        if (cacheKey && urls[attempt]) setResolvedImage(cacheKey, urls[attempt])
-      }}
-      onError={() => { setAttempt(a => a + 1) }}
+      onError={() => setAttempt(a => a + 1)}
       {...props}
     />
   )

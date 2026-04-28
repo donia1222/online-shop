@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { getCachedProducts } from "@/lib/products-cache"
+import { ProductImage } from "./product-image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -234,8 +235,9 @@ export default function SpiceDiscovery({
           <div className="flex gap-4">
             {/* Product Image */}
             <div className="relative w-20 h-20 flex-shrink-0">
-              <img
-                src={product.image_url || product.image || "/placeholder.svg"}
+              <ProductImage
+                src={product.image_url || product.image}
+                candidates={(product as any).image_url_candidates}
                 alt={product.name}
                 className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
               />
