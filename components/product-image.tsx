@@ -1,18 +1,31 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import imgManifestRaw from "@/lib/img-manifest.json"
 
 const PLACEHOLDER = "/Security_n.png"
-const HAS_EXT = /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i
-const EXTS = [".jpg", ".JPG", ".jpeg", ".png", ".webp"]
+const manifest = imgManifestRaw as Record<string, string>
 
-// Convierte URL externa → ruta local /img/categoria/archivo.jpg
-function toLocalPath(url: string): string | null {
-  if (!url) return null
-  if (url.startsWith("/img/")) return url
-  const m = url.match(/^https?:\/\/web\.lweb\.ch\/usa\/img\/([^/]+)\/(.+)$/i)
-  if (!m) return null
-  return `/img/${m[1].toLowerCase()}/${m[2]}`
+// Dado una URL (external usa/img o /img/ local), devuelve la ruta local exacta
+// según el manifest, o null si no está en la carpeta local.
+function resolveLocalExact(url: string): string | null {
+  let folder: string
+  let fileRaw: string
+
+  if (url.startsWith("/img/")) {
+    const m = url.match(/^\/img\/([^/]+)\/(.+)$/)
+    if (!m) return null
+    folder = m[1].toLowerCase()
+    fileRaw = m[2]
+  } else {
+    const m = url.match(/^https?:\/\/web\.lweb\.ch\/usa\/img\/([^/]+)\/(.+)$/i)
+    if (!m) return null
+    folder = m[1].toLowerCase()
+    fileRaw = m[2]
+  }
+
+  const fileNoExt = fileRaw.replace(/\.[^.]+$/, "").toLowerCase()
+  return manifest[`${folder}/${fileNoExt}`] ?? null
 }
 
 function buildCandidates(src: string | null | undefined, candidates?: string[]): string[] {
@@ -20,28 +33,22 @@ function buildCandidates(src: string | null | undefined, candidates?: string[]):
   if (inputs.length === 0) return []
 
   const result: string[] = []
+  const seen = new Set<string>()
+  const add = (u: string) => { if (!seen.has(u)) { seen.add(u); result.push(u) } }
+
   for (const u of inputs) {
-    const local = toLocalPath(u)
-    if (local) {
-      if (HAS_EXT.test(local)) {
-        result.push(local)
-        const lower = local.replace(/\/([^/]+)$/, (_, f) => `/${f.toLowerCase()}`)
-        if (lower !== local) result.push(lower)
-      } else {
-        // sin extensión: probar original y minúsculas con cada ext
-        for (const ext of EXTS) result.push(local + ext)
-        const localLower = local.replace(/\/([^/]+)$/, (_, f) => `/${f.toLowerCase()}`)
-        if (localLower !== local) {
-          for (const ext of EXTS) result.push(localLower + ext)
-        }
-      }
-      // las imágenes usa/img tienen copia local → no hacer petición al servidor externo
-    } else if (!result.includes(u)) {
-      // URLs no-usa/img (imágenes subidas manualmente, etc): usar directamente
-      result.push(u)
+    const exact = resolveLocalExact(u)
+    if (exact !== null) {
+      // Imagen en manifest → ruta local exacta, sin 404
+      add(exact)
+    } else if (!u.match(/web\.lweb\.ch\/usa\/img\//i) && !u.startsWith("/img/")) {
+      // URL externa no-usa/img (imagen subida manualmente) → usar directamente
+      add(u)
     }
+    // URL usa/img no encontrada en manifest → imagen no existe localmente → ignorar
   }
-  return [...new Set(result)]
+
+  return result
 }
 
 interface ProductImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> {
