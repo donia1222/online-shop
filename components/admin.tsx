@@ -1001,29 +1001,27 @@ export function Admin({ onClose }: AdminProps) {
     }
   }
 
-  const renameBrand = async (oldName: string, newName: string) => {
+  const renameBrandGroup = async (variants: string[], newName: string) => {
     const trimmed = newName.trim()
-    if (!trimmed || trimmed === oldName) {
-      setRenamingBrand(null)
-      setNewBrandName("")
-      return
-    }
+    const toRename = variants.filter(v => v !== trimmed)
+    if (!trimmed || toRename.length === 0) { setRenamingBrand(null); setNewBrandName(""); return }
     try {
       setBrandSaving(true)
-      const response = await fetch(`/api/rename-brand`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ old_name: oldName, new_name: trimmed }),
-      })
-      const data = await response.json()
-      if (data.success) {
-        toast({ title: "Erfolg", description: `${data.updated} Produkt(e) aktualisiert` })
-        setRenamingBrand(null)
-        setNewBrandName("")
-        loadProducts(true)
-      } else {
-        toast({ title: "Fehler", description: data.error || "Unbekannter Fehler", variant: "destructive" })
+      let totalUpdated = 0
+      for (const old of toRename) {
+        const res = await fetch(`/api/rename-brand`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ old_name: old, new_name: trimmed }),
+        })
+        const data = await res.json()
+        if (data.success) totalUpdated += data.updated || 0
+        else throw new Error(data.error || "Fehler")
       }
+      toast({ title: "Erfolg", description: `${totalUpdated} Produkt(e) aktualisiert` })
+      setRenamingBrand(null)
+      setNewBrandName("")
+      loadProducts(true)
     } catch (error: any) {
       toast({ title: "Fehler", description: error.message, variant: "destructive" })
     } finally {
@@ -2458,7 +2456,20 @@ export function Admin({ onClose }: AdminProps) {
                     <p className="text-emerald-100 text-xs mt-1">{showExcelImport ? "Formular schließen" : "Produkte per Excel synchronisieren"}</p>
                   </div>
                 </button>
-
+      <button
+                  onClick={() => setShowBrandsModal(true)}
+                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 p-5 text-left shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-6 -translate-x-4" />
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                      <Edit className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-white font-bold text-base leading-tight">Hersteller verwalten</p>
+                    <p className="text-indigo-100 text-xs mt-1">Markennamen umbenennen</p>
+                  </div>
+                </button>
 
               </div>
             </div>
@@ -4276,70 +4287,80 @@ export function Admin({ onClose }: AdminProps) {
             </DialogHeader>
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {(() => {
-                const counts = new Map<string, number>()
+                // Group brands case-insensitively and space-insensitively
+                const groupMap = new Map<string, { variants: Map<string, number>; total: number; displayName: string }>()
                 products.forEach(p => {
                   const o = (p.origin || "").trim()
                   if (!o) return
-                  counts.set(o, (counts.get(o) || 0) + 1)
+                  const key = o.toLowerCase().replace(/\s+/g, "")
+                  if (!groupMap.has(key)) groupMap.set(key, { variants: new Map(), total: 0, displayName: o })
+                  const g = groupMap.get(key)!
+                  g.variants.set(o, (g.variants.get(o) || 0) + 1)
+                  g.total++
+                  // Use the variant with most products as display name
+                  g.displayName = Array.from(g.variants.entries()).reduce((a, b) => a[1] >= b[1] ? a : b)[0]
                 })
-                const brands = Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+                const brands = Array.from(groupMap.entries()).sort((a, b) => a[1].displayName.localeCompare(b[1].displayName))
                 if (brands.length === 0) {
                   return <p className="text-sm text-gray-500 text-center py-8">Keine Hersteller vorhanden.</p>
                 }
                 return (
                   <ul className="divide-y divide-gray-100">
-                    {brands.map(([brand, count]) => (
-                      <li key={brand} className="py-2.5">
-                        {renamingBrand === brand ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              value={newBrandName}
-                              onChange={e => setNewBrandName(e.target.value)}
-                              placeholder={brand}
-                              autoFocus
-                              disabled={brandSaving}
-                              className="flex-1"
-                              onKeyDown={e => {
-                                if (e.key === "Enter") renameBrand(brand, newBrandName)
-                                if (e.key === "Escape") { setRenamingBrand(null); setNewBrandName("") }
-                              }}
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() => renameBrand(brand, newBrandName)}
-                              disabled={brandSaving || !newBrandName.trim() || newBrandName.trim() === brand}
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                            >
-                              {brandSaving ? "…" : "Speichern"}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => { setRenamingBrand(null); setNewBrandName("") }}
-                              disabled={brandSaving}
-                            >
-                              Abbrechen
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-gray-900 truncate">{brand}</p>
-                              <p className="text-xs text-gray-500">{count} Produkt{count === 1 ? "" : "e"}</p>
+                    {brands.map(([key, { variants, total, displayName }]) => {
+                      const variantList = Array.from(variants.keys())
+                      return (
+                        <li key={key} className="py-2.5">
+                          {renamingBrand === key ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={newBrandName}
+                                onChange={e => setNewBrandName(e.target.value)}
+                                placeholder={displayName}
+                                autoFocus
+                                disabled={brandSaving}
+                                className="flex-1"
+                                onKeyDown={e => {
+                                  if (e.key === "Enter") renameBrandGroup(variantList, newBrandName)
+                                  if (e.key === "Escape") { setRenamingBrand(null); setNewBrandName("") }
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => renameBrandGroup(variantList, newBrandName)}
+                                disabled={brandSaving || !newBrandName.trim()}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                              >
+                                {brandSaving ? "…" : "Speichern"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => { setRenamingBrand(null); setNewBrandName("") }}
+                                disabled={brandSaving}
+                              >
+                                Abbrechen
+                              </Button>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => { setRenamingBrand(brand); setNewBrandName(brand) }}
-                              className="shrink-0"
-                            >
-                              <Edit className="w-3.5 h-3.5 mr-1.5" />
-                              Umbenennen
-                            </Button>
-                          </div>
-                        )}
-                      </li>
-                    ))}
+                          ) : (
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+                                <p className="text-xs text-gray-500">{total} Produkt{total === 1 ? "" : "e"}{variantList.length > 1 && <span className="ml-1 text-amber-500">({variantList.length} Varianten)</span>}</p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => { setRenamingBrand(key); setNewBrandName(displayName) }}
+                                className="shrink-0"
+                              >
+                                <Edit className="w-3.5 h-3.5 mr-1.5" />
+                                Umbenennen
+                              </Button>
+                            </div>
+                          )}
+                        </li>
+                      )
+                    })}
                   </ul>
                 )
               })()}
