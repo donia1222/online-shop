@@ -317,6 +317,9 @@ export default function ShopGrid() {
   }, [])
   const [products, setProducts]     = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [cachedSuppliers, setCachedSuppliers] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("shop-suppliers-cache") || "[]") } catch { return [] }
+  })
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState("")
 
@@ -428,6 +431,17 @@ export default function ShopGrid() {
       setLoading(true)
       const { products } = await getCachedProducts()
       setProducts(products)
+      // Guardar suppliers en localStorage para próxima visita
+      const allSuppliers = Array.from(new Set(
+        products.map(p => p.origin).filter((s): s is string => !!s && s.trim() !== "")
+          .map(s => {
+            const n = s.toUpperCase().replace(/[`'']/g, "'").replace(/\s*&\s*/g, " & ").replace(/\s+/g, " ").trim()
+            const aliases: Record<string, string> = { "BLACKFIELD": "BLACK FIELD", "BLACKFLASH": "BLACK FLASH", "SMITH&WESSON": "SMITH & WESSON" }
+            return aliases[n] ?? n
+          })
+      )).sort()
+      try { localStorage.setItem("shop-suppliers-cache", JSON.stringify(allSuppliers)) } catch {}
+      setCachedSuppliers(allSuppliers)
     } catch (e: any) { setError(e.message || "Fehler") }
     finally { setLoading(false) }
   }
@@ -513,15 +527,15 @@ export default function ShopGrid() {
     return ORIGIN_ALIASES[n] ?? n
   }
 
-  const suppliers = Array.from(
-    new Set(
-      products
-        .filter(p => activeCategory === "all" || p.category === activeCategory)
-        .map(p => p.origin)
-        .filter((s): s is string => !!s && s.trim() !== "")
-        .map(s => getCanonicalOrigin(s))
-    )
-  ).sort()
+  const suppliers = products.length > 0
+    ? Array.from(new Set(
+        products
+          .filter(p => activeCategory === "all" || p.category === activeCategory)
+          .map(p => p.origin)
+          .filter((s): s is string => !!s && s.trim() !== "")
+          .map(s => getCanonicalOrigin(s))
+      )).sort()
+    : cachedSuppliers
 
   // Reset supplier when it's not available in the current category
   useEffect(() => {
