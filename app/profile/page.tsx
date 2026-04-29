@@ -11,7 +11,7 @@ function ProfileContent() {
 
   return (
     <UserProfile
-      onClose={() => back ? router.push(back) : router.back()}
+      onClose={() => router.push("/")}
       onAccountDeleted={() => router.push("/")}
     />
   )
