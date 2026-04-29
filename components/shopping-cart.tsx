@@ -90,8 +90,8 @@ export function ShoppingCartComponent({
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p
-                        className="text-xs font-bold text-gray-900 line-clamp-2 leading-tight cursor-pointer hover:text-[#2C5F2E] transition-colors"
-                        onClick={() => { onOpenChange(false); router.push(`/product/${item.id}`) }}
+                        className={`text-xs font-bold line-clamp-2 leading-tight transition-colors ${ (item as any).item_type === "gutschein" ? "cursor-default text-gray-900" : "cursor-pointer text-[#2C5F2E] hover:text-[#1e4220]" }`}
+                        onClick={() => { if ((item as any).item_type === "gutschein") return; onOpenChange(false); router.push(`/product/${item.id}`) }}
                       >{item.name}</p>
                       <p className="text-sm font-black text-[#2C5F2E] mt-1">{item.price.toFixed(2)} <span className="text-xs font-semibold text-gray-400">CHF</span></p>
                     </div>
@@ -129,12 +129,6 @@ export function ShoppingCartComponent({
                 <span className="text-2xl font-black text-gray-900 tracking-tight">{total.toFixed(2)}</span>
                 <span className="text-sm text-gray-400 ml-1">CHF</span>
               </div>
-            </div>
-
-            {/* Free shipping note */}
-            <div className="bg-[#2C5F2E]/10 rounded-xl px-3 py-2 flex items-center gap-2">
-              <span className="text-lg">🚚</span>
-              <p className="text-xs font-semibold text-[#2C5F2E]">Kostenloser Versand · Sichere Zahlung</p>
             </div>
 
             {/* Checkout button */}
