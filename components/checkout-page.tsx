@@ -24,6 +24,7 @@ import {
   Home,
   Landmark,
   LogOut,
+  Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -2128,8 +2129,8 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
                       <div className="flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <h4
-                            className="font-semibold text-sm line-clamp-2 cursor-pointer hover:text-[#2C5F2E] transition-colors"
-                            onClick={() => router.push(`/product/${item.id}`)}
+                            className={`font-semibold text-sm line-clamp-2 transition-colors ${ (item as any).item_type === "gutschein" ? "cursor-default text-gray-900" : "cursor-pointer text-[#2C5F2E] hover:text-[#1e4220]" }`}
+                            onClick={() => { if ((item as any).item_type === "gutschein") return; router.push(`/product/${item.id}`) }}
                           >{item.name}</h4>
                           <span className="text-sm font-bold text-[#2C5F2E] whitespace-nowrap flex-shrink-0">
                             {(item.price * item.quantity).toFixed(2)} CHF
@@ -2164,7 +2165,7 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
                             className="text-red-600 hover:text-red-800 hover:bg-red-50 "
                             disabled={!onRemoveFromCart}
                           >
-                           🗑
+                           <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
@@ -2184,7 +2185,7 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
                     <span>Versand:</span>
                     <span>
                       {shippingCost === 0
-                        ? <Badge className="bg-green-100 text-green-700">Kostenlos</Badge>
+                        ? <span className="font-semibold">0.00 CHF</span>
                         : <span className="font-semibold">{shippingCost.toFixed(2)} CHF</span>
                       }
                     </span>
