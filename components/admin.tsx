@@ -2475,15 +2475,15 @@ export function Admin({ onClose }: AdminProps) {
             </div>
 
             {/* Excel Import */}
-            {showExcelImport && <Card className="mb-6 border border-emerald-200 bg-gradient-to-r from-emerald-50/50 to-white rounded-2xl shadow-sm">
+            {showExcelImport && <Card className="mb-6 border-0 bg-gradient-to-br from-emerald-700 to-emerald-600 rounded-2xl shadow-md shadow-emerald-500/20">
                   <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-base">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                    <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center mr-2">
+                    <FileSpreadsheet className="w-4 h-4 text-white" />
                   </div>
-                  Excel-Import (Produkte hinzufügen – nichts löschen)
+                  <span className="text-white">Excel-Import</span>
                 </CardTitle>
-                <p className="text-xs text-gray-500 mt-1">Neue Kategorien &amp; Produkte hinzufügen, ohne bestehende zu löschen.</p>
+                <p className="text-xs text-emerald-100 mt-1">Neue Kategorien &amp; Produkte hinzufügen, ohne bestehende zu löschen.</p>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-4 flex-wrap">
@@ -2496,7 +2496,7 @@ export function Admin({ onClose }: AdminProps) {
                     </div>
                     <input type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => { setAddFile(e.target.files?.[0] ?? null); setAddResult(null) }} />
                   </label>
-                  <Button onClick={handleExcelAdd} disabled={!addFile || addLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button onClick={handleExcelAdd} disabled={!addFile || addLoading} className="bg-white hover:bg-emerald-50 text-emerald-700 font-bold">
                     <Upload className={`w-4 h-4 mr-2 ${addLoading ? "animate-bounce" : ""}`} />
                     {addLoading ? "Lädt hoch..." : "Hinzufügen"}
                   </Button>

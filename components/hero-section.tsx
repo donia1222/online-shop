@@ -138,6 +138,21 @@ export function HeroSection() {
     getCachedProducts().then(({ products }) => setProducts(products)).catch(() => {})
   }, [])
 
+  const brands = (() => {
+    const counts = new Map<string, { name: string; count: number }>()
+    products.forEach(p => {
+      if (!p.origin) return
+      const key = p.origin.trim().toLowerCase().replace(/\s+/g, "")
+      const existing = counts.get(key)
+      if (!existing) counts.set(key, { name: p.origin.trim(), count: 1 })
+      else existing.count++
+    })
+    return Array.from(counts.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15)
+      .map(e => e.name)
+  })()
+
 
   return (
     <div className="bg-white">
@@ -266,6 +281,40 @@ export function HeroSection() {
 
         <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-[#2C5F2E]/70 to-transparent" />
       </div>
+
+      {/* ── Brands scroll banner ── */}
+      {brands.length > 0 && (
+        <div className="bg-white border-y border-[#ECECEC] py-5 overflow-hidden select-none">
+          <div className="flex items-center gap-4 mb-4 px-6">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#E0E0E0]" />
+            <p className="text-[13px] font-black uppercase tracking-[0.25em] text-[#2C5F2E] flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-[#2C5F2E] inline-block" />
+              Unsere Marken
+              <span className="w-1 h-1 rounded-full bg-[#2C5F2E] inline-block" />
+            </p>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#E0E0E0]" />
+          </div>
+          <div
+            className="flex gap-3 w-max"
+            style={{ animation: "brandsScroll 55s linear infinite" }}
+          >
+            {[...brands, ...brands, ...brands].map((brand, i) => (
+              <span
+                key={i}
+                className="flex-shrink-0 px-4 py-1.5 rounded-full border border-[#2C5F2E]/20 bg-[#2C5F2E]/5 text-[11px] font-bold text-[#2C5F2E] uppercase tracking-wider whitespace-nowrap"
+              >
+                {brand}
+              </span>
+            ))}
+          </div>
+          <style>{`
+            @keyframes brandsScroll {
+              from { transform: translateX(0); }
+              to   { transform: translateX(-33.333%); }
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* ── Unsere Top Kategorien (dinámico, solo 6) ── */}
       <div id="spice-discovery" className="bg-[#F0F1F3] border-b border-[#E0E0E0] py-10">
