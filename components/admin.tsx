@@ -1400,10 +1400,11 @@ export function Admin({ onClose }: AdminProps) {
     doc.text("Bahnhofstrasse 2, 9475 Sevelen", margin, 46)
     doc.text("Tel: 078 606 61 05", margin, 51)
     doc.text("info@usfh.ch", margin, 56)
+    doc.text("MWST-Nr: CHE-112.174.541", margin, 61)
 
     // Titel Rechnung
     doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(44, 95, 46)
-    doc.text("RECHNUNG", pageW - margin, 36, { align: "right" })
+    doc.text("RECHNUNG · QUITTUNG", pageW - margin, 36, { align: "right" })
     doc.setFontSize(10); doc.setTextColor(100, 100, 100)
     doc.text(`Bestellnummer: ${order.order_number}`, pageW - margin, 43, { align: "right" })
     doc.text(`Rechnungsnummer: #FA${String(order.order_number).padStart(8, '0')}`, pageW - margin, 49, { align: "right" })
@@ -1411,11 +1412,11 @@ export function Admin({ onClose }: AdminProps) {
 
     // Trennlinie
     doc.setDrawColor(44, 95, 46); doc.setLineWidth(0.5)
-    doc.line(margin, 62, pageW - margin, 62)
+    doc.line(margin, 68, pageW - margin, 68)
 
     // Kundendaten
     doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(40, 40, 40)
-    doc.text("Lieferadresse:", margin, 70)
+    doc.text("Lieferadresse:", margin, 76)
     doc.setFont("helvetica", "normal"); doc.setFontSize(10)
     const lines = [
       `${order.customer_first_name} ${order.customer_last_name}`,
@@ -1425,10 +1426,10 @@ export function Admin({ onClose }: AdminProps) {
       order.customer_email,
       order.customer_phone,
     ].filter(Boolean)
-    lines.forEach((l, i) => doc.text(l, margin, 77 + i * 5.5))
+    lines.forEach((l, i) => doc.text(l, margin, 83 + i * 5.5))
 
     // Rechnungsadresse (falls gleich wie Lieferadresse)
-    const billingY = 70
+    const billingY = 76
     doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(40, 40, 40)
     doc.text("Rechnungsadresse:", pageW / 2 + 5, billingY)
     doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(100, 100, 100)
@@ -1510,8 +1511,18 @@ export function Admin({ onClose }: AdminProps) {
     doc.text("TOTAL:", pageW - 55, y)
     doc.text(`${roundedTotal.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
 
-    doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(150, 150, 150)
-    doc.text("Vielen Dank für Ihren Einkauf!", pageW / 2, 160, { align: "center" })
+    // Hinweise
+    const hinweiseY = y + 2
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(80, 80, 80)
+    const hinweise = [
+      "Armbrust nach Anleitung zusammenbauen.",
+      "Nach ca. 10 Schuss alle Schrauben nachziehen. (2-3 mal wiederholen)",
+      "Auf keinen Fall Armbrust/Pfeilbogen ohne Pfeil abschiessen.",
+      "Kann zu Schäden am Wurfarm führen.",
+      "Sehne an allen Reibflächen immer gut einfetten.",
+      "Zahlungskonditionen: sofort nach Erhalt – Gesamtbetrag inkl. MwSt",
+    ]
+    hinweise.forEach((line, i) => doc.text(line, margin, hinweiseY + 5 + i * 5))
 
     // Footer image
     try {
