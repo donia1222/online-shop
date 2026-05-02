@@ -421,8 +421,8 @@ export function Admin({ onClose }: AdminProps) {
     if (activeTab === "orders") {
       loadOrders()
     } else if (activeTab === "products") {
-      loadProducts()
-      if (!loaded.has("categories")) { loadCategories(); loaded.add("categories") }
+      loadProducts(true)
+      if (!loaded.has("categories")) { loadCategories(true); loaded.add("categories") }
     } else if (activeTab === "blog") {
       if (!loaded.has("blog")) { loadBlogPosts(); loaded.add("blog") }
     } else if (activeTab === "gallery") {
@@ -1211,20 +1211,22 @@ export function Admin({ onClose }: AdminProps) {
         })
         setIsProductModalOpen(false)
         if (isEditing && currentEditingProduct) {
-          const ss = (formData.get("stock_status") as string || currentEditingProduct.stock_status) as Product["stock_status"]
+          const stockRaw = formData.get("stock") as string
+          const priceRaw = formData.get("price") as string
+          const newStock = stockRaw !== null && stockRaw !== "" ? parseInt(stockRaw) : currentEditingProduct.stock
+          const newPrice = priceRaw !== null && priceRaw !== "" ? parseFloat(priceRaw) : currentEditingProduct.price
+          const newStockStatus: Product["stock_status"] =
+            newStock === 0 ? "out_of_stock" : newStock <= 10 ? "low_stock" : "in_stock"
           const updated: Product = {
             ...currentEditingProduct,
             name: (formData.get("name") as string) || currentEditingProduct.name,
-            price: parseFloat(formData.get("price") as string) || currentEditingProduct.price,
-            stock: parseInt(formData.get("stock") as string) || currentEditingProduct.stock,
+            price: newPrice,
+            stock: newStock,
+            stock_status: newStockStatus,
             description: (formData.get("description") as string) || currentEditingProduct.description,
-            stock_status: ss,
-            // Tomar imágenes de la respuesta del servidor si las devuelve
-            ...(data.image_url !== undefined ? {
-              image_url: data.image_url,
-              image_url_candidates: (data as any).image_url_candidates ?? [],
-              image_urls: data.image_urls ?? [],
-            } : {}),
+            // Si PHP devuelve imagen subida, usarla; si no, conservar la URL existente (Excel/local)
+            image_url: data.image_url ?? currentEditingProduct.image_url,
+            image_url_candidates: data.image_url != null ? ((data as any).image_url_candidates ?? []) : (currentEditingProduct.image_url_candidates ?? []),
           }
           updateProductInCache(updated)
           setProducts(prev => prev.map(p => p.id === updated.id ? updated : p))
@@ -2742,7 +2744,8 @@ export function Admin({ onClose }: AdminProps) {
 
                   {/* Product Info — compact */}
                   <div className="p-3">
-                    <h3 className="font-bold text-sm text-gray-900 line-clamp-1 mb-1">{product.name}</h3>
+                    <h3 className="font-bold text-sm text-gray-900 line-clamp-1 mb-0.5">{product.name}</h3>
+                    <p className="text-[10px] text-gray-400 font-mono mb-1">{product.article_number || "—"}</p>
                     <div className="flex items-center justify-between">
                       <span className="font-black text-base text-gray-900">
                         {Number.parseFloat(product.price.toString()).toFixed(2)} <span className="text-gray-400 font-medium text-xs">CHF</span>
@@ -3663,6 +3666,17 @@ export function Admin({ onClose }: AdminProps) {
                     className="bg-white"
                   />
                 </div>
+                {currentEditingProduct?.article_number && (
+                  <div>
+                    <Label className="text-sm font-medium">Referenznummer</Label>
+                    <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-mono text-gray-600">
+                      {currentEditingProduct.article_number}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="price">Preis (CHF) *</Label>
                   <Input
@@ -3673,6 +3687,18 @@ export function Admin({ onClose }: AdminProps) {
                     min="0"
                     required
                     defaultValue={currentEditingProduct?.price || ""}
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="stock">Lagerbestand *</Label>
+                  <Input
+                    id="stock"
+                    name="stock"
+                    type="number"
+                    min="0"
+                    required
+                    defaultValue={currentEditingProduct?.stock || "0"}
                     className="bg-white"
                   />
                 </div>
@@ -3689,32 +3715,18 @@ export function Admin({ onClose }: AdminProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="category">Kategorie *</Label>
-                  <Select name="category" defaultValue={currentEditingProduct?.category || ""} required>
-                    <SelectTrigger className="bg-white border-gray-300">
-                      <SelectValue placeholder="Kategorie auswählen" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.slug} value={cat.slug}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="stock">Lagerbestand *</Label>
-                  <Input
-                    id="stock"
-                    name="stock"
-                    type="number"
-                    min="0"
-                    required
-                    defaultValue={currentEditingProduct?.stock || "0"}
-                    className="bg-white"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="category">Kategorie *</Label>
+                <Select name="category" defaultValue={currentEditingProduct?.category || ""} required>
+                  <SelectTrigger className="bg-white border-gray-300">
+                    <SelectValue placeholder="Kategorie auswählen" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.slug} value={cat.slug}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
