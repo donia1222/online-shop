@@ -1223,6 +1223,7 @@ export function Admin({ onClose }: AdminProps) {
             price: newPrice,
             stock: newStock,
             stock_status: newStockStatus,
+            category: (formData.get("category") as string) || currentEditingProduct.category,
             description: (formData.get("description") as string) || currentEditingProduct.description,
             // Si PHP devuelve imagen subida, usarla; si no, conservar la URL existente (Excel/local)
             image_url: data.image_url ?? currentEditingProduct.image_url,

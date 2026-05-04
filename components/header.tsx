@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { getCachedCategories } from "@/lib/categories-cache"
 import { ShoppingCart, ChevronDown, Menu, ArrowUp, Newspaper, Download, Images, Mail, Gift } from "lucide-react"
@@ -19,7 +19,21 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [headerVisible, setHeaderVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
-  const [backendCategories, setBackendCategories] = useState<{ slug: string; name: string }[]>([])
+  const [backendCategories, setBackendCategories] = useState<{ id: number; slug: string; name: string; parent_id: number | null }[]>([])
+  const [catDropdown, setCatDropdown] = useState<{ id: number; left: number; top: number } | null>(null)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tier3Ref = useRef<HTMLDivElement>(null)
+
+  const openDrop = (id: number, e: React.MouseEvent<HTMLDivElement>) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    const subs = backendCategories.filter(c => c.parent_id === id)
+    if (!subs.length) { setCatDropdown(null); return }
+    const rect = e.currentTarget.getBoundingClientRect()
+    const navBottom = tier3Ref.current?.getBoundingClientRect().bottom ?? rect.bottom
+    setCatDropdown({ id, left: rect.left, top: navBottom })
+  }
+  const scheduleDrop = () => { closeTimer.current = setTimeout(() => setCatDropdown(null), 150) }
+  const cancelDrop = () => { if (closeTimer.current) clearTimeout(closeTimer.current) }
 
   useEffect(() => {
     const onScroll = () => {
@@ -243,9 +257,8 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
       </div>
 
       {/* ── TIER 3: Category navigation bar ── */}
-      <div className="bg-white border-b border-[#E0E0E0] hidden lg:block sticky top-0 z-40">
+      <div ref={tier3Ref} className="bg-white border-b border-[#E0E0E0] hidden lg:block sticky top-0 z-40">
         <div className="relative">
-          {/* fade edges para indicar scroll */}
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-white to-transparent z-10" />
           <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white to-transparent z-10" />
           <nav
@@ -253,24 +266,61 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             <div className="flex items-center justify-center min-w-max mx-auto px-4">
-            {categories.filter(cat => cat.label !== "Home" && cat.label !== "Gutscheine").map((cat, i) => (
+              {/* Alle Produkte — fijo */}
               <button
-                key={i}
-                onClick={() => router.push(cat.href)}
-                className={`
-                  flex items-center gap-1 px-4 py-3.5 text-[15px] font-medium whitespace-nowrap border-b-2 border-transparent flex-shrink-0
-                  hover:border-[#2C5F2E] hover:text-[#2C5F2E] transition-colors
-                  ${cat.highlight ? "text-[#CC0000] font-bold hover:border-[#CC0000] hover:text-[#CC0000]" : "text-[#333333]"}
-                `}
+                onClick={() => router.push("/shop")}
+                className="flex items-center gap-1 px-4 py-3.5 text-[15px] font-medium whitespace-nowrap border-b-2 border-transparent flex-shrink-0 hover:border-[#2C5F2E] hover:text-[#2C5F2E] transition-colors text-[#333333]"
               >
-                {cat.label}
-
+                Alle Produkte
               </button>
-            ))}
+              {/* Categorías raíz — el dropdown se renderiza fuera del nav (ver abajo) */}
+              {backendCategories.filter(c => c.parent_id === null).map(cat => {
+                const hasSubs = backendCategories.some(c => c.parent_id === cat.id)
+                return (
+                  <div
+                    key={cat.id}
+                    className="flex-shrink-0"
+                    onMouseEnter={(e) => openDrop(cat.id, e)}
+                    onMouseLeave={scheduleDrop}
+                  >
+                    <button
+                      onClick={() => { router.push(`/shop?cat=${encodeURIComponent(cat.name)}`); setCatDropdown(null) }}
+                      className="flex items-center gap-1 px-4 py-3.5 text-[15px] font-medium whitespace-nowrap border-b-2 border-transparent hover:border-[#2C5F2E] hover:text-[#2C5F2E] transition-colors text-[#333333]"
+                    >
+                      {cat.name}
+                      {hasSubs && <ChevronDown className="w-3.5 h-3.5 opacity-50" />}
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           </nav>
         </div>
       </div>
+
+      {/* Dropdown de subcategorías — fuera del nav para escapar el overflow-x-auto */}
+      {catDropdown && (() => {
+        const subs = backendCategories.filter(c => c.parent_id === catDropdown.id)
+        if (!subs.length) return null
+        return (
+          <div
+            className="fixed bg-white border border-[#E0E0E0] rounded-lg shadow-lg min-w-[180px] py-1 z-[200]"
+            style={{ top: catDropdown.top, left: catDropdown.left }}
+            onMouseEnter={cancelDrop}
+            onMouseLeave={scheduleDrop}
+          >
+            {subs.map(sub => (
+              <button
+                key={sub.id}
+                onClick={() => { router.push(`/shop?cat=${encodeURIComponent(sub.name)}`); setCatDropdown(null) }}
+                className="w-full text-left px-4 py-2 text-sm text-[#333333] hover:bg-[#F5F5F5] hover:text-[#2C5F2E] transition-colors"
+              >
+                {sub.name}
+              </button>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* Scroll to top */}
       {showScrollTop && (
