@@ -2470,6 +2470,7 @@ export function Admin({ onClose }: AdminProps) {
                     <p className="text-emerald-100 text-xs mt-1">{showExcelImport ? "Formular schließen" : "Produkte per Excel synchronisieren"}</p>
                   </div>
                 </button>
+                
       <button
                   onClick={() => setShowBrandsModal(true)}
                   className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 p-5 text-left shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200"
