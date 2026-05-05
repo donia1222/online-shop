@@ -527,10 +527,19 @@ export default function ShopGrid() {
     return ORIGIN_ALIASES[n] ?? n
   }
 
+  const activeCatSubSlugs = (() => {
+    const activeCat = categories.find(c => c.slug === activeCategory)
+    if (!activeCat) return new Set<string>()
+    return new Set(categories.filter(c => c.parent_id === activeCat.id).map(c => c.slug))
+  })()
+
+  const matchesActiveCategory = (p: Product) =>
+    activeCategory === "all" || p.category === activeCategory || activeCatSubSlugs.has(p.category ?? "")
+
   const suppliers = products.length > 0
     ? Array.from(new Set(
         products
-          .filter(p => activeCategory === "all" || p.category === activeCategory)
+          .filter(p => matchesActiveCategory(p))
           .map(p => p.origin)
           .filter((s): s is string => !!s && s.trim() !== "")
           .map(s => getCanonicalOrigin(s))
@@ -548,7 +557,7 @@ export default function ShopGrid() {
     .filter(p => {
       if (showWishlist) return wishlist.has(p.id)
       const matchSearch   = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase())
-      const matchCategory = activeCategory === "all" || p.category === activeCategory
+      const matchCategory = matchesActiveCategory(p)
       const matchSupplier = activeSupplier === "all" || (p.origin && getCanonicalOrigin(p.origin) === activeSupplier)
       const matchStock    = stockFilter === "out_of_stock" ? (p.stock ?? 0) > 0 : true
       return matchSearch && matchCategory && matchSupplier && matchStock
@@ -857,7 +866,8 @@ export default function ShopGrid() {
                     .filter(c => c.parent_id === null)
                     .flatMap(parent => [parent, ...categories.filter(c => c.parent_id === parent.id)])
                   .map(cat => {
-                    const count = products.filter(p => p.category === cat.slug).length
+                    const subSlugs = categories.filter(c => c.parent_id === cat.id).map(c => c.slug)
+                    const count = products.filter(p => p.category === cat.slug || subSlugs.includes(p.category ?? "")).length
                     const isActive = activeCategory === cat.slug
                     const isSub = cat.parent_id !== null
                     return (
@@ -978,8 +988,9 @@ export default function ShopGrid() {
                 </div>
               </button>
               {categories.filter(cat => cat.parent_id === null).map(cat => {
+                const catSubSlugs = categories.filter(c => c.parent_id === cat.id).map(c => c.slug)
                 const catProds = products.filter(p =>
-                  p.category === cat.slug || p.category === cat.name
+                  p.category === cat.slug || p.category === cat.name || catSubSlugs.includes(p.category ?? "")
                 )
                 const isActive = activeCategory === cat.slug
                 const displayName = cat.name.replace(/\s*\d{4}$/, "")
@@ -1021,7 +1032,8 @@ export default function ShopGrid() {
                   </div>
                 </button>
                 {categories.map(cat => {
-                  const catProds = products.filter(p => p.category === cat.slug || p.category === cat.name)
+                  const catSubSlugs2 = categories.filter(c => c.parent_id === cat.id).map(c => c.slug)
+                  const catProds = products.filter(p => p.category === cat.slug || p.category === cat.name || catSubSlugs2.includes(p.category ?? ""))
                   const isActive = activeCategory === cat.slug
                   const displayName = cat.name.replace(/\s*\d{4}$/, "")
                   return (
