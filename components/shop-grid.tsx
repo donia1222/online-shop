@@ -331,6 +331,7 @@ export default function ShopGrid() {
   const [stockFilter, setStockFilter]       = useState<"all" | "out_of_stock">("all")
   const [sortBy, setSortBy]                 = useState<"default"|"name_asc"|"name_desc"|"price_asc"|"price_desc">("default")
   const [sidebarOpen, setSidebarOpen]       = useState(false)
+  const [expandedCats, setExpandedCats]     = useState<Set<string>>(new Set())
   const [showBackTop, setShowBackTop]       = useState(false)
   const [navMenuOpen, setNavMenuOpen]       = useState(false)
   const [headerVisible, setHeaderVisible]   = useState(true)
@@ -861,28 +862,58 @@ export default function ShopGrid() {
 
               <div className="border-t border-[#F3F3F3] pt-4">
                 <p className="text-[10px] font-black text-[#AAAAAA] uppercase tracking-[0.15em] mb-3">Kategorien</p>
-                <ul className="space-y-0.5">
-                  {categories
-                    .filter(c => c.parent_id === null)
-                    .flatMap(parent => [parent, ...categories.filter(c => c.parent_id === parent.id)])
-                  .map(cat => {
-                    const subSlugs = categories.filter(c => c.parent_id === cat.id).map(c => c.slug)
-                    const count = products.filter(p => p.category === cat.slug || subSlugs.includes(p.category ?? "")).length
-                    const isActive = activeCategory === cat.slug
-                    const isSub = cat.parent_id !== null
+                <ul className="space-y-3">
+                  {categories.filter(c => c.parent_id === null).sort((a, b) => {
+                    const aHasSubs = categories.some(c => c.parent_id === a.id)
+                    const bHasSubs = categories.some(c => c.parent_id === b.id)
+                    return (aHasSubs === bHasSubs) ? 0 : aHasSubs ? -1 : 1
+                  }).map(parent => {
+                    const subs = categories.filter(c => c.parent_id === parent.id)
+                    const subSlugs = subs.map(c => c.slug)
+                    const count = products.filter(p => p.category === parent.slug || subSlugs.includes(p.category ?? "")).length
+                    const isActive = activeCategory === parent.slug
+                    const isExpanded = expandedCats.has(parent.slug)
+                    const hasSubs = subs.length > 0
                     return (
-                      <li key={cat.slug} className={isSub ? "pl-3" : ""}>
-                        <button
-                          onClick={() => { setShowWishlist(false); setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug); setSidebarOpen(false) }}
-                          className={`w-full text-left flex items-center justify-between text-sm px-3 py-2 rounded-xl transition-all font-medium ${
-                            isActive
-                              ? "bg-[#2C5F2E] text-white shadow-sm"
-                              : "text-[#555] hover:bg-[#F5F5F5] hover:text-[#1A1A1A]"
-                          }`}
-                        >
-                          <span className="truncate">{isSub ? "↳ " : ""}{cat.name.replace(/\s*\d{4}$/, "")}</span>
-                          <span className={`text-[10px] font-bold ml-2 px-1.5 py-0.5 rounded-full flex-shrink-0 ${isActive ? "bg-white/25 text-white" : "bg-[#F0F0F0] text-[#888]"}`}>{count}</span>
-                        </button>
+                      <li key={parent.slug}>
+                        <div className={`flex items-center rounded-xl overflow-hidden transition-all ${isActive ? "bg-[#2C5F2E] shadow-sm" : "bg-[#F0F5F0] hover:bg-[#DCF0DC]"}`}>
+                          <button
+                            onClick={() => { setShowWishlist(false); const selecting = activeCategory !== parent.slug; setActiveCategory(selecting ? parent.slug : "all"); if (hasSubs) setExpandedCats(prev => { const n = new Set(prev); selecting ? n.add(parent.slug) : n.delete(parent.slug); return n }); setSidebarOpen(false) }}
+                            className="flex-1 text-left flex items-center gap-2 px-3 py-2 min-w-0"
+                          >
+                            <span className={`text-sm font-bold truncate ${isActive ? "text-white" : "text-[#2C5F2E]"}`}>{parent.name.replace(/\s*\d{4}$/, "")}</span>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${isActive ? "bg-white/25 text-white" : "bg-[#B6D9B7] text-[#2C5F2E]"}`}>{count}</span>
+                          </button>
+                          {hasSubs && (
+                            <button
+                              onClick={() => setExpandedCats(prev => { const n = new Set(prev); n.has(parent.slug) ? n.delete(parent.slug) : n.add(parent.slug); return n })}
+                              className={`px-2.5 py-2 flex-shrink-0 font-black text-sm border-l transition-colors ${isActive ? "border-white/20 text-white hover:bg-white/10" : "border-[#B6D9B7] text-[#2C5F2E] hover:bg-[#B6D9B7]"}`}
+                            >
+                              {isExpanded ? "−" : "+"}
+                            </button>
+                          )}
+                        </div>
+                        {hasSubs && isExpanded && (
+                          <ul className="mt-1 space-y-0.5 pl-3 border-l-2 border-[#B6D9B7] ml-3">
+                            {subs.map(sub => {
+                              const subCount = products.filter(p => p.category === sub.slug).length
+                              const isSubActive = activeCategory === sub.slug
+                              return (
+                                <li key={sub.slug}>
+                                  <button
+                                    onClick={() => { setShowWishlist(false); setActiveCategory(prev => prev === sub.slug ? parent.slug : sub.slug); setSidebarOpen(false) }}
+                                    className={`w-full text-left flex items-center justify-between text-sm px-3 py-1.5 rounded-lg transition-all font-medium ${
+                                      isSubActive ? "bg-[#2C5F2E] text-white shadow-sm" : "text-[#555] hover:bg-[#F5F5F5] hover:text-[#1A1A1A]"
+                                    }`}
+                                  >
+                                    <span className="truncate">{sub.name.replace(/\s*\d{4}$/, "")}</span>
+                                    <span className={`text-[10px] font-bold ml-2 px-1.5 py-0.5 rounded-full flex-shrink-0 ${isSubActive ? "bg-white/25 text-white" : "bg-[#F0F0F0] text-[#888]"}`}>{subCount}</span>
+                                  </button>
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )}
                       </li>
                     )
                   })}
