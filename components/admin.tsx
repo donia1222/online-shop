@@ -2364,18 +2364,31 @@ export function Admin({ onClose }: AdminProps) {
 
             {/* Categories List */}
             {(() => {
-              const renderCatCard = (cat: Category) => {
+              const SUB_COLORS = [
+                { bg: "bg-purple-100", dot: "bg-purple-500", border: "border-purple-300 hover:border-purple-400", icon: "from-purple-500 to-purple-400 shadow-purple-300/20", label: "text-purple-600", activeBtn: "bg-purple-600 text-white", ring: "border-purple-400 ring-2 ring-purple-200", header: "text-purple-400" },
+                { bg: "bg-emerald-100", dot: "bg-emerald-500", border: "border-emerald-300 hover:border-emerald-400", icon: "from-emerald-500 to-emerald-400 shadow-emerald-300/20", label: "text-emerald-600", activeBtn: "bg-emerald-600 text-white", ring: "border-emerald-400 ring-2 ring-emerald-200", header: "text-emerald-400" },
+                { bg: "bg-orange-100", dot: "bg-orange-500", border: "border-orange-300 hover:border-orange-400", icon: "from-orange-500 to-orange-400 shadow-orange-300/20", label: "text-orange-600", activeBtn: "bg-orange-600 text-white", ring: "border-orange-400 ring-2 ring-orange-200", header: "text-orange-400" },
+                { bg: "bg-pink-100", dot: "bg-pink-500", border: "border-pink-300 hover:border-pink-400", icon: "from-pink-500 to-pink-400 shadow-pink-300/20", label: "text-pink-600", activeBtn: "bg-pink-600 text-white", ring: "border-pink-400 ring-2 ring-pink-200", header: "text-pink-400" },
+                { bg: "bg-teal-100", dot: "bg-teal-500", border: "border-teal-300 hover:border-teal-400", icon: "from-teal-500 to-teal-400 shadow-teal-300/20", label: "text-teal-600", activeBtn: "bg-teal-600 text-white", ring: "border-teal-400 ring-2 ring-teal-200", header: "text-teal-400" },
+                { bg: "bg-amber-100", dot: "bg-amber-500", border: "border-amber-300 hover:border-amber-400", icon: "from-amber-500 to-amber-400 shadow-amber-300/20", label: "text-amber-600", activeBtn: "bg-amber-600 text-white", ring: "border-amber-400 ring-2 ring-amber-200", header: "text-amber-400" },
+                { bg: "bg-red-100", dot: "bg-red-500", border: "border-red-300 hover:border-red-400", icon: "from-red-500 to-red-400 shadow-red-300/20", label: "text-red-600", activeBtn: "bg-red-600 text-white", ring: "border-red-400 ring-2 ring-red-200", header: "text-red-400" },
+                { bg: "bg-indigo-100", dot: "bg-indigo-500", border: "border-indigo-300 hover:border-indigo-400", icon: "from-indigo-500 to-indigo-400 shadow-indigo-300/20", label: "text-indigo-600", activeBtn: "bg-indigo-600 text-white", ring: "border-indigo-400 ring-2 ring-indigo-200", header: "text-indigo-400" },
+              ]
+              const mainCats = categories.filter(c => c.parent_id === null)
+              const subCats = categories.filter(c => c.parent_id !== null)
+              const renderCatCard = (cat: Category, cs?: typeof SUB_COLORS[0]) => {
                 const productCount = products.filter((p) => p.category === cat.slug).length
                 const parentName = cat.parent_id ? categories.find(c => c.id === cat.parent_id)?.name : null
+                const isSelected = productFilters.category === cat.slug
                 return (
-                  <div key={cat.slug} className={`flex flex-col rounded-2xl border shadow-sm hover:shadow-md transition-all overflow-hidden ${cat.parent_id ? "border-dashed bg-blue-100" : "bg-white"} ${productFilters.category === cat.slug ? "border-blue-400 ring-2 ring-blue-200" : "border-gray-100 hover:border-gray-200"}`}>
+                  <div key={cat.slug} className={`flex flex-col rounded-2xl border shadow-sm hover:shadow-md transition-all overflow-hidden bg-white ${isSelected ? "border-blue-400 ring-2 ring-blue-200" : "border-gray-100 hover:border-gray-200"}`}>
                     <div className="flex items-center gap-2.5 px-3.5 pt-3 pb-2">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${cat.parent_id ? "bg-gradient-to-br from-blue-400 to-blue-300 shadow-blue-300/20" : "bg-gradient-to-br from-blue-600 to-blue-500 shadow-blue-500/20"}`}>
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-gradient-to-br ${cat.parent_id ? (cs?.icon ?? "from-blue-400 to-blue-300 shadow-blue-300/20") : "from-blue-600 to-blue-500 shadow-blue-500/20"}`}>
                         <Flame className="w-4 h-4 text-white" />
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="font-bold text-gray-900 text-sm truncate">{cat.name}</p>
-                        {parentName && <p className="text-xs text-blue-500 font-bold truncate">Kategorie ↳ {parentName}</p>}
+                        {parentName && <p className={`text-xs font-bold truncate ${cs?.label ?? "text-blue-500"}`}>↳ {parentName}</p>}
                         <p className="text-[11px] text-gray-400 font-medium">{productCount} Produkt{productCount !== 1 ? "e" : ""}</p>
                       </div>
                     </div>
@@ -2386,7 +2399,7 @@ export function Admin({ onClose }: AdminProps) {
                           setProductFilters(prev => ({ ...prev, category: isActive ? "" : cat.slug }))
                           if (!isActive) setTimeout(() => productsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
                         }}
-                        className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold transition-colors ${productFilters.category === cat.slug ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-50"}`}
+                        className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold transition-colors ${isSelected ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-50"}`}
                       >
                         <Eye className="w-3 h-3" />
                         Ansehen
@@ -2411,23 +2424,25 @@ export function Admin({ onClose }: AdminProps) {
                   </div>
                 )
               }
-              const mainCats = categories.filter(c => c.parent_id === null)
-              const subCats = categories.filter(c => c.parent_id !== null)
               return (
                 <>
                   {mainCats.length > 0 && (
                     <div className="mb-6">
                       <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Kategorien</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {mainCats.map(renderCatCard)}
+                        {mainCats.map((cat, i) => renderCatCard(cat, SUB_COLORS[i % SUB_COLORS.length]))}
                       </div>
                     </div>
                   )}
                   {subCats.length > 0 && (
                     <div className="mb-6">
-                      <h3 className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">Subkategorien</h3>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Subkategorien</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {subCats.map(renderCatCard)}
+                        {subCats.map(cat => {
+                          const parentIdx = mainCats.findIndex(c => c.id === cat.parent_id)
+                          const cs = SUB_COLORS[parentIdx % SUB_COLORS.length]
+                          return renderCatCard(cat, cs)
+                        })}
                       </div>
                     </div>
                   )}
