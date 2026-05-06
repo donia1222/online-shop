@@ -15,6 +15,7 @@ interface HeaderProps {
 export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [expandedCats, setExpandedCats] = useState<Set<number>>(new Set())
   const [isLightSection] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [headerVisible, setHeaderVisible] = useState(true)
@@ -56,15 +57,6 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
     getCachedCategories().then(setBackendCategories).catch(() => {})
   }, [])
 
-  const categories: { label: string; href: string; highlight?: boolean }[] = [
-    { label: "Home", href: "/" },
-    { label: "Alle Produkte", href: "/shop" },
-    ...backendCategories.map(cat => ({
-      label: cat.name,
-      href: `/shop?cat=${encodeURIComponent(cat.name)}`,
-    })),
-    { label: "Gutscheine", href: "/gutscheine" },
-  ]
 
   const handleLoginSuccess = (_user: any) => {}
   const handleLogout = () => {}
@@ -121,16 +113,60 @@ export function Header({ onCartOpen, cartCount = 0 }: HeaderProps) {
                   </div>
                 </div>
                 <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
-                  {categories.map((cat, i) => (
-                    <button
-                      key={i}
-                      onClick={() => { router.push(cat.href); setIsMenuOpen(false) }}
-                      className={`w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] flex items-center gap-2 ${cat.highlight ? "text-[#CC0000] font-bold" : "text-[#333333] font-medium"}`}
-                    >
-                      {cat.label === "Gutscheine" && <Gift className="w-4 h-4 shrink-0" />}
-                      {cat.label}
-                    </button>
-                  ))}
+                  {/* Home + Alle Produkte */}
+                  <button onClick={() => { router.push("/"); setIsMenuOpen(false) }} className="w-full text-left px-3 py-2.5 text-sm rounded-lg font-bold bg-[#F0F5F0] text-[#2C5F2E] hover:bg-[#DCF0DC]">Home</button>
+                  <button onClick={() => { router.push("/shop"); setIsMenuOpen(false) }} className="w-full text-left px-3 py-2.5 text-sm rounded-lg font-bold bg-[#F0F5F0] text-[#2C5F2E] hover:bg-[#DCF0DC]">Alle Produkte</button>
+
+                  {/* Categorías padre con +/- */}
+                  <div className="space-y-2 pt-1">
+                    {backendCategories.filter(c => c.parent_id === null).sort((a, b) => {
+                      const aHas = backendCategories.some(c => c.parent_id === a.id)
+                      const bHas = backendCategories.some(c => c.parent_id === b.id)
+                      return aHas === bHas ? 0 : aHas ? -1 : 1
+                    }).map(parent => {
+                      const subs = backendCategories.filter(c => c.parent_id === parent.id)
+                      const hasSubs = subs.length > 0
+                      const isExpanded = expandedCats.has(parent.id)
+                      return (
+                        <div key={parent.id}>
+                          <div className="flex items-center rounded-lg overflow-hidden bg-[#F0F5F0]">
+                            <button
+                              onClick={() => { router.push(`/shop?cat=${encodeURIComponent(parent.name)}`); if (hasSubs) setExpandedCats(prev => { const n = new Set(prev); n.add(parent.id); return n }); setIsMenuOpen(false) }}
+                              className="flex-1 text-left px-3 py-2.5 text-sm font-bold text-[#2C5F2E] min-w-0 truncate"
+                            >
+                              {parent.name.replace(/\s*\d{4}$/, "")}
+                            </button>
+                            {hasSubs && (
+                              <button
+                                onClick={() => setExpandedCats(prev => { const n = new Set(prev); n.has(parent.id) ? n.delete(parent.id) : n.add(parent.id); return n })}
+                                className="px-3 py-2.5 font-black text-sm border-l border-[#B6D9B7] text-[#2C5F2E] hover:bg-[#B6D9B7] flex-shrink-0"
+                              >
+                                {isExpanded ? "−" : "+"}
+                              </button>
+                            )}
+                          </div>
+                          {hasSubs && isExpanded && (
+                            <div className="pl-3 mt-0.5 space-y-0.5 border-l-2 border-[#B6D9B7] ml-3">
+                              {subs.map(sub => (
+                                <button
+                                  key={sub.id}
+                                  onClick={() => { router.push(`/shop?cat=${encodeURIComponent(sub.name)}`); setIsMenuOpen(false) }}
+                                  className="w-full text-left px-3 py-2 text-sm rounded-lg font-medium text-[#555] hover:bg-[#F5F5F5]"
+                                >
+                                  ↳ {sub.name.replace(/\s*\d{4}$/, "")}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Gutscheine */}
+                  <button onClick={() => { router.push("/gutscheine"); setIsMenuOpen(false) }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm rounded-lg font-bold bg-[#F0F5F0] text-[#2C5F2E] hover:bg-[#DCF0DC]">
+                    <Gift className="w-4 h-4 shrink-0" /> Gutscheine
+                  </button>
                   <div className="pt-2 mt-1 border-t border-[#E0E0E0] space-y-0.5">
                     <div className="flex">
                       <button

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getCachedCategories } from "@/lib/categories-cache"
-import { ArrowLeft, ChevronLeft, X, ChevronRight, Images, Menu, Newspaper, Download, ShoppingCart } from "lucide-react"
+import { ArrowLeft, ChevronLeft, X, ChevronRight, Images, Menu, Newspaper, Download, ShoppingCart, Gift } from "lucide-react"
 import { Footer } from "@/components/footer"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { LoginAuth } from "@/components/login-auth"
@@ -89,7 +89,8 @@ export default function GalleryPage() {
   const [images, setImages] = useState<GalleryImage[]>([])
   const [loading, setLoading] = useState(true)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-  const [categories, setCategories] = useState<{ slug: string; name: string }[]>([])
+  const [categories, setCategories] = useState<{ id: number; slug: string; name: string; parent_id: number | null }[]>([])
+  const [expandedCats, setExpandedCats] = useState<Set<number>>(new Set())
   const [headerVisible, setHeaderVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
 
@@ -151,14 +152,46 @@ export default function GalleryPage() {
                 </div>
               </div>
               <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
-                <button onClick={() => router.push("/")} className="w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#333] font-medium">Home</button>
-                <button onClick={() => router.push("/shop")} className="w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#333] font-medium">Alle Produkte</button>
-                {categories.map(cat => (
-                  <button key={cat.slug} onClick={() => router.push(`/shop?cat=${encodeURIComponent(cat.name)}`)} className="w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#333] font-medium">
-                    {cat.name.replace(/\s*\d{4}$/, "")}
+                <button onClick={() => router.push("/")} className="w-full text-left px-3 py-2.5 text-sm rounded-lg font-bold bg-[#F0F5F0] text-[#2C5F2E] hover:bg-[#DCF0DC]">Home</button>
+                <button onClick={() => router.push("/shop")} className="w-full text-left px-3 py-2.5 text-sm rounded-lg font-bold bg-[#F0F5F0] text-[#2C5F2E] hover:bg-[#DCF0DC]">Alle Produkte</button>
+                <div className="space-y-2 pt-1">
+                  {categories.filter(c => c.parent_id === null).sort((a, b) => {
+                    const aHas = categories.some(c => c.parent_id === a.id)
+                    const bHas = categories.some(c => c.parent_id === b.id)
+                    return aHas === bHas ? 0 : aHas ? -1 : 1
+                  }).map(parent => {
+                    const subs = categories.filter(c => c.parent_id === parent.id)
+                    const hasSubs = subs.length > 0
+                    const isExpanded = expandedCats.has(parent.id)
+                    return (
+                      <div key={parent.id}>
+                        <div className="flex items-center rounded-lg overflow-hidden bg-[#F0F5F0]">
+                          <button onClick={() => { router.push(`/shop?cat=${encodeURIComponent(parent.name)}`); if (hasSubs) setExpandedCats(prev => { const n = new Set(prev); n.add(parent.id); return n }) }} className="flex-1 text-left px-3 py-2.5 text-sm font-bold text-[#2C5F2E] min-w-0 truncate">
+                            {parent.name.replace(/\s*\d{4}$/, "")}
+                          </button>
+                          {hasSubs && (
+                            <button onClick={() => setExpandedCats(prev => { const n = new Set(prev); n.has(parent.id) ? n.delete(parent.id) : n.add(parent.id); return n })} className="px-3 py-2.5 font-black text-sm border-l border-[#B6D9B7] text-[#2C5F2E] hover:bg-[#B6D9B7] flex-shrink-0">
+                              {isExpanded ? "−" : "+"}
+                            </button>
+                          )}
+                        </div>
+                        {hasSubs && isExpanded && (
+                          <div className="pl-3 mt-0.5 space-y-0.5 border-l-2 border-[#B6D9B7] ml-3">
+                            {subs.map(sub => (
+                              <button key={sub.id} onClick={() => router.push(`/shop?cat=${encodeURIComponent(sub.name)}`)} className="w-full text-left px-3 py-2 text-sm rounded-lg font-medium text-[#555] hover:bg-[#F5F5F5]">
+                                ↳ {sub.name.replace(/\s*\d{4}$/, "")}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="pt-2 mt-1 border-t border-[#E0E0E0] space-y-0.5">
+                  <button onClick={() => router.push("/gutscheine")} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm rounded-lg font-bold bg-[#F0F5F0] text-[#2C5F2E] hover:bg-[#DCF0DC]">
+                    <Gift className="w-4 h-4 shrink-0" /> Gutscheine
                   </button>
-                ))}
-                <div className="pt-2 mt-1 border-t border-[#E0E0E0]">
                   <div className="flex">
                     <button onClick={() => router.push("/blog")} className="flex items-center gap-1.5 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] text-[#2C5F2E] font-semibold"><Newspaper className="w-4 h-4 shrink-0" />Blog</button>
                     <button onClick={() => router.push("/gallery")} className="flex items-center gap-1.5 px-3 py-2.5 text-sm rounded font-semibold bg-gray-100 text-[#2C5F2E]"><Images className="w-4 h-4 shrink-0" />Gallery</button>

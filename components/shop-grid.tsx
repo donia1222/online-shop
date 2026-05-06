@@ -697,49 +697,69 @@ export default function ShopGrid() {
                   </div>
                 </div>
                 <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
-                  <button
-                    onClick={() => { router.push("/"); setNavMenuOpen(false) }}
-                    className={`w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-medium ${pathname === "/" ? "bg-[#2C5F2E] text-white" : "text-[#333333]"}`}
-                  >
-                    Home
-                  </button>
-                  <button
-                    onClick={() => { setActiveCategory("all"); setNavMenuOpen(false) }}
-                    className={`w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-medium ${activeCategory === "all" ? "bg-[#2C5F2E] text-white" : "text-[#333333]"}`}
-                  >
-                    Alle Produkte
-                  </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.slug}
-                      onClick={() => { setActiveCategory(cat.slug); setNavMenuOpen(false) }}
-                      className={`w-full text-left px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-medium ${activeCategory === cat.slug ? "bg-[#2C5F2E] text-white" : "text-[#333333]"}`}
-                    >
-                      {cat.name.replace(/\s*\d{4}$/, "")}
+                  <button onClick={() => { router.push("/"); setNavMenuOpen(false) }} className="w-full text-left px-3 py-2.5 text-sm rounded-lg font-bold bg-[#F0F5F0] text-[#2C5F2E] hover:bg-[#DCF0DC]">Home</button>
+                  <button onClick={() => { setActiveCategory("all"); setNavMenuOpen(false) }} className="w-full text-left px-3 py-2.5 text-sm rounded-lg font-bold bg-[#F0F5F0] text-[#2C5F2E] hover:bg-[#DCF0DC]">Alle Produkte</button>
+                  {categories.filter(c => c.parent_id === null).sort((a, b) => {
+                    const aHasSubs = categories.some(c => c.parent_id === a.id)
+                    const bHasSubs = categories.some(c => c.parent_id === b.id)
+                    return (aHasSubs === bHasSubs) ? 0 : aHasSubs ? -1 : 1
+                  }).map(parent => {
+                    const subs = categories.filter(c => c.parent_id === parent.id)
+                    const hasSubs = subs.length > 0
+                    const isActive = activeCategory === parent.slug
+                    const isExpanded = expandedCats.has(parent.slug)
+                    return (
+                      <div key={parent.slug}>
+                        <div className={`flex items-center rounded-lg overflow-hidden ${isActive ? "bg-[#2C5F2E]" : "bg-[#F0F5F0]"}`}>
+                          <button
+                            onClick={() => { const sel = activeCategory !== parent.slug; setActiveCategory(sel ? parent.slug : "all"); if (hasSubs) setExpandedCats(prev => { const n = new Set(prev); sel ? n.add(parent.slug) : n.delete(parent.slug); return n }); setNavMenuOpen(false) }}
+                            className="flex-1 text-left px-3 py-2.5 text-sm font-bold min-w-0 truncate"
+                            style={{ color: isActive ? "#fff" : "#2C5F2E" }}
+                          >
+                            {parent.name.replace(/\s*\d{4}$/, "")}
+                          </button>
+                          {hasSubs && (
+                            <button
+                              onClick={() => setExpandedCats(prev => { const n = new Set(prev); n.has(parent.slug) ? n.delete(parent.slug) : n.add(parent.slug); return n })}
+                              className="px-3 py-2.5 font-black text-sm border-l flex-shrink-0"
+                              style={{ color: isActive ? "#fff" : "#2C5F2E", borderColor: isActive ? "rgba(255,255,255,0.2)" : "#B6D9B7" }}
+                            >
+                              {isExpanded ? "−" : "+"}
+                            </button>
+                          )}
+                        </div>
+                        {hasSubs && isExpanded && (
+                          <div className="pl-3 mt-0.5 space-y-0.5 border-l-2 border-[#B6D9B7] ml-3">
+                            {subs.map(sub => {
+                              const isSubActive = activeCategory === sub.slug
+                              return (
+                                <button
+                                  key={sub.slug}
+                                  onClick={() => { setActiveCategory(prev => prev === sub.slug ? parent.slug : sub.slug); setNavMenuOpen(false) }}
+                                  className={`w-full text-left px-3 py-2 text-sm rounded-lg font-medium ${isSubActive ? "bg-[#2C5F2E] text-white" : "text-[#555] hover:bg-[#F5F5F5]"}`}
+                                >
+                                  ↳ {sub.name.replace(/\s*\d{4}$/, "")}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  <div className="pt-2 mt-1 border-t border-[#E0E0E0] space-y-0.5">
+                    <button onClick={() => { router.push("/gutscheine"); setNavMenuOpen(false) }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm rounded-lg font-bold bg-[#F0F5F0] text-[#2C5F2E] hover:bg-[#DCF0DC]">
+                      <Gift className="w-4 h-4 shrink-0" /> Gutscheine
                     </button>
-                  ))}
-                  <div className="pt-2 mt-1 border-t border-[#E0E0E0]">
                     <div className="flex">
-                      <button
-                        onClick={() => { router.push("/blog"); setNavMenuOpen(false) }}
-                        className={`flex items-center gap-1.5 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-semibold ${pathname === "/blog" ? "bg-[#2C5F2E] text-white" : "text-[#2C5F2E]"}`}
-                      >
-                        <Newspaper className="w-4 h-4 shrink-0" />
-                        Blog
+                      <button onClick={() => { router.push("/blog"); setNavMenuOpen(false) }} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-semibold ${pathname === "/blog" ? "bg-[#2C5F2E] text-white" : "text-[#2C5F2E]"}`}>
+                        <Newspaper className="w-4 h-4 shrink-0" />Blog
                       </button>
-                      <button
-                        onClick={() => { router.push("/gallery"); setNavMenuOpen(false) }}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-semibold text-[#2C5F2E]"
-                      >
-                        <Images className="w-4 h-4 shrink-0" />
-                        Gallery
+                      <button onClick={() => { router.push("/gallery"); setNavMenuOpen(false) }} className="flex items-center gap-1.5 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-semibold text-[#2C5F2E]">
+                        <Images className="w-4 h-4 shrink-0" />Gallery
                       </button>
-                      <button
-                        onClick={() => { handleDownloadVCard(); setNavMenuOpen(false) }}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-semibold text-[#2C5F2E]"
-                      >
-                        <Download className="w-4 h-4 shrink-0" />
-                        VCard
+                      <button onClick={() => { handleDownloadVCard(); setNavMenuOpen(false) }} className="flex items-center gap-1.5 px-3 py-2.5 text-sm rounded hover:bg-[#F5F5F5] font-semibold text-[#2C5F2E]">
+                        <Download className="w-4 h-4 shrink-0" />VCard
                       </button>
                     </div>
                   </div>
@@ -1062,10 +1082,10 @@ export default function ShopGrid() {
                     <p className="text-[12px] text-[#999] mt-0.5">Anzeigen</p>
                   </div>
                 </button>
-                {categories.map(cat => {
+                {categories.filter(cat => cat.parent_id === null).map(cat => {
                   const catSubSlugs2 = categories.filter(c => c.parent_id === cat.id).map(c => c.slug)
                   const catProds = products.filter(p => p.category === cat.slug || p.category === cat.name || catSubSlugs2.includes(p.category ?? ""))
-                  const isActive = activeCategory === cat.slug
+                  const isActive = activeCategory === cat.slug || catSubSlugs2.includes(activeCategory)
                   const displayName = cat.name.replace(/\s*\d{4}$/, "")
                   return (
                     <MobileCatCard
@@ -1074,7 +1094,7 @@ export default function ShopGrid() {
                       srcs={catImageSrc(catProds)}
                       displayName={displayName}
                       isActive={isActive}
-                      onClick={() => setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug)}
+                      onClick={() => { setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug); setExpandedCats(prev => { const n = new Set(prev); n.add(cat.slug); return n }) }}
                     />
                   )
                 })}
