@@ -1438,13 +1438,13 @@ export function Admin({ onClose }: AdminProps) {
     doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(100, 100, 100)
     doc.text("(identisch mit Lieferadresse)", pageW / 2 + 5, billingY + 6)
 
-    // Zahlungsstatus unter RECHNUNG-Titel
+    // Zahlungsstatus unter Rechnungsadresse (eine Zeile unten, kein Überlappen)
     const payStatusLabel = order.payment_status === "completed" ? "Bezahlt" : order.payment_status === "pending" ? "Ausstehend" : order.payment_status === "failed" ? "Fehlgeschlagen" : order.payment_status
     const payStatusColor: [number, number, number] = order.payment_status === "completed" ? [44, 95, 46] : order.payment_status === "failed" ? [180, 0, 0] : [180, 130, 0]
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...payStatusColor)
-    doc.text(`Zahlungsstatus: ${payStatusLabel}`, pageW - margin, 84, { align: "right" })
+    doc.text(`Zahlungsstatus: ${payStatusLabel}`, pageW - margin, billingY + 16, { align: "right" })
     doc.setTextColor(100, 100, 100); doc.setFont("helvetica", "normal")
-    doc.text(`Zahlung: ${order.payment_method}`, pageW - margin, 90, { align: "right" })
+    doc.text(`Zahlung: ${order.payment_method}`, pageW - margin, billingY + 22, { align: "right" })
     doc.setTextColor(40, 40, 40)
 
     // Artikeltabelle
@@ -1526,6 +1526,7 @@ export function Admin({ onClose }: AdminProps) {
       "Zahlungskonditionen: sofort nach Erhalt – Gesamtbetrag inkl. MwSt",
     ]
     hinweise.forEach((line, i) => doc.text(line, margin, hinweiseY + 5 + i * 5))
+    const contentEndY = hinweiseY + 5 + hinweise.length * 5
 
     // Footer image
     try {
@@ -1537,14 +1538,21 @@ export function Admin({ onClose }: AdminProps) {
         canvas.width = footer.naturalWidth
         canvas.height = footer.naturalHeight
         canvas.getContext("2d")?.drawImage(footer, 0, 0)
+        const pageH = doc.internal.pageSize.getHeight()
         const maxW = pageW - margin * 2
         const maxH = 120
         const ratio = footer.naturalWidth / footer.naturalHeight
         let w = maxW, h = maxW / ratio
         if (h > maxH) { h = maxH; w = maxH * ratio }
         const x = (pageW - w) / 2
-        const y = 297 - h - 5
-        doc.addImage(canvas.toDataURL("image/png"), "PNG", x, y, w, h)
+        const imgY = pageH - h - 5
+        if (contentEndY + 5 > imgY) {
+          doc.addPage()
+          const newY = (pageH - h) / 2
+          doc.addImage(canvas.toDataURL("image/png"), "PNG", x, newY, w, h)
+        } else {
+          doc.addImage(canvas.toDataURL("image/png"), "PNG", x, imgY, w, h)
+        }
       }
     } catch (_) {/* sin footer */}
 
