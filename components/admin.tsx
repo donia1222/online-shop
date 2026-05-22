@@ -203,6 +203,7 @@ export function Admin({ onClose }: AdminProps) {
   const [productsError, setProductsError] = useState("")
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false)
   const [currentEditingProduct, setCurrentEditingProduct] = useState<Product | null>(null)
   const [deleteProductId, setDeleteProductId] = useState<number | null>(null)
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null])
@@ -1078,7 +1079,13 @@ export function Admin({ onClose }: AdminProps) {
     setProductsPage(0)
   }
 
+  const PRODUCT_LIMIT = 614
+
   const showAddProductModal = () => {
+    if (products.length >= PRODUCT_LIMIT) {
+      setIsLimitModalOpen(true)
+      return
+    }
     setCurrentEditingProduct(null)
     setImagePreviews([null, null, null, null])
     setRemovedImages([false, false, false, false])
@@ -3671,6 +3678,37 @@ export function Admin({ onClose }: AdminProps) {
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Product Limit Modal */}
+        <Dialog open={isLimitModalOpen} onOpenChange={setIsLimitModalOpen}>
+          <DialogContent className="sm:max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="w-5 h-5" />
+                Produktlimit erreicht
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 text-sm text-gray-700">
+              <p>
+                Die Datenbank unterstützt maximal <strong>600 Produkte</strong>.
+                Aktuell sind <strong>{products.length}</strong> Produkte gespeichert.
+              </p>
+              <p>
+                Um das Limit auf <strong>1000 Produkte</strong> zu erhöhen,
+                kontaktieren Sie bitte <strong>lweb</strong>.
+              </p>
+              <p className="text-gray-500">
+                Sie können weiterhin Produkte bearbeiten oder löschen. Sobald die Anzahl
+                unter {PRODUCT_LIMIT} liegt, können wieder neue Produkte hinzugefügt werden.
+              </p>
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button onClick={() => setIsLimitModalOpen(false)} className="bg-red-600 hover:bg-red-700 text-white">
+                Verstanden
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Product Add/Edit Modal */}
         <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
