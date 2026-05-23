@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getCachedProducts } from "@/lib/products-cache"
 import { getCachedCategories } from "@/lib/categories-cache"
-import { Flashlight, Sword, Target, Wrench, Axe, Shield } from "lucide-react"
+import { Flashlight, Sword, Target, Wrench, Axe, Shield, Flame, Package } from "lucide-react"
 
 interface Product {
   id: number
@@ -348,9 +348,13 @@ export function HeroSection() {
               "Lampen": <Flashlight className="w-7 h-7" />,
               "Messer": <Sword className="w-7 h-7" />,
               "Armbrust": <Target className="w-7 h-7" />,
-              "Armbrust Zubehör": <Wrench className="w-7 h-7" />,
+              "Armbrust Zubehör": <Package className="w-7 h-7" />,
+              "Armbrust und Bogen Zubehör": <Package className="w-7 h-7" />,
+              "Armbrust & Bogen Zubehör": <Package className="w-7 h-7" />,
               "Beil": <Axe className="w-7 h-7" />,
               "Security": <Shield className="w-7 h-7" />,
+              "Rauch und Grill": <Flame className="w-7 h-7" />,
+              "Rauch & Grill": <Flame className="w-7 h-7" />,
             }
             const colors = [
               { bg: "bg-white", icon: "bg-[#2C5F2E]/10 text-[#2C5F2E]", accent: "text-[#2C5F2E]", border: "hover:border-[#2C5F2E]/40" },
@@ -360,9 +364,6 @@ export function HeroSection() {
             return (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
                 {categories.slice(0, 6).map((cat, i) => {
-                  const catProds = products.filter(p =>
-                    p.category === cat.slug || p.category === cat.name
-                  )
                   const c = colors[i % 3]
                   return (
                     <button
@@ -380,7 +381,6 @@ export function HeroSection() {
                         <p className="font-black text-[#1A1A1A] text-lg group-hover:text-[#2C5F2E] transition-colors">
                           {cat.name}
                         </p>
-                        <p className="text-xs text-[#888] mt-1">{catProds.length} Produkte verfügbar</p>
                       </div>
                       <span className={`text-sm font-semibold ${c.accent} group-hover:gap-2 inline-flex items-center gap-1 transition-all`}>
                         Entdecken <span className="group-hover:translate-x-1 transition-transform">→</span>

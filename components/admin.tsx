@@ -3695,7 +3695,7 @@ export function Admin({ onClose }: AdminProps) {
               </p>
               <p>
                 Um das Limit auf <strong>1000 Produkte</strong> zu erhöhen,
-                kontaktieren Sie bitte <strong>lweb</strong>.
+                kontaktieren Sie bitte <strong>lweb</strong> für ein Angebot.
               </p>
               <p className="text-gray-500">
                 Sie können weiterhin Produkte bearbeiten oder löschen. Sobald die Anzahl
