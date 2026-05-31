@@ -13,6 +13,20 @@ export function Footer() {
   const router = useRouter()
   const [openModal, setOpenModal] = useState<string | null>(null)
   const [siteContent, setSiteContent] = useState<Record<string, string>>({})
+  const [isStandalone, setIsStandalone] = useState(false)
+
+  // Detectar si ya está abierta como app instalada (PWA standalone)
+  useEffect(() => {
+    const check = () =>
+      setIsStandalone(
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as any).standalone === true
+      )
+    check()
+    const mq = window.matchMedia("(display-mode: standalone)")
+    mq.addEventListener?.("change", check)
+    return () => mq.removeEventListener?.("change", check)
+  }, [])
 
   useEffect(() => {
     fetch(`/api/site-settings`)
@@ -592,13 +606,15 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
         </div>
       </div>
 
-      {/* ── Install PWA CTA (solo móvil/tablet, oculto en desktop) ── */}
-      <div className="md:hidden bg-white border-t border-[#E0E0E0] py-5">
-        <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
-          <span className="text-sm text-[#555]">Installieren Sie unsere App für schnelleren Zugriff</span>
-          <InstallPWAButton />
+      {/* ── Install PWA CTA (oculto si ya está instalada como app) ── */}
+      {!isStandalone && (
+        <div className="bg-white border-t border-[#E0E0E0] py-5">
+          <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
+            <span className="text-sm text-[#555]">Installieren Sie unsere App für schnelleren Zugriff</span>
+            <InstallPWAButton />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Bottom copyright bar ── */}
       <div className="bg-[#F5F5F5] border-t border-[#E0E0E0] py-5">

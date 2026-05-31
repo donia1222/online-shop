@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Download, Share, Plus, MoreVertical, X } from "lucide-react"
+import { Download, Share, Plus, MoreVertical, X, Smartphone } from "lucide-react"
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -13,6 +13,7 @@ export function InstallPWAButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isStandalone, setIsStandalone] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
@@ -31,6 +32,10 @@ export function InstallPWAButton() {
     const ua = window.navigator.userAgent.toLowerCase()
     const ios = /iphone|ipad|ipod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
     setIsIOS(ios)
+
+    // Detectar dispositivo móvil (móvil/tablet) vs escritorio
+    const mobile = ios || /android|iphone|ipad|ipod|mobile|tablet|silk|kindle/.test(ua) || navigator.maxTouchPoints > 1
+    setIsMobile(mobile)
 
     const onBeforeInstall = (e: Event) => {
       e.preventDefault()
@@ -89,7 +94,22 @@ export function InstallPWAButton() {
             </DialogTitle>
           </DialogHeader>
 
-          {isIOS ? (
+          {!isMobile && !deferredPrompt ? (
+            <div className="space-y-4 pt-2">
+              <div className="flex flex-col items-center text-center gap-3 py-2">
+                <div className="w-14 h-14 rounded-2xl bg-[#EAF3EA] flex items-center justify-center">
+                  <Smartphone className="w-7 h-7 text-[#2C5F2E]" />
+                </div>
+                <p className="text-sm font-semibold text-gray-800">
+                  Diese App kann nur auf mobilen Geräten installiert werden
+                </p>
+                <p className="text-sm text-gray-600">
+                  Öffnen Sie diese Website auf Ihrem Smartphone oder Tablet (iPhone, iPad oder Android),
+                  um die App zum Startbildschirm hinzuzufügen.
+                </p>
+              </div>
+            </div>
+          ) : isIOS ? (
             <div className="space-y-4 pt-2">
               <p className="text-sm text-gray-600">
                 Auf dem iPhone/iPad fügen Sie die App in wenigen Schritten zum Home-Bildschirm hinzu:
