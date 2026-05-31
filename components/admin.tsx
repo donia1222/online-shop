@@ -3957,8 +3957,30 @@ export function Admin({ onClose }: AdminProps) {
             ) : (
               <div className="space-y-8 max-w-3xl">
 
+                {/* Quick-Nav: salta a cada sección con autoscroll */}
+                <div className="sticky top-0 z-10 -mt-2 flex flex-wrap items-center gap-2 rounded-2xl bg-white/90 backdrop-blur border border-gray-100 shadow-sm p-2.5">
+                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-1">Springe zu:</span>
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById("inhalt-hero")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    className="px-3 py-1 rounded-full text-xs font-semibold border bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100 transition-all"
+                  >
+                    Hero-Bereich
+                  </button>
+                  {FOOTER_MODAL_KEYS.map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => document.getElementById(`inhalt-${k}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                      className="px-3 py-1 rounded-full text-xs font-semibold border bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100 transition-all"
+                    >
+                      {siteForm[`footer_${k}_title`] || FOOTER_LEGAL_DEFAULTS[k].title}
+                    </button>
+                  ))}
+                </div>
+
                 {/* HERO */}
-                <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                <div id="inhalt-hero" className="scroll-mt-24 bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
                   <h3 className="font-black text-gray-900 mb-4 flex items-center gap-2"><Images className="w-5 h-5 text-[#2C5F2E]" /> Hero-Bereich</h3>
 
                   {/* Imágenes */}
@@ -4025,7 +4047,7 @@ export function Admin({ onClose }: AdminProps) {
                   <h3 className="font-black text-gray-900 mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-[#2C5F2E]" /> Footer-Texte (Modale)</h3>
                   <div className="space-y-5">
                     {FOOTER_MODAL_KEYS.map((k) => (
-                      <div key={k} className="border border-gray-100 rounded-xl p-4 bg-gray-50/40">
+                      <div key={k} id={`inhalt-${k}`} className="scroll-mt-24 border border-gray-100 rounded-xl p-4 bg-gray-50/40">
                         <div className="mb-2">
                           <Label className="text-xs text-gray-400 font-medium">Titel</Label>
                           <Input value={siteForm[`footer_${k}_title`] ?? ""} onChange={(e) => setSiteForm(p => ({ ...p, [`footer_${k}_title`]: e.target.value }))} className="bg-white border-gray-200 rounded-lg mt-1 font-semibold" />
