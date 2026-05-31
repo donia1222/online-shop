@@ -573,8 +573,12 @@ function sendOrderConfirmationEmail($data) {
         'stripe'       => 'Kreditkarte (Stripe)',
         'stripe_twint' => 'TWINT (Stripe QR)',
         'twint'        => 'TWINT (Manuell)',
+        'pickup'       => 'Abholung im Geschäft',
         default        => ucfirst($paymentMethod),
     };
+
+    $isPickup = ($paymentMethod === 'pickup');
+    $isTwint  = ($paymentMethod === 'twint');
 
     $subtotal = 0;
     $itemsHtml = '';
@@ -604,7 +608,7 @@ function sendOrderConfirmationEmail($data) {
             <p>" . htmlspecialchars($customerInfo['firstName'] . ' ' . $customerInfo['lastName']) . "<br>
                " . htmlspecialchars($customerInfo['email']) . "<br>
                " . htmlspecialchars($customerInfo['phone']) . "<br>
-               " . htmlspecialchars($customerInfo['address'] . ', ' . $customerInfo['postalCode'] . ' ' . $customerInfo['city']) . "</p>
+               " . ($isPickup ? "<strong>Abholung im Geschäft</strong> (reserviert, Zahlung bei Abholung)" : htmlspecialchars($customerInfo['address'] . ', ' . $customerInfo['postalCode'] . ' ' . $customerInfo['city'])) . "</p>
             <h3>Bestellte Artikel</h3>
             <table width='100%' style='border-collapse:collapse'>
                 <tr style='background:#f5f5f5'>
@@ -631,7 +635,9 @@ function sendOrderConfirmationEmail($data) {
         </div>
         <div style='padding:20px'>
             <p>Hallo " . htmlspecialchars($customerInfo['firstName']) . ",</p>
-            <p>Wir haben Ihre Bestellung erhalten. Zahlungsmethode: <strong>{$methodLabel}</strong></p>
+            <p>Wir haben Ihre Bestellung erhalten. " . ($isPickup ? "Abholung: <strong>im Geschäft</strong>" : "Zahlungsmethode: <strong>{$methodLabel}</strong>") . "</p>
+            " . ($isPickup ? "<p style='background:#FFF8E1;border:1px solid #FFE082;border-radius:8px;padding:12px 14px;color:#8a6d00'>Ihre Bestellung ist für Sie <strong>reserviert</strong>. Die Bezahlung erfolgt bei der Abholung im Geschäft. Wir melden uns, sobald sie zur Abholung bereit ist.</p>" : "") . "
+            " . ($isTwint ? "<p style='background:#FFF3E0;border:1px solid #FFCC80;border-radius:8px;padding:12px 14px;color:#8a5000'>Bitte schließen Sie die Zahlung via <strong>TWINT</strong> ab. Sobald Ihre Zahlung bei uns eingegangen ist, wird Ihre Bestellung versandt.</p>" : "") . "
             <h3>Ihre Bestellung</h3>
             <table width='100%' style='border-collapse:collapse'>
                 <tr style='background:#f5f5f5'>
@@ -643,7 +649,7 @@ function sendOrderConfirmationEmail($data) {
                 <tr><td colspan='2' style='padding:8px;text-align:right;font-weight:bold'>TOTAL</td>
                     <td style='padding:8px;text-align:right;font-weight:bold;font-size:18px;color:#2C5F2E'>CHF " . number_format($total, 2) . "</td></tr>
             </table>
-            <p style='margin-top:20px'>Ihre Bestellung wird innerhalb von 2&ndash;3 Werktagen versandt.</p>
+            <p style='margin-top:20px'>" . ($isPickup ? "Bitte holen Sie Ihre Bestellung im Geschäft ab. Wir benachrichtigen Sie, sobald sie bereit ist." : ($isTwint ? "Nach Eingang Ihrer TWINT-Zahlung wird Ihre Bestellung innerhalb von 2&ndash;3 Werktagen versandt." : "Ihre Bestellung wird innerhalb von 2&ndash;3 Werktagen versandt.")) . "</p>
             <p>Mit freundlichen Grüßen,<br>Ihr Team</p>
         </div>
     </body></html>";

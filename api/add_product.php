@@ -33,6 +33,7 @@ try {
     $category  = $_POST['category']  ?? 'hot-sauce';
     $weight_kg = $_POST['weight_kg'] ?? 0.500;
     $stock = intval($_POST['stock'] ?? 0);
+    $article_number = isset($_POST['article_number']) ? trim($_POST['article_number']) : '';
 
     // Validar datos requeridos
     if (empty($name) || empty($price)) {
@@ -83,8 +84,8 @@ try {
     }
     
     // Insertar producto en la base de datos
-    $sql = "INSERT INTO products (name, description, price, image, image2, image3, image4, heat_level, rating, badge, origin, supplier, category, weight_kg, stock)
-            VALUES (:name, :description, :price, :image, :image2, :image3, :image4, :heat_level, :rating, :badge, :origin, :supplier, :category, :weight_kg, :stock)";
+    $sql = "INSERT INTO products (name, description, price, image, image2, image3, image4, heat_level, rating, badge, origin, supplier, category, weight_kg, stock, article_number)
+            VALUES (:name, :description, :price, :image, :image2, :image3, :image4, :heat_level, :rating, :badge, :origin, :supplier, :category, :weight_kg, :stock, :article_number)";
 
     $stmt = $pdo->prepare($sql);
     $result = $stmt->execute([
@@ -103,6 +104,7 @@ try {
         ':category'  => $category,
         ':weight_kg' => floatval($weight_kg),
         ':stock'     => $stock,
+        ':article_number' => $article_number !== '' ? $article_number : null,
     ]);
     
     if (!$result) {

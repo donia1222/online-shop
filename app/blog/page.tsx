@@ -23,6 +23,29 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
 }
 
+// Wandelt URLs im Text in anklickbare Links um
+function renderTextWithLinks(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  return text.split(urlRegex).map((part, i) => {
+    if (/^https?:\/\//.test(part)) {
+      // Doppeltes Protokoll bereinigen (z.B. https://https://...)
+      const href = part.replace(/^https?:\/\/(https?:\/\/)/, "$1")
+      return (
+        <a
+          key={i}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#2C5F2E] font-semibold underline underline-offset-2 break-all hover:text-[#1f4720]"
+        >
+          {part}
+        </a>
+      )
+    }
+    return part
+  })
+}
+
 function Lightbox({ images, startIndex, onClose }: { images: string[]; startIndex: number; onClose: () => void }) {
   const [idx, setIdx] = useState(startIndex)
 
@@ -152,7 +175,7 @@ function PostModal({ post, onClose }: { post: BlogPost; onClose: () => void }) {
 
             {/* Content */}
             <p className="text-base text-[#444] leading-[1.85] whitespace-pre-line">
-              {post.content}
+              {renderTextWithLinks(post.content)}
             </p>
 
             {/* Extra images */}
@@ -398,7 +421,7 @@ export default function BlogPage() {
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-black text-[#1A1A1A] tracking-tight leading-tight mb-5">{post.title}</h2>
                 <div className="w-12 h-1 bg-[#2C5F2E] rounded-full mb-6" />
-                <p className="text-base text-[#444] leading-[1.85] whitespace-pre-line">{post.content}</p>
+                <p className="text-base text-[#444] leading-[1.85] whitespace-pre-line">{renderTextWithLinks(post.content)}</p>
                 {extraImgs.length > 0 && (
                   <div className={`mt-8 grid gap-4 ${extraImgs.length === 1 ? "grid-cols-1" : extraImgs.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
                     {extraImgs.map((url, i) => (

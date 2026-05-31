@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { getCachedProducts, bustProductsCache, updateProductInCache, removeProductFromCache } from "@/lib/products-cache"
 import { getCachedCategories, bustCategoriesCache } from "@/lib/categories-cache"
+import { FOOTER_LEGAL_DEFAULTS, FOOTER_MODAL_KEYS, HERO_DEFAULTS, HERO_IMAGE_DEFAULTS } from "@/lib/site-content-defaults"
 import { ProductImage } from "@/components/product-image"
 import {
   ArrowLeft,
@@ -33,6 +34,12 @@ import {
   Download,
   Images,
   Landmark,
+  Store,
+  Copy,
+  Phone,
+  Mail,
+  MapPin,
+  FileText,
   CreditCard,
   Megaphone,
   Bell,
@@ -168,6 +175,30 @@ export function Admin({ onClose }: AdminProps) {
   const [activeTab, setActiveTab] = useState("orders")
   const loadedTabsRef = useRef(new Set<string>())
 
+  // Registered users (Kunden tab)
+  type RegisteredUser = {
+    id: number; email: string; firstName: string; lastName: string; phone: string
+    address: string; city: string; postalCode: string; canton: string; notes: string; createdAt: string; lastAccess: string
+  }
+  const [users, setUsers] = useState<RegisteredUser[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [usersError, setUsersError] = useState("")
+  type UserOrder = {
+    id: number; order_number: string; total_amount: string | number; status: string
+    payment_method: string; payment_status: string; created_at: string; items_count: number
+  }
+  const [userOrders, setUserOrders] = useState<Record<number, UserOrder[]>>({})
+  const [expandedUserId, setExpandedUserId] = useState<number | null>(null)
+  const [userOrdersLoadingId, setUserOrdersLoadingId] = useState<number | null>(null)
+
+  // Site content (Inhalte tab): footer modal texts + hero
+  const [siteForm, setSiteForm] = useState<Record<string, string>>({})
+  const [siteImagePreviews, setSiteImagePreviews] = useState<Record<number, string>>({ 1: "", 2: "", 3: "" })
+  const [siteImageFiles, setSiteImageFiles] = useState<Record<number, File | null>>({ 1: null, 2: null, 3: null })
+  const [siteLoading, setSiteLoading] = useState(false)
+  const [siteSaving, setSiteSaving] = useState(false)
+  const [siteSavedMsg, setSiteSavedMsg] = useState("")
+
   // Gutscheine State
   const [giftCards, setGiftCards] = useState<any[]>([])
   const [giftCardPurchases, setGiftCardPurchases] = useState<any[]>([])
@@ -205,6 +236,7 @@ export function Admin({ onClose }: AdminProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false)
   const [currentEditingProduct, setCurrentEditingProduct] = useState<Product | null>(null)
+  const [isDuplicating, setIsDuplicating] = useState(false)
   const [deleteProductId, setDeleteProductId] = useState<number | null>(null)
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null])
 
@@ -327,7 +359,7 @@ export function Admin({ onClose }: AdminProps) {
   const [paySettings, setPaySettings] = useState({
     paypal_email: "", stripe_publishable_key: "", stripe_secret_key: "", stripe_pmc_id: "", twint_phone: "",
     bank_iban: "", bank_holder: "", bank_name: "",
-    enable_paypal: false, enable_stripe: false, enable_twint: false, enable_invoice: true,
+    enable_paypal: false, enable_stripe: false, enable_twint: false, enable_invoice: true, enable_pickup: false,
   })
   const [payLoading,     setPayLoading]     = useState(false)
   const [paySavedMsg,    setPaySavedMsg]    = useState("")
@@ -360,6 +392,7 @@ export function Admin({ onClose }: AdminProps) {
       else if (m.includes("paypal")) method = "PayPal"
       else if (m.includes("stripe") || m.includes("card")) method = "Kreditkarte"
       else if (m.includes("invoice") || m.includes("rechnung")) method = "Rechnung"
+      else if (m.includes("pickup") || m.includes("abhol")) method = "Abholung"
       paymentCounts[method] = (paymentCounts[method] || 0) + 1
 
       // Daily revenue
@@ -376,7 +409,7 @@ export function Admin({ onClose }: AdminProps) {
     ].filter(d => d.value > 0)
 
     const paymentColors: Record<string, string> = {
-      "TWINT": "#9333ea", "PayPal": "#3b82f6", "Kreditkarte": "#6366f1", "Rechnung": "#64748b", "Andere": "#94a3b8"
+      "TWINT": "#9333ea", "PayPal": "#3b82f6", "Kreditkarte": "#6366f1", "Rechnung": "#64748b", "Abholung": "#f59e0b", "Andere": "#94a3b8"
     }
     const paymentData = Object.entries(paymentCounts).map(([name, value]) => ({
       name, value, color: paymentColors[name] || "#94a3b8"
@@ -437,6 +470,10 @@ export function Admin({ onClose }: AdminProps) {
     } else if (activeTab === "gutscheine") {
       loadGiftCards()
       loadGiftCardPurchases()
+    } else if (activeTab === "kunden") {
+      if (!loaded.has("kunden")) { loadUsers(); loaded.add("kunden") }
+    } else if (activeTab === "inhalte") {
+      if (!loaded.has("inhalte")) { loadSiteSettings(); loaded.add("inhalte") }
     }
   }, [activeTab, currentOrderPage, orderFilters])
 
@@ -454,6 +491,135 @@ export function Admin({ onClose }: AdminProps) {
       setProductFilters(prev => prev.category ? prev : { ...prev, category: categories[0].slug })
     }
   }, [categories, activeTab])
+
+  // Inhalte (site content) Functions
+  const loadSiteSettings = async () => {
+    setSiteLoading(true)
+    try {
+      const res = await fetch(`/api/site-settings`)
+      const data = await res.json()
+      const s: Record<string, string> = (data.success && data.settings) ? data.settings : {}
+
+      const form: Record<string, string> = {}
+      // Footer: textos de cada modal (con fallback al texto por defecto)
+      for (const k of FOOTER_MODAL_KEYS) {
+        form[`footer_${k}_title`] = s[`footer_${k}_title`] ?? FOOTER_LEGAL_DEFAULTS[k].title
+        form[`footer_${k}_content`] = s[`footer_${k}_content`] ?? FOOTER_LEGAL_DEFAULTS[k].content
+      }
+      // Hero
+      HERO_DEFAULTS.badges.forEach((d, i) => { form[`hero_badge_${i + 1}`] = s[`hero_badge_${i + 1}`] ?? d })
+      form["hero_title_1"] = s["hero_title_1"] ?? HERO_DEFAULTS.titleLine1
+      form["hero_title_2"] = s["hero_title_2"] ?? HERO_DEFAULTS.titleLine2
+      form["hero_subtitle"] = s["hero_subtitle"] ?? HERO_DEFAULTS.subtitle
+      HERO_DEFAULTS.stats.forEach((d, i) => {
+        form[`hero_stat${i + 1}_val`] = s[`hero_stat${i + 1}_val`] ?? d.val
+        form[`hero_stat${i + 1}_label`] = s[`hero_stat${i + 1}_label`] ?? d.label
+      })
+      setSiteForm(form)
+
+      setSiteImagePreviews({
+        1: s["hero_image_1_url"] || HERO_IMAGE_DEFAULTS[0],
+        2: s["hero_image_2_url"] || HERO_IMAGE_DEFAULTS[1],
+        3: s["hero_image_3_url"] || HERO_IMAGE_DEFAULTS[2],
+      })
+      setSiteImageFiles({ 1: null, 2: null, 3: null })
+    } catch {
+      toast({ title: "Fehler", description: "Inhalte konnten nicht geladen werden", variant: "destructive" })
+    } finally {
+      setSiteLoading(false)
+    }
+  }
+
+  const handleSiteImageChange = (slot: number, file: File | null) => {
+    if (!file) return
+    setSiteImageFiles(prev => ({ ...prev, [slot]: file }))
+    setSiteImagePreviews(prev => ({ ...prev, [slot]: URL.createObjectURL(file) }))
+  }
+
+  const saveSiteSettings = async () => {
+    setSiteSaving(true)
+    setSiteSavedMsg("")
+    try {
+      const fd = new FormData()
+      Object.entries(siteForm).forEach(([k, v]) => fd.append(k, v ?? ""))
+      ;[1, 2, 3].forEach(slot => {
+        const f = siteImageFiles[slot]
+        if (f) fd.append(`hero_image_${slot}`, f)
+      })
+      const res = await fetch(`/api/site-settings`, { method: "POST", body: fd })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || "Fehler beim Speichern")
+      setSiteSavedMsg("Gespeichert ✓")
+      setTimeout(() => setSiteSavedMsg(""), 3000)
+      loadSiteSettings()
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" })
+    } finally {
+      setSiteSaving(false)
+    }
+  }
+
+  // Kunden (registered users) Functions
+  const loadUsers = async () => {
+    setUsersLoading(true)
+    setUsersError("")
+    try {
+      const res = await fetch(`/api/users`)
+      const data = await res.json()
+      if (data.success) {
+        setUsers(data.users || [])
+      } else {
+        throw new Error(data.error || "Fehler beim Laden der Kunden")
+      }
+    } catch (e: any) {
+      setUsersError(e.message || "Fehler beim Laden der Kunden")
+    } finally {
+      setUsersLoading(false)
+    }
+  }
+
+  const toggleUserOrders = async (u: RegisteredUser) => {
+    if (expandedUserId === u.id) {
+      setExpandedUserId(null)
+      return
+    }
+    setExpandedUserId(u.id)
+    if (userOrders[u.id] || !u.email) return // ya cargado o sin email
+    setUserOrdersLoadingId(u.id)
+    try {
+      const res = await fetch(`/api/user-orders?email=${encodeURIComponent(u.email)}&limit=50`)
+      const data = await res.json()
+      if (data.success) {
+        setUserOrders(prev => ({ ...prev, [u.id]: data.data || data.orders || [] }))
+      } else {
+        throw new Error(data.error || "Fehler")
+      }
+    } catch {
+      toast({ title: "Fehler", description: "Bestellungen konnten nicht geladen werden", variant: "destructive" })
+      setUserOrders(prev => ({ ...prev, [u.id]: [] }))
+    } finally {
+      setUserOrdersLoadingId(null)
+    }
+  }
+
+  const copyToClipboard = async (text: string, label: string) => {
+    if (!text) return
+    try {
+      await navigator.clipboard.writeText(text)
+      toast({ title: "Kopiert", description: `${label} wurde kopiert` })
+    } catch {
+      toast({ title: "Fehler", description: "Konnte nicht kopieren", variant: "destructive" })
+    }
+  }
+
+  const copyAllEmails = async () => {
+    const emails = users.map(u => u.email).filter(Boolean)
+    if (emails.length === 0) {
+      toast({ title: "Keine E-Mails", description: "Es gibt keine E-Mails zum Kopieren", variant: "destructive" })
+      return
+    }
+    await copyToClipboard(emails.join(", "), `${emails.length} E-Mail-Adressen`)
+  }
 
   // Blog Functions
   const loadBlogPosts = async () => {
@@ -1033,21 +1199,30 @@ export function Admin({ onClose }: AdminProps) {
   const filterProducts = () => {
     let filtered = [...products]
 
-    if (productFilters.search) {
-      const searchTerm = productFilters.search.toLowerCase()
+    // Una coincidencia por número de referencia o ID ignora el filtro de categoría
+    const matchesReference = (product: Product, term: string) =>
+      (product.article_number && product.article_number.toLowerCase().includes(term)) ||
+      String(product.id).includes(term)
+
+    const searchTerm = productFilters.search ? productFilters.search.toLowerCase() : ""
+
+    if (searchTerm) {
       filtered = filtered.filter(
         (product) =>
           product.name.toLowerCase().includes(searchTerm) ||
           (product.description ?? "").toLowerCase().includes(searchTerm) ||
           (product.badge && product.badge.toLowerCase().includes(searchTerm)) ||
           (product.origin && product.origin.toLowerCase().includes(searchTerm)) ||
-          (product.article_number && product.article_number.toLowerCase().includes(searchTerm)) ||
-          String(product.id).includes(searchTerm),
+          matchesReference(product, searchTerm),
       )
     }
 
     if (productFilters.category) {
-      filtered = filtered.filter((product) => product.category === productFilters.category)
+      filtered = filtered.filter(
+        (product) =>
+          product.category === productFilters.category ||
+          (searchTerm !== "" && matchesReference(product, searchTerm)),
+      )
     }
 
     if (productFilters.stock_status) {
@@ -1079,7 +1254,7 @@ export function Admin({ onClose }: AdminProps) {
     setProductsPage(0)
   }
 
-  const PRODUCT_LIMIT = 614
+  const PRODUCT_LIMIT = 1024
 
   const showAddProductModal = () => {
     if (products.length >= PRODUCT_LIMIT) {
@@ -1087,9 +1262,27 @@ export function Admin({ onClose }: AdminProps) {
       return
     }
     setCurrentEditingProduct(null)
+    setIsDuplicating(false)
     setImagePreviews([null, null, null, null])
     setRemovedImages([false, false, false, false])
     setIsProductModalOpen(true)
+  }
+
+  const duplicateCurrentProduct = () => {
+    if (!currentEditingProduct) return
+    if (products.length >= PRODUCT_LIMIT) {
+      setIsProductModalOpen(false)
+      setIsLimitModalOpen(true)
+      return
+    }
+    // Mantener los valores precargados, pero crear como producto nuevo (sin imágenes)
+    setIsDuplicating(true)
+    setImagePreviews([null, null, null, null])
+    setRemovedImages([false, false, false, false])
+    toast({
+      title: "Produkt duplizieren",
+      description: "Passen Sie die Felder an und laden Sie die Bilder hoch, um ein neues Produkt zu erstellen.",
+    })
   }
 
   const showEditProductModal = async (id: number) => {
@@ -1098,6 +1291,7 @@ export function Admin({ onClose }: AdminProps) {
       const product = products.find((p: any) => p.id === id)
       if (product) {
         setCurrentEditingProduct(product as any)
+        setIsDuplicating(false)
         setImagePreviews((product as any).image_urls || [(product as any).image_url, null, null, null])
         setRemovedImages([false, false, false, false])
         setIsProductModalOpen(true)
@@ -1181,7 +1375,7 @@ export function Admin({ onClose }: AdminProps) {
     e.preventDefault()
 
     const formData = new FormData(e.currentTarget)
-    const isEditing = currentEditingProduct !== null
+    const isEditing = currentEditingProduct !== null && !isDuplicating
 
     if (isEditing) {
       formData.append("id", currentEditingProduct.id.toString())
@@ -1227,6 +1421,7 @@ export function Admin({ onClose }: AdminProps) {
           const updated: Product = {
             ...currentEditingProduct,
             name: (formData.get("name") as string) || currentEditingProduct.name,
+            article_number: (formData.get("article_number") as string) ?? currentEditingProduct.article_number,
             price: newPrice,
             stock: newStock,
             stock_status: newStockStatus,
@@ -1714,7 +1909,7 @@ export function Admin({ onClose }: AdminProps) {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="overflow-x-auto mb-8 -mx-2 px-2 pb-1">
-          <TabsList className="flex w-max lg:grid lg:grid-cols-8 lg:w-full bg-white border border-[#EBEBEB] rounded-2xl p-1 shadow-sm gap-1">
+          <TabsList className="flex w-max lg:grid lg:grid-cols-10 lg:w-full bg-white border border-[#EBEBEB] rounded-2xl p-1 shadow-sm gap-1">
             <TabsTrigger
               value="orders"
               className="flex items-center gap-2 font-semibold shrink-0 bg-blue-50 text-blue-700 data-[state=active]:bg-blue-400 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
@@ -1770,6 +1965,20 @@ export function Admin({ onClose }: AdminProps) {
             >
               <Gift className="w-4 h-4" />
               <span>Gutscheine</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="kunden"
+              className="flex items-center gap-2 font-semibold shrink-0 bg-amber-50 text-amber-700 data-[state=active]:bg-amber-400 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+            >
+              <Users className="w-4 h-4" />
+              <span>Kunden</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="inhalte"
+              className="flex items-center gap-2 font-semibold shrink-0 bg-green-50 text-green-700 data-[state=active]:bg-green-400 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Inhalte</span>
             </TabsTrigger>
           </TabsList>
           </div>
@@ -2104,6 +2313,7 @@ export function Admin({ onClose }: AdminProps) {
                             if (m.includes("twint")) return "bg-purple-100 text-purple-700"
                             if (m.includes("paypal")) return "bg-blue-100 text-blue-700"
                             if (m.includes("invoice") || m.includes("rechnung")) return "bg-gray-100 text-gray-700"
+                            if (m.includes("pickup") || m.includes("abhol")) return "bg-amber-100 text-amber-700"
                             return "bg-indigo-100 text-indigo-700"
                           })()
                         }`}>
@@ -2115,6 +2325,7 @@ export function Admin({ onClose }: AdminProps) {
                             if (m === "stripe" || m.includes("stripe_card") || m.includes("card")) return "Karte"
                             if (m.includes("stripe")) return "Karte"
                             if (m.includes("invoice") || m.includes("rechnung")) return "Rechnung"
+                            if (m.includes("pickup") || m.includes("abhol")) return "Abholung"
                             return order.payment_method
                           })()}
                         </span>
@@ -2605,7 +2816,10 @@ export function Admin({ onClose }: AdminProps) {
               {/* Category chips row */}
               <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-b border-gray-100">
                 <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mr-1">Kategorie:</span>
-                {categories.map(c => ({ value: c.slug, label: c.name })).map(opt => (
+                {categories
+                  // Ocultar el chip de categorías con 0 productos (mismo conteo que en KATEGORIEN).
+                  .filter(c => products.some(p => p.category === c.slug))
+                  .map(c => ({ value: c.slug, label: c.name })).map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => setProductFilters(prev => ({ ...prev, category: opt.value }))}
@@ -3467,6 +3681,30 @@ export function Admin({ onClose }: AdminProps) {
                   )}
                 </div>
 
+                {/* Abholung im Geschäft */}
+                <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-amber-50/50 to-transparent">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center">
+                        <Store className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">Abholung im Geschäft</p>
+                        <p className="text-xs text-gray-400">Bestellung wird reserviert, Zahlung bei Abholung</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPaySettings(p => ({ ...p, enable_pickup: !p.enable_pickup }))}
+                      className={`px-4 py-1.5 rounded-xl text-sm font-semibold transition-all ${
+                        paySettings.enable_pickup ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 shadow-sm" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                      }`}
+                    >
+                      {paySettings.enable_pickup ? "Aktiv" : "Deaktiviert"}
+                    </button>
+                  </div>
+                </div>
+
               </div>
             )}
           </TabsContent>
@@ -3563,6 +3801,244 @@ export function Admin({ onClose }: AdminProps) {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Kunden (Registered Users) Tab ── */}
+          <TabsContent value="kunden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Registrierte Kunden</h2>
+                  <p className="text-sm text-gray-400 mt-0.5">{users.length} {users.length === 1 ? "Kunde" : "Kunden"} registriert</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button onClick={loadUsers} variant="outline" className="rounded-xl gap-2" disabled={usersLoading}>
+                  {usersLoading ? "Lädt..." : "Aktualisieren"}
+                </Button>
+                <Button onClick={copyAllEmails} className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl gap-2 shadow-sm" disabled={users.length === 0}>
+                  <Copy className="w-4 h-4" />
+                  Alle E-Mails kopieren
+                </Button>
+              </div>
+            </div>
+
+            {usersError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">{usersError}</div>
+            )}
+
+            {usersLoading && users.length === 0 ? (
+              <div className="text-center py-16 text-gray-400">Kunden werden geladen...</div>
+            ) : users.length === 0 ? (
+              <div className="text-center py-16 text-gray-400">Keine registrierten Kunden gefunden.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {users.map((u) => (
+                  <div key={u.id} className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="px-5 py-4 bg-gradient-to-r from-amber-50/60 to-transparent border-b border-gray-100">
+                      <p className="font-bold text-gray-900 truncate">{u.firstName} {u.lastName}</p>
+                      {u.createdAt && <p className="text-xs text-gray-400 mt-0.5">Registriert: {u.createdAt.split(" ")[0]}</p>}
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Letzter Login: {(() => {
+                          if (!u.lastAccess) return "Nie"
+                          const [d, t] = u.lastAccess.replace("T", " ").split(" ")
+                          const [y, m, day] = (d || "").split("-")
+                          if (!y || !m || !day) return u.lastAccess
+                          return `${day}.${m}.${y}${t ? " " + t.slice(0, 5) : ""}`
+                        })()}
+                      </p>
+                    </div>
+                    <div className="px-5 py-4 space-y-3">
+                      {/* Email */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Mail className="w-4 h-4 text-gray-400 shrink-0" />
+                          <span className="text-sm text-gray-700 truncate">{u.email || "—"}</span>
+                        </div>
+                        {u.email && (
+                          <button type="button" onClick={() => copyToClipboard(u.email, "E-Mail")} title="E-Mail kopieren" className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors shrink-0">
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      {/* Phone */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+                          <span className="text-sm text-gray-700 truncate">{u.phone || "—"}</span>
+                        </div>
+                        {u.phone && (
+                          <button type="button" onClick={() => copyToClipboard(u.phone, "Telefon")} title="Telefon kopieren" className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors shrink-0">
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      {/* Address */}
+                      <div className="flex items-start gap-2">
+                        <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-600">
+                          {[u.address, [u.postalCode, u.city].filter(Boolean).join(" "), u.canton].filter(Boolean).join(", ") || "—"}
+                        </span>
+                      </div>
+
+                      {/* Orders toggle */}
+                      <button
+                        type="button"
+                        onClick={() => toggleUserOrders(u)}
+                        className="w-full flex items-center justify-center gap-2 mt-1 px-3 py-2 rounded-xl text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        {expandedUserId === u.id ? "Bestellungen verbergen" : "Bestellungen anzeigen"}
+                      </button>
+
+                      {expandedUserId === u.id && (
+                        <div className="pt-1">
+                          {userOrdersLoadingId === u.id ? (
+                            <p className="text-xs text-gray-400 text-center py-3">Bestellungen werden geladen...</p>
+                          ) : (userOrders[u.id]?.length ?? 0) === 0 ? (
+                            <p className="text-xs text-gray-400 text-center py-3">Keine Bestellungen für diesen Kunden.</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {userOrders[u.id].map((o) => (
+                                <div key={o.id} className="border border-gray-100 rounded-xl px-3 py-2 bg-gray-50/60">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-mono font-bold text-sm text-gray-800">#{o.order_number}</span>
+                                    <span className="font-bold text-sm text-[#2C5F2E]">{Number(o.total_amount).toFixed(2)} CHF</span>
+                                  </div>
+                                  <div className="flex items-center justify-between gap-2 mt-1">
+                                    <span className="text-xs text-gray-400">{(o.created_at || "").split(" ")[0]} · {o.items_count} Art.</span>
+                                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                      o.status === "completed" ? "bg-emerald-100 text-emerald-700"
+                                      : o.status === "cancelled" ? "bg-red-100 text-red-700"
+                                      : o.status === "processing" ? "bg-blue-100 text-blue-700"
+                                      : "bg-amber-100 text-amber-700"
+                                    }`}>{o.status}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Inhalte (Site Content) Tab ── */}
+          <TabsContent value="inhalte">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Inhalte bearbeiten</h2>
+                  <p className="text-sm text-gray-400 mt-0.5">Hero-Bereich & Footer-Texte der Startseite</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {siteSavedMsg && <span className="text-sm font-semibold text-emerald-600">{siteSavedMsg}</span>}
+                <Button onClick={saveSiteSettings} disabled={siteSaving || siteLoading} className="bg-gradient-to-r from-[#2C5F2E] to-[#3a7a3d] hover:from-[#1A4520] hover:to-[#2C5F2E] text-white rounded-xl px-6 shadow-sm">
+                  {siteSaving ? "Speichert..." : "Speichern"}
+                </Button>
+              </div>
+            </div>
+
+            {siteLoading ? (
+              <div className="text-center py-16 text-gray-400">Inhalte werden geladen...</div>
+            ) : (
+              <div className="space-y-8 max-w-3xl">
+
+                {/* HERO */}
+                <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                  <h3 className="font-black text-gray-900 mb-4 flex items-center gap-2"><Images className="w-5 h-5 text-[#2C5F2E]" /> Hero-Bereich</h3>
+
+                  {/* Imágenes */}
+                  <Label className="text-xs text-gray-400 font-medium">Hintergrundbilder (3)</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-1 mb-5">
+                    {[1, 2, 3].map((slot) => (
+                      <div key={slot} className="space-y-2">
+                        <div className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                          {siteImagePreviews[slot] && (
+                            <img src={siteImagePreviews[slot]} alt={`Hero ${slot}`} className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                        <Input type="file" accept="image/*" onChange={(e) => handleSiteImageChange(slot, e.target.files?.[0] || null)} className="bg-white text-xs" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Badges */}
+                  <Label className="text-xs text-gray-400 font-medium">Trust-Bar Badges (4)</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1 mb-5">
+                    {[1, 2, 3, 4].map((i) => (
+                      <Input
+                        key={i}
+                        value={siteForm[`hero_badge_${i}`] ?? ""}
+                        onChange={(e) => setSiteForm(p => ({ ...p, [`hero_badge_${i}`]: e.target.value }))}
+                        placeholder={`Badge ${i}`}
+                        className="bg-gray-50/80 border-gray-200 rounded-xl focus:bg-white"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Título */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                    <div>
+                      <Label className="text-xs text-gray-400 font-medium">Titel – Zeile 1</Label>
+                      <Input value={siteForm["hero_title_1"] ?? ""} onChange={(e) => setSiteForm(p => ({ ...p, hero_title_1: e.target.value }))} className="bg-gray-50/80 border-gray-200 rounded-xl mt-1 focus:bg-white" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-400 font-medium">Titel – Zeile 2 (grün)</Label>
+                      <Input value={siteForm["hero_title_2"] ?? ""} onChange={(e) => setSiteForm(p => ({ ...p, hero_title_2: e.target.value }))} className="bg-gray-50/80 border-gray-200 rounded-xl mt-1 focus:bg-white" />
+                    </div>
+                  </div>
+
+                  {/* Subtítulo */}
+                  <div className="mb-5">
+                    <Label className="text-xs text-gray-400 font-medium">Untertitel</Label>
+                    <Textarea value={siteForm["hero_subtitle"] ?? ""} onChange={(e) => setSiteForm(p => ({ ...p, hero_subtitle: e.target.value }))} rows={2} className="bg-gray-50/80 border-gray-200 rounded-xl mt-1 focus:bg-white" />
+                  </div>
+
+                  {/* Stats */}
+                  <Label className="text-xs text-gray-400 font-medium">Statistik-Boxen (3)</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-1">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="border border-gray-100 rounded-xl p-3 space-y-2 bg-gray-50/40">
+                        <Input value={siteForm[`hero_stat${i}_val`] ?? ""} onChange={(e) => setSiteForm(p => ({ ...p, [`hero_stat${i}_val`]: e.target.value }))} placeholder="Wert (z.B. 500+)" className="bg-white border-gray-200 rounded-lg text-sm" />
+                        <Input value={siteForm[`hero_stat${i}_label`] ?? ""} onChange={(e) => setSiteForm(p => ({ ...p, [`hero_stat${i}_label`]: e.target.value }))} placeholder="Label" className="bg-white border-gray-200 rounded-lg text-sm" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* FOOTER MODALS */}
+                <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                  <h3 className="font-black text-gray-900 mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-[#2C5F2E]" /> Footer-Texte (Modale)</h3>
+                  <div className="space-y-5">
+                    {FOOTER_MODAL_KEYS.map((k) => (
+                      <div key={k} className="border border-gray-100 rounded-xl p-4 bg-gray-50/40">
+                        <div className="mb-2">
+                          <Label className="text-xs text-gray-400 font-medium">Titel</Label>
+                          <Input value={siteForm[`footer_${k}_title`] ?? ""} onChange={(e) => setSiteForm(p => ({ ...p, [`footer_${k}_title`]: e.target.value }))} className="bg-white border-gray-200 rounded-lg mt-1 font-semibold" />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-400 font-medium">Inhalt</Label>
+                          <Textarea value={siteForm[`footer_${k}_content`] ?? ""} onChange={(e) => setSiteForm(p => ({ ...p, [`footer_${k}_content`]: e.target.value }))} rows={8} className="bg-white border-gray-200 rounded-lg mt-1 text-sm font-mono" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             )}
           </TabsContent>
@@ -3690,11 +4166,11 @@ export function Admin({ onClose }: AdminProps) {
             </DialogHeader>
             <div className="space-y-3 text-sm text-gray-700">
               <p>
-                Die Datenbank unterstützt maximal <strong>600 Produkte</strong>.
+                Die Datenbank unterstützt maximal <strong>1000 Produkte</strong>.
                 Aktuell sind <strong>{products.length}</strong> Produkte gespeichert.
               </p>
               <p>
-                Um das Limit auf <strong>1000 Produkte</strong> zu erhöhen,
+                Um das Limit auf <strong>3000 Produkte</strong> zu erhöhen,
                 kontaktieren Sie bitte <strong>lweb</strong> für ein Angebot.
               </p>
               <p className="text-gray-500">
@@ -3714,10 +4190,10 @@ export function Admin({ onClose }: AdminProps) {
         <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
           <DialogContent className="left-0 top-0 translate-x-0 translate-y-0 w-full max-w-full h-full max-h-full rounded-none sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-2xl sm:h-auto sm:max-h-[80vh] sm:rounded-lg overflow-y-auto bg-white">
             <DialogHeader>
-              <DialogTitle>{currentEditingProduct ? "Produkt bearbeiten" : "Produkt hinzufügen"}</DialogTitle>
+              <DialogTitle>{isDuplicating ? "Produkt duplizieren" : currentEditingProduct ? "Produkt bearbeiten" : "Produkt hinzufügen"}</DialogTitle>
             </DialogHeader>
 
-            <form onSubmit={handleProductSubmit} className="space-y-4 bg-white">
+            <form key={`${currentEditingProduct?.id ?? "new"}-${isDuplicating ? "dup" : "edit"}`} onSubmit={handleProductSubmit} className="space-y-4 bg-white">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name">Produktname *</Label>
@@ -3729,14 +4205,15 @@ export function Admin({ onClose }: AdminProps) {
                     className="bg-white"
                   />
                 </div>
-                {currentEditingProduct?.article_number && (
-                  <div>
-                    <Label className="text-sm font-medium">Referenznummer</Label>
-                    <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-mono text-gray-600">
-                      {currentEditingProduct.article_number}
-                    </p>
-                  </div>
-                )}
+                <div>
+                  <Label htmlFor="article_number">Referenznummer</Label>
+                  <Input
+                    id="article_number"
+                    name="article_number"
+                    defaultValue={isDuplicating ? "" : currentEditingProduct?.article_number || ""}
+                    className="bg-white font-mono"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3903,11 +4380,16 @@ export function Admin({ onClose }: AdminProps) {
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
+                {currentEditingProduct && !isDuplicating && (
+                  <Button type="button" variant="outline" onClick={duplicateCurrentProduct} className="mr-auto bg-white text-[#2C5F2E] border-[#2C5F2E] hover:bg-[#2C5F2E]/10">
+                    Duplizieren
+                  </Button>
+                )}
                 <Button type="button" variant="outline" onClick={() => setIsProductModalOpen(false)} className="bg-white text-gray-700 hover:bg-gray-50">
                   Abbrechen
                 </Button>
                 <Button type="submit" className="bg-[#2C5F2E] hover:bg-[#1A4520] text-white rounded-full px-6">
-                  {currentEditingProduct ? "Aktualisieren" : "Erstellen"}
+                  {currentEditingProduct && !isDuplicating ? "Aktualisieren" : "Erstellen"}
                 </Button>
               </div>
             </form>

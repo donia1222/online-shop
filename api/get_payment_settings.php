@@ -23,6 +23,7 @@ try {
         enable_stripe TINYINT(1) NOT NULL DEFAULT 0,
         enable_twint TINYINT(1) NOT NULL DEFAULT 0,
         enable_invoice TINYINT(1) NOT NULL DEFAULT 1,
+        enable_pickup TINYINT(1) NOT NULL DEFAULT 0,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -30,7 +31,7 @@ try {
     // Safe column migrations
     $cols = ['paypal_email','stripe_secret_key','stripe_publishable_key','stripe_webhook_secret',
              'stripe_pmc_id','twint_phone','bank_iban','bank_holder','bank_name',
-             'enable_paypal','enable_stripe','enable_twint','enable_invoice'];
+             'enable_paypal','enable_stripe','enable_twint','enable_invoice','enable_pickup'];
     foreach ($cols as $col) {
         try { $pdo->exec("ALTER TABLE payment_settings ADD COLUMN $col VARCHAR(255) NOT NULL DEFAULT ''"); } catch (Exception $e) {}
     }
@@ -57,6 +58,7 @@ try {
             'enable_stripe'          => (bool)($row['enable_stripe'] ?? 0),
             'enable_twint'           => (bool)($row['enable_twint'] ?? 0),
             'enable_invoice'         => (bool)($row['enable_invoice'] ?? 1),
+            'enable_pickup'          => (bool)($row['enable_pickup'] ?? 0),
         ]
     ]);
 

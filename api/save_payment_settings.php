@@ -13,10 +13,10 @@ try {
     $stmt = $pdo->prepare("INSERT INTO payment_settings
         (id, paypal_email, stripe_publishable_key, stripe_secret_key, stripe_pmc_id, twint_phone,
          bank_iban, bank_holder, bank_name,
-         enable_paypal, enable_stripe, enable_twint, enable_invoice)
+         enable_paypal, enable_stripe, enable_twint, enable_invoice, enable_pickup)
         VALUES (1, :paypal_email, :stripe_publishable_key, :stripe_secret_key, :stripe_pmc_id, :twint_phone,
                 :bank_iban, :bank_holder, :bank_name,
-                :enable_paypal, :enable_stripe, :enable_twint, :enable_invoice)
+                :enable_paypal, :enable_stripe, :enable_twint, :enable_invoice, :enable_pickup)
         ON DUPLICATE KEY UPDATE
             paypal_email           = VALUES(paypal_email),
             stripe_publishable_key = VALUES(stripe_publishable_key),
@@ -29,7 +29,8 @@ try {
             enable_paypal          = VALUES(enable_paypal),
             enable_stripe          = VALUES(enable_stripe),
             enable_twint           = VALUES(enable_twint),
-            enable_invoice         = VALUES(enable_invoice)");
+            enable_invoice         = VALUES(enable_invoice),
+            enable_pickup          = VALUES(enable_pickup)");
 
     $stmt->execute([
         ':paypal_email'           => trim($body['paypal_email'] ?? ''),
@@ -44,6 +45,7 @@ try {
         ':enable_stripe'          => (int)(bool)($body['enable_stripe']  ?? false),
         ':enable_twint'           => (int)(bool)($body['enable_twint']   ?? false),
         ':enable_invoice'         => (int)(bool)($body['enable_invoice'] ?? true),
+        ':enable_pickup'          => (int)(bool)($body['enable_pickup']  ?? false),
     ]);
 
     echo json_encode(['success' => true]);

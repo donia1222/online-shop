@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { getCachedProducts } from "@/lib/products-cache"
 import { getCachedCategories } from "@/lib/categories-cache"
+import { HERO_DEFAULTS, HERO_IMAGE_DEFAULTS } from "@/lib/site-content-defaults"
 import { Flashlight, Sword, Target, Wrench, Axe, Shield, Flame, Package } from "lucide-react"
 
 interface Product {
@@ -91,18 +92,44 @@ function CatImageCard({
   )
 }
 
-const HERO_IMAGES = [
-  "/images/shop/header.jpeg",
-  "/images/shop/46503497_763729157311247_9165108232799125504_ncopia.jpg",
-  "/images/shop/132718579_1370015803349243_4576092651755794772_n.jpg",
-]
-
 export function HeroSection() {
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [count, setCount] = useState(0)
   const [slideIndex, setSlideIndex] = useState(0)
+  const [siteContent, setSiteContent] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    fetch(`/api/site-settings`)
+      .then(r => r.json())
+      .then(data => { if (data.success && data.settings) setSiteContent(data.settings) })
+      .catch(() => {})
+  }, [])
+
+  // Imágenes y textos del hero: usar overrides del admin, con fallback a los por defecto
+  const HERO_IMAGES = useMemo(
+    () => [1, 2, 3].map((i) => siteContent[`hero_image_${i}_url`] || HERO_IMAGE_DEFAULTS[i - 1]),
+    [siteContent],
+  )
+  const heroBadges = useMemo(
+    () => HERO_DEFAULTS.badges.map((d, i) => {
+      const k = `hero_badge_${i + 1}`
+      // Si el badge fue guardado (aunque sea vacío) se respeta; si nunca se tocó, usa el por defecto
+      return k in siteContent ? siteContent[k] : d
+    }),
+    [siteContent],
+  )
+  const heroTitle1 = siteContent["hero_title_1"] || HERO_DEFAULTS.titleLine1
+  const heroTitle2 = siteContent["hero_title_2"] || HERO_DEFAULTS.titleLine2
+  const heroSubtitle = siteContent["hero_subtitle"] || HERO_DEFAULTS.subtitle
+  const heroStats = useMemo(
+    () => HERO_DEFAULTS.stats.map((d, i) => ({
+      val: siteContent[`hero_stat${i + 1}_val`] || d.val,
+      label: siteContent[`hero_stat${i + 1}_label`] || d.label,
+    })),
+    [siteContent],
+  )
 
   useEffect(() => {
     // Wait for the element to be visible (fade delay 360ms + partial animation), then count
@@ -161,13 +188,9 @@ export function HeroSection() {
       <div className="hidden md:block border-b border-[#E0E0E0] bg-white">
         <div className="container mx-auto px-4 py-2.5">
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-1 text-sm text-[#333333]">
-            {[
-              "100% Schweizer Shop",
-              "Schnelle Lieferung",
-              "14 Tage Rückgaberecht",
-            ].map((item, i) => (
+            {heroBadges.filter(Boolean).map((item, i) => (
               <span
-                key={item}
+                key={item + i}
                 className="flex items-center gap-1.5 section-fade"
                 style={{ animationDelay: `${i * 120}ms` }}
               >
@@ -175,13 +198,6 @@ export function HeroSection() {
                 <span>{item}</span>
               </span>
             ))}
-            <span
-              className="flex items-center gap-1.5 section-fade"
-              style={{ animationDelay: "360ms" }}
-            >
-              <span className="text-[#2C5F2E] font-bold">✓</span>
-              <span><span className="font-bold">{count}+</span> Artikel im Sortiment</span>
-            </span>
           </div>
         </div>
       </div>
@@ -240,13 +256,12 @@ export function HeroSection() {
                 letterSpacing: "-0.02em",
               }}
             >
-              Top-Ausrüstung<br />
-              <span className="text-[#6DBF6A]">zu Bestpreisen</span>
+              {heroTitle1}<br />
+              <span className="text-[#6DBF6A]">{heroTitle2}</span>
             </h1>
 
-            <p className="text-white/75 text-lg mb-8 leading-relaxed max-w-lg">
-              Jagd, Angeln & Outdoor — alles was du brauchst,<br />
-              jetzt zum Frühjahrs-Sale-Preis.
+            <p className="text-white/75 text-lg mb-8 leading-relaxed max-w-lg whitespace-pre-line">
+              {heroSubtitle}
             </p>
 
             <div className="flex flex-wrap gap-3">
@@ -265,11 +280,7 @@ export function HeroSection() {
             </div>
 
             <div className="flex items-center gap-8 mt-10 pt-8 border-t border-white/12">
-              {[
-                { val: "500+", label: "Artikel" },
-                { val: "1–3 Tage", label: "Lieferung" },
-                { val: "100%", label: "Schweizer Shop" },
-              ].map(({ val, label }) => (
+              {heroStats.map(({ val, label }) => (
                 <div key={label}>
                   <div className="text-white font-black text-xl leading-none">{val}</div>
                   <div className="text-white/45 text-xs mt-1 tracking-wide">{label}</div>

@@ -59,11 +59,20 @@ try {
     $billingAddress = $data['billingAddress'] ?? null;
     $cart = $data['cart'];
     $totalAmount = $data['totalAmount'];
-    $shippingCost = $data['shippingCost'] ?? 0;
     $paypalPayerID = $data['paypalPayerID'] ?? null;
-    
+
+    // Determinar método de pago (necesario para validación de dirección)
+    $paymentMethod = $data['paymentMethod'] ?? 'paypal';
+    $isPickup = ($paymentMethod === 'pickup');
+
+    // En Abholung im Geschäft no hay envío: forzar coste 0
+    $shippingCost = $isPickup ? 0 : ($data['shippingCost'] ?? 0);
+
     // Validar información del cliente
-    $required_customer_fields = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'postalCode', 'canton'];
+    // En Abholung im Geschäft la dirección de envío no es obligatoria
+    $required_customer_fields = $isPickup
+        ? ['firstName', 'lastName', 'email', 'phone']
+        : ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'postalCode', 'canton'];
     foreach ($required_customer_fields as $field) {
         if (empty($customerInfo[$field])) {
             throw new Exception("Missing required customer field: $field");
@@ -175,10 +184,10 @@ try {
         error_log("Stock updated for {$update['name']} (ID: {$update['id']}): {$update['currentStock']} -> {$update['newStock']}");
     }
     
-    // Determinar método de pago y estado
-    $paymentMethod = $data['paymentMethod'] ?? 'paypal';
-    $paymentStatus = $data['paymentStatus'] ?? ($paymentMethod === 'invoice' ? 'pending' : 'completed');
-    $orderStatus = $paymentMethod === 'invoice' ? 'pending' : 'completed';
+    // Determinar estado del pedido según el método de pago
+    // (pickup e invoice quedan pendientes: se pagan más tarde / en la tienda)
+    $paymentStatus = $data['paymentStatus'] ?? (($paymentMethod === 'invoice' || $isPickup) ? 'pending' : 'completed');
+    $orderStatus = ($paymentMethod === 'invoice' || $isPickup) ? 'pending' : 'completed';
     
     // Log para debugging
     error_log("Payment method received: " . $paymentMethod);
@@ -192,6 +201,9 @@ try {
     }
     if ($paymentMethod === 'invoice') {
         $notes .= ($notes ? "\n" : "") . "Kauf auf Rechnung - Rechnung wird per Post gesendet";
+    }
+    if ($isPickup) {
+        $notes .= ($notes ? "\n" : "") . "Abholung im Geschäft - Bestellung reserviert, Zahlung bei Abholung";
     }
     
     // Agregar información de stock actualizado a las notas
@@ -217,10 +229,10 @@ try {
         $customerInfo['lastName'],
         $customerInfo['email'],
         $customerInfo['phone'],
-        $customerInfo['address'],
-        $customerInfo['city'],
-        $customerInfo['postalCode'],
-        $customerInfo['canton'],
+        $customerInfo['address'] ?? '',
+        $customerInfo['city'] ?? '',
+        $customerInfo['postalCode'] ?? '',
+        $customerInfo['canton'] ?? '',
         $notes,
         $totalAmount,
         $shippingCost,
@@ -278,14 +290,17 @@ try {
     try {
         $giftCardItems = array_filter($cart, fn($i) => ($i['item_type'] ?? '') === 'gutschein');
         if (!empty($giftCardItems)) {
-            $isPaidNow = ($paymentMethod !== 'invoice');
+            // Métodos cuyo pago no es inmediato: el código se activa cuando el admin marca pagado
+            $pendingMethods = ['invoice', 'twint', 'pickup'];
+            $isPaidNow = !in_array($paymentMethod, $pendingMethods, true);
             processGiftCardOrder(
                 $pdo,
                 (int)$orderId,
                 array_values($giftCardItems),
                 $customerInfo['firstName'] . ' ' . $customerInfo['lastName'],
                 $customerInfo['email'],
-                $isPaidNow
+                $isPaidNow,
+                $paymentMethod
             );
         }
     } catch (Exception $gcError) {

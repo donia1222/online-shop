@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AdminLoginButton } from "@/components/admin-auth"
+import { InstallPWAButton } from "@/components/install-pwa-button"
 import { Facebook, Twitter, Instagram, Newspaper, ArrowRight, Download, ShieldCheck } from "lucide-react"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
@@ -11,6 +12,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 export function Footer() {
   const router = useRouter()
   const [openModal, setOpenModal] = useState<string | null>(null)
+  const [siteContent, setSiteContent] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    fetch(`/api/site-settings`)
+      .then(r => r.json())
+      .then(data => { if (data.success && data.settings) setSiteContent(data.settings) })
+      .catch(() => {})
+  }, [])
   const [paySettings, setPaySettings] = useState<{
     enable_paypal: boolean
     enable_stripe: boolean
@@ -69,7 +78,7 @@ export function Footer() {
       })
   }
 
-  const legalContent = {
+  const legalDefaults = {
     agb: {
       title: "Allgemeine Geschäftsbedingungen (AGB)",
       content: `US – Fishing & Huntingshop | Bahnhofstrasse 2, 9475 Sevelen | info@usfh.ch
@@ -292,6 +301,17 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
     },
   }
 
+  const legalContent = useMemo(() => {
+    const out = JSON.parse(JSON.stringify(legalDefaults)) as typeof legalDefaults
+    for (const k of Object.keys(out) as (keyof typeof out)[]) {
+      const t = siteContent[`footer_${k}_title`]
+      const c = siteContent[`footer_${k}_content`]
+      if (t) out[k].title = t
+      if (c) out[k].content = c
+    }
+    return out
+  }, [siteContent])
+
   return (
     <footer id="footer" className="bg-white mt-0">
 
@@ -447,7 +467,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                 <li>
                   <Dialog open={openModal === "rueckgabe"} onOpenChange={(open) => setOpenModal(open ? "rueckgabe" : null)}>
                     <DialogTrigger asChild>
-                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">Versand und Rückgabe</button>
+                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">{legalContent.rueckgabe.title}</button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
@@ -460,7 +480,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                 <li>
                   <Dialog open={openModal === "zahlungsarten"} onOpenChange={(open) => setOpenModal(open ? "zahlungsarten" : null)}>
                     <DialogTrigger asChild>
-                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">Zahlungsarten</button>
+                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">{legalContent.zahlungsarten.title}</button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
@@ -473,7 +493,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                 <li>
                   <Dialog open={openModal === "cookies"} onOpenChange={(open) => setOpenModal(open ? "cookies" : null)}>
                     <DialogTrigger asChild>
-                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">Cookie Manager</button>
+                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">{legalContent.cookies.title}</button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
@@ -502,7 +522,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                 <li>
                   <Dialog open={openModal === "ueberuns"} onOpenChange={(open) => setOpenModal(open ? "ueberuns" : null)}>
                     <DialogTrigger asChild>
-                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">Über uns</button>
+                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">{legalContent.ueberuns.title}</button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
@@ -515,7 +535,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                 <li>
                   <Dialog open={openModal === "impressum"} onOpenChange={(open) => setOpenModal(open ? "impressum" : null)}>
                     <DialogTrigger asChild>
-                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">Impressum</button>
+                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">{legalContent.impressum.title}</button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
@@ -528,7 +548,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                 <li>
                   <Dialog open={openModal === "datenschutz"} onOpenChange={(open) => setOpenModal(open ? "datenschutz" : null)}>
                     <DialogTrigger asChild>
-                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">Datenschutzerklärung</button>
+                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">{legalContent.datenschutz.title}</button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
@@ -541,7 +561,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
                 <li>
                   <Dialog open={openModal === "agb"} onOpenChange={(open) => setOpenModal(open ? "agb" : null)}>
                     <DialogTrigger asChild>
-                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">AGB</button>
+                      <button className="text-sm font-medium text-[#444] hover:text-[#2C5F2E] transition-colors text-left">{legalContent.agb.title}</button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
@@ -569,6 +589,14 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
             </div>
 
           </div>
+        </div>
+      </div>
+
+      {/* ── Install PWA CTA (solo móvil/tablet, oculto en desktop) ── */}
+      <div className="md:hidden bg-white border-t border-[#E0E0E0] py-5">
+        <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
+          <span className="text-sm text-[#555]">Installieren Sie unsere App für schnelleren Zugriff</span>
+          <InstallPWAButton />
         </div>
       </div>
 

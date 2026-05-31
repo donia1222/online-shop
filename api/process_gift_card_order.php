@@ -20,7 +20,8 @@ function processGiftCardOrder(
     array  $giftCardItems,
     string $buyerName,
     string $buyerEmail,
-    bool   $isPaidNow
+    bool   $isPaidNow,
+    string $paymentMethod = ''
 ): void {
     $date = date('d.m.Y');
 
@@ -59,7 +60,7 @@ function processGiftCardOrder(
             sendGiftCardSellerNotification($orderNumber, $amount, $buyerName, $buyerEmail, $date, true);
         } else {
             if (!empty($buyerEmail)) {
-                sendGiftCardPendingEmail($buyerEmail, $buyerName, $amount, $orderNumber);
+                sendGiftCardPendingEmail($buyerEmail, $buyerName, $amount, $orderNumber, $paymentMethod);
             }
             sendGiftCardSellerNotification($orderNumber, $amount, $buyerName, $buyerEmail, $date, false);
         }
@@ -69,8 +70,17 @@ function processGiftCardOrder(
 /**
  * Email al comprador cuando el pago es por factura (sin código todavía)
  */
-function sendGiftCardPendingEmail(string $buyerEmail, string $buyerName, float $amount, string $orderNumber = ''): bool {
+function sendGiftCardPendingEmail(string $buyerEmail, string $buyerName, float $amount, string $orderNumber = '', string $paymentMethod = ''): bool {
     $subject = "Bestellbestaetigung – Geschenkgutschein CHF " . number_format($amount, 2, '.', "'");
+
+    // Nota explicativa según el método de pago
+    if ($paymentMethod === 'pickup') {
+        $hinweisText = 'Sie koennen den Betrag bei der Abholung im Geschaeft bezahlen. Sobald die Zahlung erfolgt ist, wird Ihr Gutschein-Code aktiviert.';
+    } elseif ($paymentMethod === 'twint') {
+        $hinweisText = 'Bitte schliessen Sie die Zahlung via TWINT ab. Sobald Ihre Zahlung bei uns eingegangen ist, wird Ihr Gutschein-Code aktiviert und Ihnen zugesendet.';
+    } else {
+        $hinweisText = 'Nach Eingang Ihrer Zahlung erhalten Sie eine Bestaetigung und der Code wird aktiviert.';
+    }
 
     $htmlBody = '
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#141414;color:#fff;border-radius:8px;overflow:hidden;">
@@ -93,7 +103,7 @@ function sendGiftCardPendingEmail(string $buyerEmail, string $buyerName, float $
 
         <div style="background:#1a1200;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin:20px 0;">
           <p style="color:#fbbf24;font-size:13px;margin:0;">
-            <strong>Hinweis:</strong> Nach Eingang Ihrer Zahlung erhalten Sie eine Bestaetigung und der Code wird aktiviert.
+            <strong>Hinweis:</strong> ' . $hinweisText . '
           </p>
         </div>
 

@@ -98,7 +98,8 @@ try {
         $supplier = $_POST['supplier'] ?? $existing_product['supplier'] ?? '';
         $category = $_POST['category'] ?? $existing_product['category'] ?? 'hot-sauce';
         $weight_kg = $_POST['weight_kg'] ?? $existing_product['weight_kg'] ?? 0.500;
-        
+        $article_number = isset($_POST['article_number']) ? trim($_POST['article_number']) : ($existing_product['article_number'] ?? '');
+
         
         // Validar datos requeridos
         if (empty(trim($name))) {
@@ -188,6 +189,7 @@ try {
                 supplier = :supplier,
                 category = :category,
                 weight_kg = :weight_kg,
+                article_number = :article_number,
                 updated_at = CURRENT_TIMESTAMP
                 WHERE id = :id";
         
@@ -209,6 +211,7 @@ try {
             ':supplier' => trim($supplier),
             ':category' => $category,
             ':weight_kg' => floatval($weight_kg),
+            ':article_number' => $article_number !== '' ? $article_number : null,
         ]);
         
         if (!$result) {

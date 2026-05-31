@@ -23,6 +23,7 @@ import {
   ReceiptText,
   Home,
   Landmark,
+  Store,
   LogOut,
   Trash2,
 } from "lucide-react"
@@ -122,7 +123,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   const [orderDetails, setOrderDetails] = useState<any>(null)
   const [formErrors, setFormErrors] = useState<Partial<CustomerInfo>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "invoice" | "stripe" | "twint" | "twint_stripe">("invoice")
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "invoice" | "stripe" | "twint" | "twint_stripe" | "pickup">("invoice")
 
   // Billing address states
   const [useDifferentBillingAddress, setUseDifferentBillingAddress] = useState(false)
@@ -193,7 +194,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
 
   // Payment settings
   const [paySettings, setPaySettings] = useState({
-    enable_paypal: false, enable_stripe: false, enable_twint: false, enable_invoice: true,
+    enable_paypal: false, enable_stripe: false, enable_twint: false, enable_invoice: true, enable_pickup: false,
     paypal_email: "", stripe_publishable_key: "", stripe_secret_key: "", stripe_pmc_id: "", twint_phone: "",
     bank_iban: "", bank_holder: "", bank_name: "",
   })
@@ -226,6 +227,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
           else if (s.enable_paypal)  setPaymentMethod("paypal")
           else if (s.enable_stripe)  setPaymentMethod("stripe")
           else if (s.enable_twint)   setPaymentMethod("twint" as any)
+          else if (s.enable_pickup)  setPaymentMethod("pickup")
         }
       })
       .catch(() => {})
@@ -284,6 +286,8 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   // Recalculate shipping when cart or country changes
   useEffect(() => {
     if (cart.length === 0) { setShippingCost(0); setShippingInfo({ zone: "", range: "" }); return }
+    // Abholung im Geschäft: kein Versand
+    if (paymentMethod === "pickup") { setShippingCost(0); setShippingInfo({ zone: "", range: "" }); return }
     // Gift cards (item_type === "gutschein") have no shipping cost
     const onlyGutscheine = cart.every(item => (item as any).item_type === "gutschein")
     if (onlyGutscheine) { setShippingCost(0); setShippingInfo({ zone: "", range: "" }); return }
@@ -301,7 +305,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
         }
       })
       .catch(() => {})
-  }, [cart, customerInfo.country])
+  }, [cart, customerInfo.country, paymentMethod])
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -440,10 +444,10 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
     return cart.reduce((total, item) => total + item.price * item.quantity, 0)
   }
 
-  const getShippingCost = () => shippingCost
+  const getShippingCost = () => paymentMethod === "pickup" ? 0 : shippingCost
 
   const isOnlyGutscheine = () => cart.length > 0 && cart.every(item => (item as any).item_type === "gutschein")
-const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((getTotalPrice() + shippingCost) / 0.5) * 0.5
+const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ? getTotalPrice() : Math.ceil((getTotalPrice() + shippingCost) / 0.5) * 0.5
 
   const createUserAccount = async () => {
     try {
@@ -693,6 +697,39 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
     }
   }
 
+  const handlePickupOrder = async () => {
+    if (!validateForm()) return
+    if (showCreateAccount && !validateAccountCreation()) return
+
+    setIsSubmitting(true)
+    try {
+      const savedOrder = await saveOrderToDatabase({
+        paymentMethod: "pickup",
+        paymentStatus: "pending",
+        shippingCost: 0,
+      })
+
+      setOrderStatus("completed")
+      setOrderDetails({
+        id: savedOrder.orderNumber,
+        status: "PICKUP_RESERVED",
+        customerInfo: customerInfo,
+        cart: cart,
+        total: getFinalTotal(),
+        createdAt: savedOrder.createdAt,
+      })
+
+      if (onClearCart) onClearCart()
+      localStorage.removeItem("cantina-cart")
+    } catch (error: any) {
+      console.error("Error saving pickup order:", error)
+      alert(`Fehler beim Speichern der Bestellung: ${error.message}`)
+      setOrderStatus("error")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   // Guarda el pedido en DB antes de redirigir a Stripe TWINT
   const handleStripeTwintSaveOrder = async (): Promise<string> => {
     if (!validateForm()) throw new Error("Bitte füllen Sie alle Pflichtfelder aus")
@@ -781,7 +818,7 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
       totalAmount: getFinalTotal(),
       shippingCost: getShippingCost(),
       paymentMethod: paymentMethod,
-      paymentStatus: paymentMethod === "invoice" ? "pending" : "completed",
+      paymentStatus: (paymentMethod === "invoice" || paymentMethod === "pickup") ? "pending" : "completed",
       userId: currentUser?.id || null,
       ...overrides
     }
@@ -850,10 +887,13 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
     if (!customerInfo.lastName.trim()) errors.lastName = "Nachname ist erforderlich"
     if (!customerInfo.email.trim()) errors.email = "E-Mail ist erforderlich"
     if (!customerInfo.phone.trim()) errors.phone = "Telefon ist erforderlich"
-    if (!customerInfo.address.trim()) errors.address = "Adresse ist erforderlich"
-    if (!customerInfo.city.trim()) errors.city = "Stadt ist erforderlich"
-    if (!customerInfo.postalCode.trim()) errors.postalCode = "PLZ ist erforderlich"
-    if (!customerInfo.canton.trim()) errors.canton = "Kanton ist erforderlich"
+    // Bei Abholung im Geschäft ist keine Lieferadresse erforderlich
+    if (paymentMethod !== "pickup") {
+      if (!customerInfo.address.trim()) errors.address = "Adresse ist erforderlich"
+      if (!customerInfo.city.trim()) errors.city = "Stadt ist erforderlich"
+      if (!customerInfo.postalCode.trim()) errors.postalCode = "PLZ ist erforderlich"
+      if (!customerInfo.canton.trim()) errors.canton = "Kanton ist erforderlich"
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (customerInfo.email && !emailRegex.test(customerInfo.email)) {
@@ -937,7 +977,7 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
   // Memoized validations to prevent infinite re-renders
   const isFormValid = useMemo(() => {
     return validateForm()
-  }, [customerInfo])
+  }, [customerInfo, paymentMethod])
 
   const isBillingValid = useMemo(() => {
     return useDifferentBillingAddress ? validateBillingAddress() : true
@@ -1191,6 +1231,7 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
   if (orderStatus === "completed") {
     const isTwint = orderDetails?.status === "TWINT_PENDING"
     const isInvoice = orderDetails?.status === "INVOICE_SENT"
+    const isPickup = orderDetails?.status === "PICKUP_RESERVED"
 
     return (
       <div className="min-h-screen bg-[#F0F1F3]">
@@ -1219,13 +1260,15 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
               }
             </div>
             <h1 className="text-3xl font-black text-[#1A1A1A] tracking-tight mb-2">
-              {isTwint ? "Bestellung aufgegeben!" : "Bestellung bestätigt!"}
+              {isTwint ? "Bestellung aufgegeben!" : isPickup ? "Bestellung reserviert!" : "Bestellung bestätigt!"}
             </h1>
             <p className="text-[#666] text-base max-w-md mx-auto">
               {isTwint
                 ? "Bitte schließen Sie die Zahlung via TWINT ab, um Ihre Bestellung zu bestätigen."
                 : isInvoice
                 ? "Vielen Dank! Wir senden Ihnen die Rechnung per E-Mail."
+                : isPickup
+                ? "Vielen Dank! Ihre Bestellung ist für Sie reserviert. Sie bezahlen bei der Abholung im Geschäft – wir melden uns, sobald sie bereit ist."
                 : "Vielen Dank! Sie erhalten in Kürze eine Bestätigungs-E-Mail."
               }
             </p>
@@ -2182,15 +2225,17 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
                     <span>{getTotalPrice().toFixed(2)} CHF</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Versand:</span>
+                    <span>{paymentMethod === "pickup" ? "Abholung:" : "Versand:"}</span>
                     <span>
-                      {shippingCost === 0
+                      {paymentMethod === "pickup"
+                        ? <span className="font-semibold">Im Geschäft</span>
+                        : getShippingCost() === 0
                         ? <span className="font-semibold">0.00 CHF</span>
-                        : <span className="font-semibold">{shippingCost.toFixed(2)} CHF</span>
+                        : <span className="font-semibold">{getShippingCost().toFixed(2)} CHF</span>
                       }
                     </span>
                   </div>
-                  {shippingInfo.zone && (
+                  {paymentMethod !== "pickup" && shippingInfo.zone && (
                     <div className="text-xs text-gray-500">
                       {shippingInfo.zone} · {shippingInfo.range}
                     </div>
@@ -2327,6 +2372,23 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
                     </div>
                   )}
 
+                  {/* Abholung im Geschäft */}
+                  {paySettings.enable_pickup && (
+                    <div
+                      onClick={() => setPaymentMethod("pickup")}
+                      className={`flex items-center gap-3 border rounded-xl px-4 py-3 cursor-pointer transition-all ${paymentMethod === "pickup" ? "border-[#2C5F2E] bg-[#F0F9F0]" : "border-gray-200 hover:border-gray-300 bg-white"}`}
+                    >
+                      <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${paymentMethod === "pickup" ? "border-[#2C5F2E] bg-[#2C5F2E]" : "border-gray-300"}`}>
+                        {paymentMethod === "pickup" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-gray-900">Abholung im Geschäft</p>
+                        <p className="text-xs text-gray-500">Ihre Bestellung wird reserviert. Sie bezahlen bei der Abholung im Geschäft – kein Versand.</p>
+                      </div>
+                      <Store className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                    </div>
+                  )}
+
                 </div>
 
                 {/* Context info + action per method */}
@@ -2368,6 +2430,24 @@ const getFinalTotal = () => isOnlyGutscheine() ? getTotalPrice() : Math.ceil((ge
                       className="w-full min-h-14 h-auto py-3 text-base font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {STORE_UNDER_MAINTENANCE ? "Shop wird gerade überarbeitet" : isSubmitting ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Verarbeitung...</> : `Bestellung abschließen · ${getFinalTotal().toFixed(2)} CHF`}
+                    </Button>
+                  </>
+                )}
+
+                {/* Abholung im Geschäft */}
+                {paymentMethod === "pickup" && (
+                  <>
+                    <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                      <p className="text-sm text-amber-700">
+                        Ihre Bestellung wird für Sie reserviert. Die Bezahlung erfolgt bei der Abholung im Geschäft. Wir kontaktieren Sie, sobald die Bestellung zur Abholung bereit ist.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handlePickupOrder}
+                      disabled={isSubmitting || STORE_UNDER_MAINTENANCE}
+                      className="w-full min-h-14 h-auto py-3 text-base font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {STORE_UNDER_MAINTENANCE ? "Shop wird gerade überarbeitet" : isSubmitting ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Verarbeitung...</> : `Reservieren & im Geschäft abholen · ${getFinalTotal().toFixed(2)} CHF`}
                     </Button>
                   </>
                 )}
