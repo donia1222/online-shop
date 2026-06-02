@@ -1217,12 +1217,10 @@ export function Admin({ onClose }: AdminProps) {
       )
     }
 
-    if (productFilters.category) {
-      filtered = filtered.filter(
-        (product) =>
-          product.category === productFilters.category ||
-          (searchTerm !== "" && matchesReference(product, searchTerm)),
-      )
+    // El chip de categoría solo filtra cuando NO se está buscando por texto.
+    // Si hay término de búsqueda, se busca en todas las categorías.
+    if (productFilters.category && searchTerm === "") {
+      filtered = filtered.filter((product) => product.category === productFilters.category)
     }
 
     if (productFilters.stock_status) {
