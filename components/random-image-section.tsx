@@ -71,7 +71,7 @@ export function RandomImageSection({
   )
 
   return (
-    <section className="py-12" style={{ backgroundColor: sectionBg }}>
+    <section className="py-6" style={{ backgroundColor: sectionBg }}>
       <div className="container mx-auto px-4">
 
         {/* Tarjeta con borde */}
