@@ -105,7 +105,7 @@ export function RandomImageSection({
               onClick={goToShop}
               className="w-full py-3 rounded-2xl border-2 border-[#2C5F2E]/25 hover:border-[#2C5F2E] text-sm font-bold text-[#2C5F2E] transition-all"
             >
-              Alle {title} anzeigen →
+              Alle {title.replace(/^Unsere\s+/i, "")} anzeigen →
             </button>
           </div>
 
