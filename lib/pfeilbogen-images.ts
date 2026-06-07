@@ -1,0 +1,23 @@
+// Generado automáticamente desde /public/img/pfeilbogen
+export const PFEILBOGEN_IMAGES: string[] = [
+  "11152_02.jpg",
+  "11152.jpeg",
+  "11153.jpg",
+  "33032.jpg",
+  "A015744.jpg",
+  "a055127.jpg",
+  "a055130.jpg",
+  "a055132.jpg",
+  "a055134.jpg",
+  "a055136.jpg",
+  "a055137.jpg",
+  "A069878.jpg",
+  "BPR-C-PULSE-6.jpg",
+  "CO-029M.png",
+  "CO-034B.png",
+  "CO-034G1.png",
+  "CO-039B.png",
+  "CO-039F.png",
+  "KIC-B-1255.jpg",
+  "RE-019.png",
+]

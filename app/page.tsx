@@ -2,12 +2,13 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
-import { Target, Sword } from "lucide-react"
+import { Target, Sword, MoveUpRight } from "lucide-react"
 import { Header } from "@/components/header"
 import { HeroSection } from "@/components/hero-section"
 import { CategoryPreviewSection } from "@/components/category-preview-section"
 import { RandomImageSection } from "@/components/random-image-section"
 import { ARMBRUST_IMAGES } from "@/lib/armbrust-images"
+import { PFEILBOGEN_IMAGES } from "@/lib/pfeilbogen-images"
 import { MESSER_IMAGES } from "@/lib/messer-images"
 import { ReviewsSection } from "@/components/reviews-section"
 import { BlogBanner } from "@/components/blog-banner"
@@ -274,6 +275,17 @@ function PremiumHotSauceStoreInner() {
           title="Unsere Armbrüste"
           description="Leistungsstarke Armbrüste für Sport und Freizeit — Qualität, der man vertrauen kann."
           catParam="Armbrust"
+        />
+      </FadeSection>
+      <FadeSection>
+        <RandomImageSection
+          folder="pfeilbogen"
+          images={PFEILBOGEN_IMAGES}
+          tag="Pfeilbogen"
+          icon={<MoveUpRight className="w-6 h-6" />}
+          title="Unsere Pfeilbogen"
+          description="Recurve- und Compoundbögen für Sport, Jagd und Freizeit — präzise und zuverlässig."
+          catParam="Pfeilbogen"
         />
       </FadeSection>
       <FadeSection>
