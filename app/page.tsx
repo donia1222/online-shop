@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/header"
 import { HeroSection } from "@/components/hero-section"
 import { CategoryPreviewSection } from "@/components/category-preview-section"
+import { RandomImageSection } from "@/components/random-image-section"
+import { ARMBRUST_IMAGES } from "@/lib/armbrust-images"
+import { MESSER_IMAGES } from "@/lib/messer-images"
 import { ReviewsSection } from "@/components/reviews-section"
 import { BlogBanner } from "@/components/blog-banner"
 import { GalleryBanner } from "@/components/gallery-banner"
@@ -260,6 +263,28 @@ function PremiumHotSauceStoreInner() {
 
       <FadeSection>
         <CategoryPreviewSection />
+      </FadeSection>
+      <FadeSection>
+        <RandomImageSection
+          folder="armbrust"
+          images={ARMBRUST_IMAGES}
+          tag="Armbrust"
+          emoji="🏹"
+          title="Unsere Armbrüste"
+          description="Leistungsstarke Armbrüste für Sport und Freizeit — Qualität, der man vertrauen kann."
+          catParam="Armbrust"
+        />
+      </FadeSection>
+      <FadeSection>
+        <RandomImageSection
+          folder="messer"
+          images={MESSER_IMAGES}
+          tag="Messer"
+          emoji="🔪"
+          title="Unsere Messer"
+          description="Premium Messer für jeden Einsatz — von Outdoor bis Küche, Qualität die überzeugt."
+          catParam="Messer"
+        />
       </FadeSection>
       <FadeSection>
         <ReviewsSection />
