@@ -43,21 +43,6 @@ const CATEGORY_CONFIG = [
     ctaLabel:    "Alle Messer entdecken",
     catParam:    "Messer",
   },
-  {
-    keyword:     "Armbrust",
-    label:       "Unsere Armbrüste",
-    cat:         "Armbrust",
-    image:       "/images/shop/488657394_1257007002863524_6579276074813205025_n.jpg",
-    emoji:       "🏹",
-    headline:    ["Präzision auf", "den Punkt."],
-    accent:      "Gebracht.",
-    description: "Leistungsstarke Armbrüste für Sport und Freizeit — Qualität, der man vertrauen kann.",
-    accentColor: "#5BC8E8",
-    overlayFrom: "#04111f",
-    stats:       [["20+", "Modelle"], ["Top", "Präzision"], ["Gratis", "Beratung"]],
-    ctaLabel:    "Alle Armbrüste entdecken",
-    catParam:    "Armbrust",
-  },
 ]
 
 export function CategoryPreviewSection() {
