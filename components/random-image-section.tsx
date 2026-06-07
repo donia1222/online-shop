@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 
 function pickRandom(arr: string[], n: number): string[] {
@@ -19,8 +19,8 @@ interface RandomImageSectionProps {
   images: string[]
   /** Texto del chip superior */
   tag: string
-  /** Emoji del chip */
-  emoji: string
+  /** Icono del chip (componente lucide) */
+  icon: ReactNode
   /** Título del bloque */
   title: string
   /** Subtítulo / descripción */
@@ -35,7 +35,7 @@ export function RandomImageSection({
   folder,
   images: source,
   tag,
-  emoji,
+  icon,
   title,
   description,
   catParam,
@@ -59,12 +59,12 @@ export function RandomImageSection({
       onClick={goToShop}
       className="cursor-pointer group shrink-0 snap-start w-[45%] sm:w-[31%] lg:w-[calc((100%-3rem)/4)]"
     >
-      <div className="relative bg-[#F8F8F8] rounded-2xl overflow-hidden aspect-square lg:aspect-[4/3] border border-[#E5E5E5] ring-1 ring-transparent group-hover:ring-2 group-hover:ring-[#2C5F2E]/40 group-hover:border-[#2C5F2E]/30 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
+      <div className="relative bg-white rounded-2xl overflow-hidden aspect-square lg:aspect-[4/3] border border-[#E5E5E5] ring-1 ring-transparent group-hover:ring-2 group-hover:ring-[#2C5F2E]/40 group-hover:border-[#2C5F2E]/30 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
         <img
           src={`/img/${folder}/${encodeURIComponent(file)}`}
           alt={title}
           loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-500"
         />
       </div>
     </div>
@@ -81,7 +81,7 @@ export function RandomImageSection({
           <div className="flex items-end justify-between mb-8">
             <div>
               <div className="inline-flex items-center gap-1.5 bg-[#2C5F2E]/8 text-[#2C5F2E] text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
-                <span className="text-2xl">{emoji}</span> {tag}
+                <span className="flex items-center justify-center">{icon}</span> {tag}
               </div>
               <h2 className="text-2xl font-black text-[#1A1A1A] tracking-tight">{title}</h2>
               <p className="text-sm text-[#888] mt-1">{description}</p>

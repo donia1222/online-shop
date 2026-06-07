@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import { Target, Sword } from "lucide-react"
 import { Header } from "@/components/header"
 import { HeroSection } from "@/components/hero-section"
 import { CategoryPreviewSection } from "@/components/category-preview-section"
@@ -269,7 +270,7 @@ function PremiumHotSauceStoreInner() {
           folder="armbrust"
           images={ARMBRUST_IMAGES}
           tag="Armbrust"
-          emoji="🏹"
+          icon={<Target className="w-6 h-6" />}
           title="Unsere Armbrüste"
           description="Leistungsstarke Armbrüste für Sport und Freizeit — Qualität, der man vertrauen kann."
           catParam="Armbrust"
@@ -280,7 +281,7 @@ function PremiumHotSauceStoreInner() {
           folder="messer"
           images={MESSER_IMAGES}
           tag="Messer"
-          emoji="🔪"
+          icon={<Sword className="w-6 h-6" />}
           title="Unsere Messer"
           description="Premium Messer für jeden Einsatz — von Outdoor bis Küche, Qualität die überzeugt."
           catParam="Messer"
