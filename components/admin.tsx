@@ -1691,17 +1691,13 @@ export function Admin({ onClose }: AdminProps) {
     const itemsSubtotal = items.reduce((s, i) => s + (Number(i.subtotal) || 0), 0)
     const onlyGutscheine = items.length > 0 && items.every(i => Number(i.product_id) < 0)
     const shipping = onlyGutscheine ? 0 : (Number(order.shipping_cost) || 0)
-    const mwstAmount = onlyGutscheine ? 0 : Math.round(itemsSubtotal * 0.081 / 0.05) * 0.05
-    const grossTotal = itemsSubtotal + shipping + mwstAmount
+    const grossTotal = itemsSubtotal + shipping
     const roundedTotal = onlyGutscheine ? itemsSubtotal : Math.ceil(grossTotal / 0.5) * 0.5
 
     doc.text("Zwischensumme (Artikel):", pageW - 75, y)
     doc.text(`${itemsSubtotal.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
     y += 6
     if (!onlyGutscheine) {
-      doc.text("MwSt. 8.1%:", pageW - 75, y)
-      doc.text(`${mwstAmount.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
-      y += 6
       if (shipping > 0) {
         doc.text("Versandkosten:", pageW - 75, y)
         doc.text(`${shipping.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
@@ -1713,6 +1709,12 @@ export function Admin({ onClose }: AdminProps) {
     doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(44, 95, 46)
     doc.text("TOTAL:", pageW - 55, y)
     doc.text(`${roundedTotal.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+    if (!onlyGutscheine) {
+      y += 5
+      const mwstIncl = roundedTotal * 0.081 / 1.081
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(100, 100, 100)
+      doc.text(`inkl. MwSt. 8.1%: ${mwstIncl.toFixed(2)} CHF`, pageW - margin, y, { align: "right" })
+    }
 
     // Hinweise
     const hinweiseY = y + 2
