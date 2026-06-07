@@ -338,9 +338,9 @@ export function HeroSection() {
             </div>
             <button
               onClick={() => router.push("/shop")}
-              className="hidden sm:flex items-center gap-1.5 text-sm text-[#2C5F2E] font-semibold hover:underline transition-all pb-1"
+              className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[#2C5F2E]/10 px-5 py-2.5 text-sm font-bold text-[#1E441F] hover:bg-[#2C5F2E]/20 hover:gap-3 active:scale-95 transition-all duration-200 whitespace-nowrap"
             >
-              Alle anzeigen →
+              Alle anzeigen <span>→</span>
             </button>
           </div>
 
