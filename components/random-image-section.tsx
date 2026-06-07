@@ -56,15 +56,14 @@ export function RandomImageSection({
   const renderTile = (file: string) => (
     <div
       key={file}
-      onClick={goToShop}
-      className="cursor-pointer group shrink-0 snap-start w-[45%] sm:w-[31%] lg:w-[calc((100%-3rem)/4)]"
+      className="shrink-0 snap-start w-[45%] sm:w-[31%] lg:w-[calc((100%-3rem)/4)]"
     >
-      <div className="relative bg-white rounded-2xl overflow-hidden aspect-square lg:aspect-[4/3] border border-[#E5E5E5] ring-1 ring-transparent group-hover:ring-2 group-hover:ring-[#2C5F2E]/40 group-hover:border-[#2C5F2E]/30 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300">
+      <div className="relative bg-white rounded-2xl overflow-hidden aspect-square lg:aspect-[4/3] border border-[#E5E5E5]">
         <img
           src={`/img/${folder}/${encodeURIComponent(file)}`}
           alt={title}
           loading="lazy"
-          className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-contain p-3"
         />
       </div>
     </div>
