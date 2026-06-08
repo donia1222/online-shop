@@ -127,6 +127,10 @@ export default function GutscheineGrid() {
       setAmountError("Bitte geben Sie einen gültigen Betrag ein")
       return
     }
+    if (amount < 20) {
+      setAmountError("Der Mindestbetrag für einen Gutschein beträgt CHF 20.–")
+      return
+    }
     const baseCard = cards[0]
     if (!baseCard) {
       toast({ title: "Fehler", description: "Kein Gutschein verfügbar" })
