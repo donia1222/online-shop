@@ -313,11 +313,6 @@ export default function GutscheineGrid() {
             </div>
           ) : (
             <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#DCDCDC] flex flex-col sm:flex-row">
-              {/* Left: logo */}
-              <div className="flex items-center justify-center border-b sm:border-b-0 sm:border-r border-[#E0E0E0] px-2 py-4 sm:py-2 flex-shrink-0 overflow-hidden sm:w-[180px]">
-                <img src="/icon-192x192.png" alt="US-Fishing & Huntingshop" className="w-24 sm:w-full h-auto object-contain" />
-              </div>
-
               {/* Center: info */}
               <div className="flex flex-col justify-center flex-1 px-4 sm:px-6 py-4 gap-1 min-w-0">
                 <span className="text-[10px] font-black tracking-[0.15em] uppercase text-[#b40000] flex items-center gap-1"><Gift className="w-3 h-3 flex-shrink-0" />Geschenkgutschein</span>
