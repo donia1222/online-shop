@@ -295,6 +295,8 @@ export default function GutscheineGrid() {
                     value={customAmount}
                     onChange={e => {
                       const val = e.target.value.replace(/[^0-9.,]/g, "")
+                      // Máximo 4 cifras (sin contar separadores decimales)
+                      if (val.replace(/[.,]/g, "").length > 4) return
                       setCustomAmount(val)
                       if (amountError) setAmountError("")
                     }}
