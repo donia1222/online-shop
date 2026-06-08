@@ -340,7 +340,7 @@ export default function GutscheineGrid() {
               {/* Datum — heutiges Datum, rechts neben dem Label "Datum" */}
               <span
                 className="absolute font-black whitespace-nowrap"
-                style={{ left: "23%", top: "27.8%", transform: "translateY(-50%)", fontSize: "2.6cqw", color: "#2C5F2E" }}
+                style={{ left: "23%", top: "28.8%", transform: "translateY(-50%)", fontSize: "2.6cqw", color: "#2C5F2E", fontFamily: "'Special Elite', cursive" }}
               >
                 {todayStr}
               </span>
@@ -348,7 +348,7 @@ export default function GutscheineGrid() {
               {/* Visum — Gutschein-Code (Platzhalter in der Vorschau) */}
               <span
                 className="absolute font-black whitespace-nowrap"
-                style={{ left: "17.5%", top: "37.8%", transform: "translateY(-50%)", fontSize: "2.6cqw", color: "#2C5F2E" }}
+                style={{ left: "17.5%", top: "38.8%", transform: "translateY(-50%)", fontSize: "2.6cqw", color: "#2C5F2E", fontFamily: "'Special Elite', cursive" }}
               >
                 USFH-XXXX
               </span>
@@ -357,7 +357,7 @@ export default function GutscheineGrid() {
               {customAmount && (
                 <span
                   className="absolute font-black whitespace-nowrap"
-                  style={{ left: "78.5%", top: "63.2%", transform: "translateY(-50%)", fontSize: "5cqw", color: "#FF0000" }}
+                  style={{ left: "78.5%", top: "64.2%", transform: "translateY(-50%)", fontSize: "5cqw", color: "#FF0000", fontFamily: "'Special Elite', cursive" }}
                 >
                   {customAmount}
                 </span>
