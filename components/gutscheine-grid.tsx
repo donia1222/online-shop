@@ -294,7 +294,10 @@ export default function GutscheineGrid() {
                     inputMode="decimal"
                     value={customAmount}
                     onChange={e => {
-                      const val = e.target.value.replace(/[^0-9.,]/g, "")
+                      let val = e.target.value.replace(/[^0-9.,]/g, "")
+                      // Sin cero a la izquierda (05 -> 5, y un 0 solo no cuenta)
+                      val = val.replace(/^0+(\d)/, "$1")
+                      if (val === "0") val = ""
                       // Máximo 4 cifras (sin contar separadores decimales)
                       if (val.replace(/[.,]/g, "").length > 4) return
                       setCustomAmount(val)
@@ -354,7 +357,7 @@ export default function GutscheineGrid() {
               {customAmount && (
                 <span
                   className="absolute font-black whitespace-nowrap"
-                  style={{ left: "80.5%", top: "63.2%", transform: "translateY(-50%)", fontSize: "5cqw", color: "#FF0000" }}
+                  style={{ left: "78.5%", top: "63.2%", transform: "translateY(-50%)", fontSize: "5cqw", color: "#FF0000" }}
                 >
                   {customAmount}
                 </span>
