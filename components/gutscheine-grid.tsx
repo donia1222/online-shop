@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ShoppingCart, Check, Gift, ArrowLeft, ArrowUp, Truck } from "lucide-react"
 import { ShoppingCartComponent } from "@/components/shopping-cart"
@@ -52,6 +52,27 @@ export default function GutscheineGrid() {
   const [amountError, setAmountError] = useState<string>("")
   const { toast } = useToast()
   const todayStr = new Date().toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })
+
+  // Animación "volar al carrito"
+  const previewImgRef = useRef<HTMLImageElement>(null)
+  const cartBtnRef = useRef<HTMLButtonElement>(null)
+  const [flyImg, setFlyImg] = useState<{ x: number; y: number; w: number; h: number; tx: number; ty: number; scale: number; active: boolean } | null>(null)
+  const [cartBump, setCartBump] = useState(false)
+
+  const flyToCart = () => {
+    const img = previewImgRef.current
+    const cart = cartBtnRef.current
+    if (!img || !cart) return
+    const r = img.getBoundingClientRect()
+    const c = cart.getBoundingClientRect()
+    setFlyImg({ x: r.left, y: r.top, w: r.width, h: r.height, tx: 0, ty: 0, scale: 1, active: false })
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const dx = (c.left + c.width / 2) - (r.left + r.width / 2)
+      const dy = (c.top + c.height / 2) - (r.top + r.height / 2)
+      setFlyImg(prev => prev ? { ...prev, tx: dx, ty: dy, scale: 0.04, active: true } : null)
+    }))
+    setTimeout(() => { setFlyImg(null); setCartBump(true); setTimeout(() => setCartBump(false), 300) }, 720)
+  }
 
   useEffect(() => {
     loadCards()
@@ -131,6 +152,7 @@ export default function GutscheineGrid() {
     setAddedIds(prev => new Set([...prev, baseCard.id]))
     setTimeout(() => setAddedIds(prev => { const s = new Set(prev); s.delete(baseCard.id); return s }), 2000)
     toast({ title: "Gutschein hinzugefügt", description: `CHF ${amount.toFixed(2)}` })
+    flyToCart()
     setCustomAmount("")
   }
 
@@ -165,6 +187,28 @@ export default function GutscheineGrid() {
 
   return (
     <>
+      {/* Clon que "vuela" al carrito */}
+      {flyImg && (
+        <img
+          src="/gutscheine.png"
+          alt=""
+          style={{
+            position: "fixed",
+            left: flyImg.x,
+            top: flyImg.y,
+            width: flyImg.w,
+            height: flyImg.h,
+            transform: `translate(${flyImg.tx}px, ${flyImg.ty}px) scale(${flyImg.scale})`,
+            transition: flyImg.active ? "transform 0.7s cubic-bezier(0.5,-0.3,0.3,1.2), opacity 0.7s ease-in" : "none",
+            opacity: flyImg.active ? 0.15 : 0.95,
+            zIndex: 60,
+            pointerEvents: "none",
+            borderRadius: 12,
+            boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+          }}
+        />
+      )}
+
       {/* Side cart modal */}
       <ShoppingCartComponent
         isOpen={cartOpen}
@@ -224,8 +268,9 @@ export default function GutscheineGrid() {
                 />
               </div>
               <button
+                ref={cartBtnRef}
                 onClick={() => gcEnabled && setCartOpen(true)}
-                className={`relative flex flex-col items-center p-2 rounded-xl transition-colors ${gcEnabled ? "hover:bg-[#F5F5F5] cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
+                className={`relative flex flex-col items-center p-2 rounded-xl transition-transform duration-300 ${cartBump ? "scale-125" : "scale-100"} ${gcEnabled ? "hover:bg-[#F5F5F5] cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
                 disabled={!gcEnabled}
               >
                 <ShoppingCart className="w-6 h-6 text-[#555]" />
@@ -335,7 +380,7 @@ export default function GutscheineGrid() {
               className="relative w-full max-w-[620px] mx-auto rounded-xl overflow-hidden border border-[#E0E0E0] shadow-sm bg-white"
               style={{ containerType: "inline-size" }}
             >
-              <img src="/gutscheine.png" alt="Geschenkgutschein Vorschau" className="block w-full h-auto select-none" />
+              <img ref={previewImgRef} src="/gutscheine.png" alt="Geschenkgutschein Vorschau" className="block w-full h-auto select-none" />
 
               {/* Datum — heutiges Datum, rechts neben dem Label "Datum" */}
               <span
