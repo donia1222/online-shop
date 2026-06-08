@@ -25,11 +25,135 @@ function generateGiftCardCode(PDO $pdo): string {
 }
 
 /**
- * Genera el PDF de la tarjeta de regalo y devuelve el contenido binario
+ * Formatea el importe igual que en la web: sin decimales si es entero
+ * (50 -> "50", 49.9 -> "49.90")
+ */
+function formatGiftCardAmount(float $amount): string {
+    if ($amount == floor($amount)) {
+        return (string)(int)$amount;
+    }
+    return number_format($amount, 2, '.', '');
+}
+
+/**
+ * Rellena la imagen real del gutschein (gutscheine.png) con GD:
+ *  - Datum  (verde)  junto a la etiqueta "Datum"
+ *  - Visum  (verde)  = código (order_number) junto a "Visum"
+ *  - Betrag (rojo)   a la derecha del "CHF" rojo
+ * Devuelve el JPEG binario, o null si faltan la imagen / la fuente / GD.
+ *
+ * Posiciones calibradas visualmente con la preview de la web
+ * (imagen base 844x542). left = borde izq. del texto en %, top = centro vertical en %.
+ */
+function fillGiftCardImage(string $code, float $amount, string $date): ?string {
+    if (!function_exists('imagecreatefrompng') || !function_exists('imagettftext')) {
+        return null;
+    }
+
+    $imgPath  = __DIR__ . '/gutscheine.png';
+    $fontPath = __DIR__ . '/SpecialElite-Regular.ttf';
+    if (!file_exists($imgPath) || !file_exists($fontPath)) {
+        return null;
+    }
+
+    $img = @imagecreatefrompng($imgPath);
+    if (!$img) {
+        return null;
+    }
+
+    $W = imagesx($img);
+    $H = imagesy($img);
+
+    $green = imagecolorallocate($img, 0x2C, 0x5F, 0x2E);
+    $red   = imagecolorallocate($img, 0xFF, 0x00, 0x00);
+
+    // Dibuja texto: left-edge en xPct, centro vertical en yPct, tamaño en px CSS
+    $draw = function (string $text, float $xPct, float $yPct, float $sizePx, int $color)
+        use ($img, $fontPath, $W, $H) {
+        $size = $sizePx * 0.75; // px CSS (96dpi) -> pt GD (72dpi)
+        $bbox = imagettfbbox($size, 0, $fontPath, $text);
+        $xLeft   = $xPct * $W;
+        $yCenter = $yPct * $H;
+        $drawX = (int) round($xLeft - $bbox[0]);
+        $drawY = (int) round($yCenter - ($bbox[7] + $bbox[1]) / 2);
+        imagettftext($img, $size, 0, $drawX, $drawY, $color, $fontPath, $text);
+    };
+
+    $draw($date,                      0.230, 0.288, 0.026 * $W, $green); // Datum
+    $draw($code,                      0.175, 0.388, 0.026 * $W, $green); // Visum = código
+    $draw(formatGiftCardAmount($amount) . '.-', 0.785, 0.632, 0.050 * $W, $red);   // Betrag
+
+    ob_start();
+    imagejpeg($img, null, 92);
+    $jpeg = ob_get_clean();
+    imagedestroy($img);
+
+    return $jpeg ?: null;
+}
+
+/**
+ * Genera el PDF del gutschein.
+ * 1) Intenta incrustar la imagen real rellenada (gutscheine.png + GD).
+ * 2) Si falla, usa el PDF de texto (FPDF o fallback en PHP puro).
  */
 function generateGiftCardPDF(string $code, float $amount, string $buyerName, string $date): string {
-    // FPDF incluido en el servidor de Hostpoint
-    // Si no existe, usar ruta alternativa
+    // --- Opción preferida: imagen real del gutschein rellenada ---
+    $jpeg = fillGiftCardImage($code, $amount, $date);
+    if ($jpeg !== null) {
+        $imgW = 844; // dimensiones reales de gutscheine.png
+        $imgH = 542;
+
+        // Página A4 horizontal, imagen centrada y escalada a la anchura
+        $pageW = 842.0;
+        $pageH = 595.0;
+        $margin = 30.0;
+        $drawW = $pageW - 2 * $margin;
+        $drawH = $drawW * $imgH / $imgW;
+        if ($drawH > $pageH - 2 * $margin) {
+            $drawH = $pageH - 2 * $margin;
+            $drawW = $drawH * $imgW / $imgH;
+        }
+        $posX = ($pageW - $drawW) / 2;
+        $posY = ($pageH - $drawH) / 2;
+
+        $imgLen = strlen($jpeg);
+        $stream = "q\n"
+                . round($drawW, 2) . " 0 0 " . round($drawH, 2) . " "
+                . round($posX, 2) . " " . round($posY, 2) . " cm\n"
+                . "/Im1 Do\nQ\n";
+        $sLen = strlen($stream);
+
+        $o1 = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
+        $o2 = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
+        $o3 = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {$pageW} {$pageH}] "
+            . "/Contents 4 0 R /Resources << /XObject << /Im1 5 0 R >> >> >>\nendobj\n";
+        $o4 = "4 0 obj\n<< /Length {$sLen} >>\nstream\n{$stream}endstream\nendobj\n";
+        $o5 = "5 0 obj\n<< /Type /XObject /Subtype /Image /Width {$imgW} /Height {$imgH} "
+            . "/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {$imgLen} >>\n"
+            . "stream\n" . $jpeg . "\nendstream\nendobj\n";
+
+        $header  = "%PDF-1.4\n";
+        $objects = [$o1, $o2, $o3, $o4, $o5];
+        $offsets = [];
+        $pos     = strlen($header);
+        $body    = '';
+        foreach ($objects as $obj) {
+            $offsets[] = $pos;
+            $pos += strlen($obj);
+            $body .= $obj;
+        }
+        $count   = count($objects) + 1;
+        $xrefPos = strlen($header) + strlen($body);
+        $xref    = "xref\n0 {$count}\n0000000000 65535 f \n";
+        foreach ($offsets as $off) {
+            $xref .= str_pad((string)$off, 10, '0', STR_PAD_LEFT) . " 00000 n \n";
+        }
+        $trailer = "trailer\n<< /Size {$count} /Root 1 0 R >>\nstartxref\n{$xrefPos}\n%%EOF";
+
+        return $header . $body . $xref . $trailer;
+    }
+
+    // --- Fallback: PDF de texto (FPDF si existe en el servidor) ---
     $fpdfPaths = [
         __DIR__ . '/fpdf/fpdf.php',
         __DIR__ . '/../vendor/fpdf/fpdf.php',
