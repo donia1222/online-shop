@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { getCachedProducts } from "@/lib/products-cache"
 import { getCachedCategories } from "@/lib/categories-cache"
 import { HERO_DEFAULTS, HERO_IMAGE_DEFAULTS } from "@/lib/site-content-defaults"
-import { Flashlight, Sword, Target, Wrench, Axe, Shield, Flame, Package } from "lucide-react"
+import { Flashlight, Sword, Target, Wrench, Axe, Shield, Flame, Package, Crosshair, Wind, HardHat } from "lucide-react"
 
 interface Product {
   id: number
@@ -327,7 +327,7 @@ export function HeroSection() {
         </div>
       )}
 
-      {/* ── Unsere Top Kategorien (dinámico, solo 6) ── */}
+      {/* ── Unsere Top Kategorien (dinámico, solo 9) ── */}
       <div id="spice-discovery" className="bg-[#F0F1F3] border-b border-[#E0E0E0] py-10">
         <div className="container mx-auto px-4">
           <div className="flex items-end justify-between mb-6">
@@ -347,7 +347,7 @@ export function HeroSection() {
           {/* Skeleton */}
           {categories.length === 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 9 }).map((_, i) => (
                 <div key={i} className="rounded-2xl bg-gray-200 animate-pulse aspect-[3/4]" />
               ))}
             </div>
@@ -366,6 +366,12 @@ export function HeroSection() {
               "Security": <Shield className="w-7 h-7" />,
               "Rauch und Grill": <Flame className="w-7 h-7" />,
               "Rauch & Grill": <Flame className="w-7 h-7" />,
+              "Pfeilbogen": <Crosshair className="w-7 h-7" />,
+              "Schleuder und Blasrohr": <Wind className="w-7 h-7" />,
+              "Schleuder & Blasrohr": <Wind className="w-7 h-7" />,
+              "Schutzkleidung und Basebalschläger": <HardHat className="w-7 h-7" />,
+              "Schutzkleidung und Baseballschläger": <HardHat className="w-7 h-7" />,
+              "Schutzkleidung & Baseballschläger": <HardHat className="w-7 h-7" />,
             }
             const colors = [
               { bg: "bg-white", icon: "bg-[#2C5F2E]/10 text-[#2C5F2E]", accent: "text-[#2C5F2E]", border: "hover:border-[#2C5F2E]/40" },
@@ -374,13 +380,13 @@ export function HeroSection() {
             ]
             return (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
-                {categories.slice(0, 6).map((cat, i) => {
+                {categories.slice(0, 9).map((cat, i) => {
                   const c = colors[i % 3]
                   return (
                     <button
                       key={cat.id}
                       onClick={() => router.push(`/shop?cat=${encodeURIComponent(cat.name)}`)}
-                      className={`${c.bg} rounded-2xl border border-[#E8E8E8] ${c.border} p-5 group hover:shadow-xl transition-all duration-300 text-left flex flex-col gap-4 relative overflow-hidden`}
+                      className={`${c.bg} rounded-2xl border border-[#E8E8E8] ${c.border} p-5 group hover:shadow-xl transition-all duration-300 text-left flex-col gap-4 relative overflow-hidden ${i >= 6 ? "hidden sm:flex" : "flex"}`}
                     >
                       {/* Decorative circles — floating */}
                       <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-[#2C5F2E]/5 animate-float" />
