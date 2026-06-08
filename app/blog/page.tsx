@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getCachedCategories } from "@/lib/categories-cache"
-import { ArrowLeft, ChevronLeft, Calendar, X, ChevronRight, Menu, Newspaper, Images, Download, ShoppingCart, Gift } from "lucide-react"
+import { ArrowLeft, ChevronLeft, Calendar, X, ChevronRight, Menu, Newspaper, Images, Download, ShoppingCart, Gift, Share2, Check } from "lucide-react"
 import { Footer } from "@/components/footer"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { LoginAuth } from "@/components/login-auth"
@@ -21,6 +21,43 @@ interface BlogPost {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
+}
+
+// Teilen-Button: nutzt Web Share API (mobil) bzw. kopiert den Link in die Zwischenablage
+function ShareButton({ post, className = "" }: { post: BlogPost; className?: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const url = `${window.location.origin}/blog?post=${post.id}`
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: post.title, url })
+        return
+      } catch {
+        // Abgebrochen oder nicht unterstützt → Fallback Kopieren
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {}
+  }
+
+  return (
+    <button
+      onClick={handleShare}
+      className={`inline-flex items-center gap-2 text-sm font-bold rounded-full px-4 py-2 transition-all ${
+        copied
+          ? "bg-[#2C5F2E] text-white"
+          : "bg-[#2C5F2E]/8 text-[#2C5F2E] hover:bg-[#2C5F2E]/15"
+      } ${className}`}
+    >
+      {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+      {copied ? "Link kopiert!" : "Teilen"}
+    </button>
+  )
 }
 
 // Wandelt URLs im Text in anklickbare Links um
@@ -196,6 +233,12 @@ function PostModal({ post, onClose }: { post: BlogPost; onClose: () => void }) {
                 ))}
               </div>
             )}
+
+            {/* Teilen */}
+            <div className="mt-8 pt-6 border-t border-[#EEE] flex items-center justify-between gap-3">
+              <span className="text-xs text-[#AAA] font-medium">Beitrag teilen</span>
+              <ShareButton post={post} />
+            </div>
           </div>
         </div>
       </div>
@@ -242,7 +285,17 @@ export default function BlogPage() {
   useEffect(() => {
     fetch("/api/blog")
       .then(r => r.json())
-      .then(d => { if (d.success) setPosts(d.posts) })
+      .then(d => {
+        if (d.success) {
+          setPosts(d.posts)
+          // Geteilten Beitrag (?post=ID) direkt öffnen
+          const sharedId = Number(new URLSearchParams(window.location.search).get("post"))
+          if (sharedId) {
+            const shared = d.posts.find((p: BlogPost) => p.id === sharedId)
+            if (shared) setSelectedPost(shared)
+          }
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
     getCachedCategories().then(setCategories).catch(() => {})
@@ -435,6 +488,11 @@ export default function BlogPage() {
                     ))}
                   </div>
                 )}
+                {/* Teilen */}
+                <div className="mt-8 pt-6 border-t border-[#EEE] flex items-center justify-between gap-3">
+                  <span className="text-xs text-[#AAA] font-medium">Beitrag teilen</span>
+                  <ShareButton post={post} />
+                </div>
               </div>
             </article>
           )
