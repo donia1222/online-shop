@@ -264,9 +264,6 @@ function PremiumHotSauceStoreInner() {
       <HeroSection />
 
       <FadeSection>
-        <CategoryPreviewSection />
-      </FadeSection>
-      <FadeSection>
         <RandomImageSection
           folder="armbrust"
           images={ARMBRUST_IMAGES}
