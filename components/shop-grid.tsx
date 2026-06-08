@@ -940,7 +940,7 @@ export default function ShopGrid() {
                 </ul>
               </div>
 
-              <div className="border-t border-[#F3F3F3] pt-4">
+              <div className="lg:hidden border-t border-[#F3F3F3] pt-4">
                 <button
                   onClick={() => { setShowWishlist(p => !p); setActiveCategory("all"); setStockFilter("all"); setSearch(""); setSidebarOpen(false) }}
                   className={`w-full text-left flex items-center justify-between text-sm px-3 py-2 rounded-xl transition-all font-medium ${
@@ -959,7 +959,7 @@ export default function ShopGrid() {
                 </button>
               </div>
 
-              <div className="border-t border-[#F3F3F3] pt-4">
+              <div className="lg:hidden border-t border-[#F3F3F3] pt-4">
                 <button
                   onClick={() => router.push("/gutscheine")}
                   className="w-full text-left flex items-center gap-2 text-sm px-3 py-2 rounded-xl transition-all font-medium text-[#2C5F2E] hover:bg-[#F0F5F0]"
@@ -971,18 +971,26 @@ export default function ShopGrid() {
 
             </div>
 
+            {/* ── Gutscheine banner — desktop only ── */}
+            <div onClick={() => router.push("/gutscheine")} className="hidden lg:block mt-4 rounded-2xl overflow-hidden relative cursor-pointer">
+              <img
+                src="/gutscheinebanner.png"
+                alt="Gutscheine"
+                className="w-full h-auto block"
+              />
+            </div>
+
             {/* ── Promo banner — desktop only ── */}
-            <div onClick={() => router.push("/angeln")} className="hidden lg:block mt-4 rounded-2xl overflow-hidden relative cursor-pointer" style={{ minHeight: "210px" }}>
+            <div onClick={() => router.push("/angeln")} className="hidden lg:block mt-4 rounded-2xl overflow-hidden relative cursor-pointer" style={{ minHeight: "130px" }}>
               <img
                 src="/images/fischen/472679633_1183608080203417_7913441867178334031_n.jpg"
                 alt="Angeln & Outdoor"
                 className="absolute inset-0 w-full h-full object-cover"
               />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 100%)" }} />
-              <div className="relative p-4 flex flex-col justify-end h-full" style={{ minHeight: "210px" }}>
+              <div className="relative p-4 flex flex-col justify-end h-full" style={{ minHeight: "130px" }}>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70 mb-1">ANGELN & OUTDOOR</p>
                 <p className="text-white font-black text-base leading-tight">Alles zum Angeln im Laden</p>
-                <p className="text-white/75 text-[13px] mt-1 leading-snug">Angelhaken, Ruten, Köder, Netze, Kanus und vieles mehr.</p>
               </div>
             </div>
 

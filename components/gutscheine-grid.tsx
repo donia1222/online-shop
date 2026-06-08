@@ -51,6 +51,7 @@ export default function GutscheineGrid() {
   const [customAmount, setCustomAmount] = useState<string>("")
   const [amountError, setAmountError] = useState<string>("")
   const { toast } = useToast()
+  const todayStr = new Date().toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })
 
   useEffect(() => {
     loadCards()
@@ -321,6 +322,43 @@ export default function GutscheineGrid() {
               </div>
             </div>
           )}
+
+          {/* ── Live-Vorschau des Gutscheins ── */}
+          <div className="mt-8">
+            <p className="text-[10px] font-bold text-[#888] uppercase tracking-widest text-center mb-3">So sieht Ihr Gutschein aus</p>
+            <div
+              className="relative w-full max-w-[620px] mx-auto rounded-xl overflow-hidden border border-[#E0E0E0] shadow-sm bg-white"
+              style={{ containerType: "inline-size" }}
+            >
+              <img src="/gutscheine.png" alt="Geschenkgutschein Vorschau" className="block w-full h-auto select-none" />
+
+              {/* Datum — heutiges Datum, rechts neben dem Label "Datum" */}
+              <span
+                className="absolute font-black whitespace-nowrap"
+                style={{ left: "23%", top: "27.8%", transform: "translateY(-50%)", fontSize: "2.6cqw", color: "#2C5F2E" }}
+              >
+                {todayStr}
+              </span>
+
+              {/* Visum — Gutschein-Code (Platzhalter in der Vorschau) */}
+              <span
+                className="absolute font-black whitespace-nowrap"
+                style={{ left: "17.5%", top: "37.8%", transform: "translateY(-50%)", fontSize: "2.6cqw", color: "#2C5F2E" }}
+              >
+                USFH-XXXX
+              </span>
+
+              {/* Betrag — rechts neben dem roten "CHF" */}
+              {customAmount && (
+                <span
+                  className="absolute font-black whitespace-nowrap"
+                  style={{ left: "80.5%", top: "63.2%", transform: "translateY(-50%)", fontSize: "5cqw", color: "#FF0000" }}
+                >
+                  {customAmount}
+                </span>
+              )}
+            </div>
+          </div>
 
           {/* Info box */}
           <div className="mt-8 bg-white rounded-2xl border border-[#EBEBEB] shadow-sm overflow-hidden text-sm text-gray-600">
