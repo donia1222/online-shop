@@ -13,6 +13,7 @@ import { ReviewsSection } from "@/components/reviews-section"
 import { BlogBanner } from "@/components/blog-banner"
 import { GalleryBanner } from "@/components/gallery-banner"
 import { FischenBanner } from "@/components/fischen-banner"
+import { GutscheinBanner } from "@/components/gutschein-banner"
 import { ShoppingCartComponent } from "@/components/shopping-cart"
 import { CheckoutPage } from "@/components/checkout-page"
 import { Footer } from "@/components/footer"
@@ -294,6 +295,9 @@ function PremiumHotSauceStoreInner() {
           description="Premium Messer für jeden Einsatz — von Outdoor bis Küche, Qualität die überzeugt."
           catParam="Messer"
         />
+      </FadeSection>
+      <FadeSection>
+        <GutscheinBanner />
       </FadeSection>
       <FadeSection>
         <ReviewsSection />

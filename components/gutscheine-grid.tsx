@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ShoppingCart, Check, Gift, ArrowLeft, ArrowUp, Truck } from "lucide-react"
 import { ShoppingCartComponent } from "@/components/shopping-cart"
 import { LoginAuth } from "@/components/login-auth"
@@ -56,6 +56,8 @@ export default function GutscheineGrid() {
   // Animación "volar al carrito"
   const previewImgRef = useRef<HTMLImageElement>(null)
   const cartBtnRef = useRef<HTMLButtonElement>(null)
+  const customInputRef = useRef<HTMLInputElement>(null)
+  const searchParams = useSearchParams()
   const [flyImg, setFlyImg] = useState<{ x: number; y: number; w: number; h: number; tx: number; ty: number; scale: number; active: boolean } | null>(null)
   const [cartBump, setCartBump] = useState(false)
 
@@ -78,6 +80,20 @@ export default function GutscheineGrid() {
     loadCards()
     loadCart()
   }, [])
+
+  // Pre-relleno desde el banner del home: /gutscheine?betrag=50 o ?custom=1
+  useEffect(() => {
+    const betrag = searchParams.get("betrag")
+    const custom = searchParams.get("custom")
+    if (!betrag && !custom) return
+    if (betrag && /^\d{1,4}$/.test(betrag)) setCustomAmount(betrag)
+    // Esperar a que la tarjeta esté montada, luego desplazar y enfocar
+    const t = setTimeout(() => {
+      customInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+      customInputRef.current?.focus()
+    }, 350)
+    return () => clearTimeout(t)
+  }, [searchParams])
 
   useEffect(() => {
     const onScroll = () => {
@@ -308,9 +324,7 @@ export default function GutscheineGrid() {
 
         {/* Single custom-amount card */}
         <div className="max-w-5xl mx-auto px-4 py-8">
-          {loading ? (
-            <div className="bg-white rounded-2xl h-44 animate-pulse border border-gray-100" />
-          ) : cards.length === 0 ? (
+          {!loading && cards.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <Gift className="w-12 h-12 mx-auto mb-4 opacity-30" />
               <p className="font-semibold">Keine Gutscheine verfügbar</p>
@@ -334,6 +348,7 @@ export default function GutscheineGrid() {
                 <div className="w-full">
                   <label className="text-[10px] font-bold text-[#888] uppercase tracking-widest block text-center mb-1">Betrag (CHF)</label>
                   <input
+                    ref={customInputRef}
                     type="text"
                     inputMode="decimal"
                     value={customAmount}
