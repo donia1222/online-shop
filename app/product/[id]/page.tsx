@@ -13,6 +13,10 @@ function DescriptionBlock({ text }: { text: string }) {
   const [clamped, setClamped] = useState(false)
   const ref = useRef<HTMLParagraphElement>(null)
 
+  // Normalizar saltos de línea Windows (\r\n) y sueltos (\r) a \n para que
+  // whitespace-pre-line no muestre un espacio sobrante al inicio de cada línea.
+  const cleanText = text.replace(/\r\n?/g, "\n").replace(/[ \t]+\n/g, "\n")
+
   useEffect(() => {
     const el = ref.current
     if (el) setClamped(el.scrollHeight > el.clientHeight)
@@ -25,9 +29,9 @@ function DescriptionBlock({ text }: { text: string }) {
       </p>
       <p
         ref={ref}
-        className={`text-sm text-[#444] leading-relaxed whitespace-pre-line ${!expanded ? "line-clamp-4" : ""}`}
+        className={`text-sm text-[#444] leading-relaxed whitespace-pre-line ${!expanded ? "line-clamp-5" : ""}`}
       >
-        {text}
+        {cleanText}
       </p>
       {clamped && (
         <button
@@ -151,6 +155,8 @@ export default function ProductPage() {
       .then(({ products }) => {
         const found = products.find((p: any) => String(p.id) === String(id))
         if (found) {
+          // Render instantáneo desde el caché (la descripción aquí viene
+          // recortada a 150 chars por el slim de localStorage).
           setProduct(found as unknown as Product)
           const cat = (found as any).category
           const hasImage = (p: Product) =>
@@ -159,9 +165,20 @@ export default function ProductPage() {
             (p: Product) => p.id !== (found as any).id && p.category === cat && (p.stock ?? 0) > 0 && hasImage(p)
           )
           setSimilar(others.slice(0, 10))
-        } else {
-          setError("Produkt nicht gefunden")
         }
+
+        // Siempre pedir el producto completo por ID: el caché slim trunca la
+        // descripción a 150 chars y la página de detalle necesita el texto entero.
+        return fetch(`${API_BASE_URL}/get_products.php?id=${id}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d?.success && d.product) {
+              setProduct(prev => ({ ...(prev ?? {}), ...d.product } as Product))
+            } else if (!found) {
+              setError("Produkt nicht gefunden")
+            }
+          })
+          .catch(() => { if (!found) setError("Verbindungsfehler") })
       })
       .catch(() => setError("Verbindungsfehler"))
       .finally(() => setLoading(false))

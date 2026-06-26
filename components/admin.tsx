@@ -1285,8 +1285,21 @@ export function Admin({ onClose }: AdminProps) {
 
   const showEditProductModal = async (id: number) => {
     try {
-      const { products } = await getCachedProducts()
-      const product = products.find((p: any) => p.id === id)
+      // Pedir el producto COMPLETO por ID: el caché slim trunca la descripción
+      // a 150 chars y el formulario de edición necesita el texto entero.
+      let product: any = null
+      try {
+        const res = await fetch(`/api/products?id=${id}&_=${Date.now()}`)
+        const data = await res.json()
+        if (data?.success && data.product) product = data.product
+      } catch {}
+
+      // Fallback al caché slim si la API falla (mejor algo que nada).
+      if (!product) {
+        const { products } = await getCachedProducts()
+        product = products.find((p: any) => p.id === id)
+      }
+
       if (product) {
         setCurrentEditingProduct(product as any)
         setIsDuplicating(false)
