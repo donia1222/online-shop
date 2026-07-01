@@ -252,6 +252,19 @@ function catImageSrc(catProds: any[]): string[] {
   return srcs
 }
 
+// Imagen de fondo específica por categoría cuando sus productos no tienen imagen
+// utilizable (p. ej. "Verschiedenes"). Se añade como fallback al final de la
+// cadena, así cualquier imagen real de producto tiene prioridad.
+const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
+  "Verschiedenes": "/img/04px003.jpg",
+}
+
+function catImageSrcWithFallback(catProds: any[], catName: string): string[] {
+  const srcs = catImageSrc(catProds)
+  const fallback = CATEGORY_FALLBACK_IMAGES[catName]
+  return fallback ? [...srcs, fallback] : srcs
+}
+
 // ─── CatCard: category card with image fallback chain ─────────────────────────
 
 function CatCard({ srcs, displayName, isActive, onClick }: {
@@ -1056,7 +1069,7 @@ export default function ShopGrid() {
                 return (
                   <CatCard
                     key={cat.slug}
-                    srcs={catImageSrc(catProds)}
+                    srcs={catImageSrcWithFallback(catProds, cat.name)}
                     displayName={displayName}
                     isActive={isActive}
                     onClick={() => setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug)}
