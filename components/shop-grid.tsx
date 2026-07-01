@@ -1112,7 +1112,7 @@ export default function ShopGrid() {
                     <MobileCatCard
                       key={cat.slug}
                       id={`mobile-cat-${cat.slug}`}
-                      srcs={catImageSrc(catProds)}
+                      srcs={catImageSrcWithFallback(catProds, cat.name)}
                       displayName={displayName}
                       isActive={isActive}
                       onClick={() => { setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug); setExpandedCats(prev => { const n = new Set(prev); n.add(cat.slug); return n }) }}
