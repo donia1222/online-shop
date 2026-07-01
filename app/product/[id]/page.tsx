@@ -271,6 +271,10 @@ export default function ProductPage() {
 
   const images = getImages(product)
   const inStock = (product.stock ?? 0) > 0
+  // Los candidates son la lista de fallback de UNA sola imagen; si los pasamos
+  // cuando hay varias imágenes, ProductImage ignora `src` (images[imgIdx]) y
+  // muestra siempre la primera. Con varias imágenes usamos solo src.
+  const mainCandidates = images.length > 1 ? undefined : product.image_url_candidates
 
   return (
     <div className="min-h-screen bg-[#F7F7F8]">
@@ -314,7 +318,7 @@ export default function ProductPage() {
               >
                 <ProductImage
                   src={images[imgIdx] || product.image_url}
-                  candidates={product.image_url_candidates}
+                  candidates={mainCandidates}
                   alt={product.name}
                   className="w-full h-full object-contain"
                 />
@@ -530,7 +534,7 @@ export default function ProductPage() {
             >
               <ProductImage
                 src={images[imgIdx] || product.image_url}
-                candidates={product.image_url_candidates}
+                candidates={mainCandidates}
                 alt={product.name}
                 className="block max-w-[90vw] max-h-[90vh] w-auto h-auto bg-white"
               />

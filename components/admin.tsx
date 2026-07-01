@@ -3478,7 +3478,7 @@ export function Admin({ onClose }: AdminProps) {
                       {shippingRanges.map(range => (
                         <div key={range.id} className="group bg-gray-50/60 rounded-xl p-3 border border-gray-100">
                           <label className="text-xs text-gray-500 font-semibold block mb-2 leading-snug">
-                            {range.label}{range.label.includes("Sperrgut") ? " / bis 999 kg" : ""}
+                            {range.label}{range.label.includes("Sperrgut") ? " / bis 30kg" : ""}
                           </label>
                           <div className="flex items-center gap-1.5">
                             <input
