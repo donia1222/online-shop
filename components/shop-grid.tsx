@@ -257,6 +257,8 @@ function catImageSrc(catProds: any[]): string[] {
 // cadena, así cualquier imagen real de producto tiene prioridad.
 const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
   "Verschiedenes": "/img/04px003.jpg",
+  "Schutzkleidung und Basebalschläger": "/images/categories/CST-92BSW.jpg",
+  "Schaufel und Spaten": "/images/categories/80629.jpg",
 }
 
 function catImageSrcWithFallback(catProds: any[], catName: string): string[] {
