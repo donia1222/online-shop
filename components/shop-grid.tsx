@@ -1060,7 +1060,7 @@ export default function ShopGrid() {
             <div className="hidden lg:flex items-start gap-3 mb-3">
               <div className="w-1 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
               <div>
-                <p className="font-black text-[#2C5F2E] text-2xl leading-tight">Kategorien</p>
+                <p className="font-black text-[#2C5F2E] text-2xl leading-tight">Hauptkategorien</p>
                 <p className="text-sm text-[#888] mt-1">Jagd, Angeln & Outdoor-Ausrüstung</p>
               </div>
             </div>
@@ -1176,7 +1176,7 @@ export default function ShopGrid() {
                 : (activeCat?.parent_id ? categories.find(c => c.id === activeCat.parent_id) : undefined)
               const subs = shownParent ? categories.filter(c => c.parent_id === shownParent.id) : []
               if (!shownParent || subs.length === 0) return null
-              const barTitle = shownParent.is_haupt ? "Hauptkategorie" : "Subkategorien"
+              const barTitle = shownParent.is_haupt ? "Kategorien" : "Subkategorien"
               return (
                 <div className="border-t border-[#E0E0E0] mt-6 pt-6">
                   <div className="flex items-start gap-2.5 mb-2.5">
