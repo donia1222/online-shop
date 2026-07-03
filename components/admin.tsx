@@ -2621,8 +2621,8 @@ export function Admin({ onClose }: AdminProps) {
                     <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
                       <Plus className="w-5 h-5 text-white" />
                     </div>
-                    <p className="text-white font-bold text-base leading-tight">Kategorie erstellen</p>
-                    <p className="text-sky-50 text-xs mt-1">Neue Kategorie erstellen</p>
+                    <p className="text-white font-bold text-base leading-tight">Kategorie/Subkategorie erstellen</p>
+                    <p className="text-sky-50 text-xs mt-1">Neue Kategorie oder Subkategorie</p>
                   </div>
                 </button>
               </div>

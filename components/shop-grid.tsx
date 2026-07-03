@@ -1177,6 +1177,10 @@ export default function ShopGrid() {
               const subs = shownParent ? categories.filter(c => c.parent_id === shownParent.id) : []
               if (!shownParent || subs.length === 0) return null
               const barTitle = shownParent.is_haupt ? "Kategorien" : "Subkategorien"
+              // Si estamos viendo Subkategorien (padre = Kategorie), permitir volver a las Kategorien (la Hauptkategorie)
+              const backParent = !shownParent.is_haupt && shownParent.parent_id != null
+                ? categories.find(c => c.id === shownParent.parent_id)
+                : null
               return (
                 <div className="border-t border-[#E0E0E0] mt-6 pt-6">
                   <div className="flex items-start gap-2.5 mb-2.5">
@@ -1186,6 +1190,14 @@ export default function ShopGrid() {
                       <p className="text-sm text-[#888] mt-1">{shownParent.name.replace(/\s*\d{4}$/, "")}</p>
                     </div>
                   </div>
+                  {backParent && (
+                    <button
+                      onClick={() => setActiveCategory(backParent.slug)}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#2C5F2E] hover:text-[#1A4520] mb-3 bg-[#F0F5F0] hover:bg-[#DCF0DC] px-3 py-1.5 rounded-full transition-colors"
+                    >
+                      ← Zurück zu Kategorien
+                    </button>
+                  )}
                   <div className="overflow-x-auto mb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <div className="flex items-center gap-1 min-w-max border-b border-[#E0E0E0]">
                       {(() => {
