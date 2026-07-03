@@ -1146,7 +1146,7 @@ export default function ShopGrid() {
                 : (activeCat?.parent_id ? categories.find(c => c.id === activeCat.parent_id) : undefined)
               const subs = shownParent ? categories.filter(c => c.parent_id === shownParent.id) : []
               if (!shownParent || subs.length === 0) return null
-              const barTitle = shownParent.is_haupt ? "Kategorien" : "Subkategorien"
+              const barTitle = "Subkategorien"
               return (
                 <div className="border-t border-[#E0E0E0] mt-6 pt-6">
                   <div className="flex items-start gap-2.5 mb-2.5">
@@ -1156,19 +1156,34 @@ export default function ShopGrid() {
                       <p className="text-sm text-[#888] mt-1">{shownParent.name.replace(/\s*\d{4}$/, "")}</p>
                     </div>
                   </div>
-                  <div className="overflow-x-auto mb-3 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                    <div className="flex items-center gap-1.5 min-w-max pb-1">
+                  <div className="overflow-x-auto mb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <div className="flex items-center gap-1 min-w-max border-b border-[#E0E0E0]">
+                      {(() => {
+                        const isAllActive = activeCategory === shownParent.slug
+                        return (
+                          <button
+                            onClick={() => setActiveCategory(shownParent.slug)}
+                            className={`px-3.5 py-2 -mb-px border-b-2 rounded-t-lg transition-all whitespace-nowrap text-xs font-bold uppercase tracking-wide ${
+                              isAllActive
+                                ? "border-[#2C5F2E] text-[#2C5F2E] bg-[#F0F5F0]"
+                                : "border-transparent text-[#333] bg-gray-100 hover:text-[#2C5F2E] hover:bg-[#F0F5F0]"
+                            }`}
+                          >
+                            Alle
+                          </button>
+                        )
+                      })()}
                       {subs.map(sub => {
                         const isSubActive = activeCategory === sub.slug
                         return (
                           <button
                             key={sub.slug}
                             onClick={() => setActiveCategory(prev => prev === sub.slug ? shownParent.slug : sub.slug)}
-                            className="px-2.5 py-1 rounded-full border transition-all whitespace-nowrap text-[11px] font-black uppercase tracking-wider"
-                            style={isSubActive
-                              ? { backgroundColor: "#2C5F2E", color: "#fff", borderColor: "#2C5F2E" }
-                              : { backgroundColor: "#4a7f4c", color: "#fff", borderColor: "#4a7f4c" }
-                            }
+                            className={`px-3.5 py-2 -mb-px border-b-2 rounded-t-lg transition-all whitespace-nowrap text-xs font-bold uppercase tracking-wide ${
+                              isSubActive
+                                ? "border-[#2C5F2E] text-[#2C5F2E] bg-[#F0F5F0]"
+                                : "border-transparent text-[#333] bg-gray-100 hover:text-[#2C5F2E] hover:bg-[#F0F5F0]"
+                            }`}
                           >
                             {sub.name.replace(/\s*\d{4}$/, "")}
                           </button>
