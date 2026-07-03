@@ -5,6 +5,7 @@ import { useRouter, useParams, useSearchParams } from "next/navigation"
 import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, Check, X, ZoomIn, Heart } from "lucide-react"
 import { ProductImage } from "@/components/product-image"
 import { getCachedProducts } from "@/lib/products-cache"
+import ContactModal from "@/components/contact-modal"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -59,12 +60,13 @@ interface Product {
   category?: string
   stock?: number
   weight_kg?: number
+  shipping_on_request?: number
 }
 
 interface CartItem {
   id: number; name: string; price: number; image: string; image_url?: string
   description: string; heatLevel: number; rating: number
-  badge?: string; origin?: string; quantity: number; weight_kg?: number
+  badge?: string; origin?: string; quantity: number; weight_kg?: number; shipping_on_request?: number
 }
 
 function getImages(p: Product): string[] {
@@ -85,6 +87,7 @@ export default function ProductPage() {
   const [error, setError] = useState("")
   const [imgIdx, setImgIdx] = useState(0)
   const [added, setAdded] = useState(false)
+  const [contactOpen, setContactOpen] = useState(false)
   const [cartCount, setCartCount] = useState(0)
   const [isWished, setIsWished] = useState(false)
   const [lightbox, setLightbox] = useState(false)
@@ -202,6 +205,7 @@ export default function ProductPage() {
             heatLevel: 0, rating: 0,
             badge: product.badge, origin: product.origin, quantity: 1,
             weight_kg: product.weight_kg,
+            shipping_on_request: product.shipping_on_request,
           }]
       localStorage.setItem("cantina-cart", JSON.stringify(next))
       localStorage.setItem("cantina-cart-count", next.reduce((s, i) => s + i.quantity, 0).toString())
@@ -389,7 +393,21 @@ export default function ProductPage() {
                   </span>
                   <span className="text-base text-[#999] font-medium">CHF</span>
                 </div>
-                <p className="text-xs text-[#999] mb-4">* Preise inkl. MwSt., zzgl. Versandkosten</p>
+                {product.shipping_on_request ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 mb-4">
+                    <p className="text-xs text-amber-700 mb-3">Für Versand oder Abholung im Laden kontaktieren Sie uns bitte.</p>
+                    <button
+                      type="button"
+                      onClick={() => setContactOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors"
+                    >
+                      Kontaktieren
+                    </button>
+                    <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} subject={`Versand-/Abholanfrage: ${product.name}`} />
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#999] mb-4">* Preise inkl. MwSt., zzgl. Versandkosten</p>
+                )}
                 <button
                   onClick={addToCart}
                   disabled={!inStock}

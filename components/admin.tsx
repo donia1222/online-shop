@@ -137,6 +137,7 @@ interface Product {
   image_url_candidates?: string[]
   created_at: string
   weight_kg: number
+  shipping_on_request?: number
 }
 
 // Interfaces für Shipping
@@ -238,6 +239,8 @@ export function Admin({ onClose }: AdminProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false)
   const [currentEditingProduct, setCurrentEditingProduct] = useState<Product | null>(null)
+  // "Versand auf Anfrage": producto que no se vende online (contactar). Oculta el peso.
+  const [productOnRequest, setProductOnRequest] = useState(false)
   const [isDuplicating, setIsDuplicating] = useState(false)
   const [deleteProductId, setDeleteProductId] = useState<number | null>(null)
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null])
@@ -1266,6 +1269,7 @@ export function Admin({ onClose }: AdminProps) {
       return
     }
     setCurrentEditingProduct(null)
+    setProductOnRequest(false)
     setIsDuplicating(false)
     setImagePreviews([null, null, null, null])
     setRemovedImages([false, false, false, false])
@@ -1308,6 +1312,7 @@ export function Admin({ onClose }: AdminProps) {
 
       if (product) {
         setCurrentEditingProduct(product as any)
+        setProductOnRequest(!!(product as any).shipping_on_request)
         setIsDuplicating(false)
         setImagePreviews((product as any).image_urls || [(product as any).image_url, null, null, null])
         setRemovedImages([false, false, false, false])
@@ -4415,6 +4420,20 @@ export function Admin({ onClose }: AdminProps) {
                     className="bg-white"
                   />
                 </div>
+                <div className="md:col-span-2">
+                  {/* Versand auf Anfrage: no se vende online (contactar / recogida) */}
+                  <input type="hidden" name="shipping_on_request" value={productOnRequest ? "1" : "0"} />
+                  <label className="flex items-center gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={productOnRequest}
+                      onChange={e => setProductOnRequest(e.target.checked)}
+                      className="w-4 h-4 accent-amber-600"
+                    />
+                    <span className="text-sm font-medium text-amber-800">Versand auf Anfrage — nicht online kaufbar (Kontakt / Abholung im Laden)</span>
+                  </label>
+                </div>
+                {!productOnRequest && (
                 <div>
                   <Label htmlFor="weight_kg">Gewicht (kg)</Label>
                   <Input
@@ -4428,6 +4447,7 @@ export function Admin({ onClose }: AdminProps) {
                     className="bg-white"
                   />
                 </div>
+                )}
               </div>
 
               <div>

@@ -98,6 +98,9 @@ try {
         $supplier = $_POST['supplier'] ?? $existing_product['supplier'] ?? '';
         $category = $_POST['category'] ?? $existing_product['category'] ?? 'hot-sauce';
         $weight_kg = $_POST['weight_kg'] ?? $existing_product['weight_kg'] ?? 0.500;
+        $shipping_on_request = isset($_POST['shipping_on_request'])
+            ? (!empty($_POST['shipping_on_request']) && $_POST['shipping_on_request'] != '0' ? 1 : 0)
+            : intval($existing_product['shipping_on_request'] ?? 0);
         $article_number = isset($_POST['article_number']) ? trim($_POST['article_number']) : ($existing_product['article_number'] ?? '');
 
         
@@ -189,6 +192,7 @@ try {
                 supplier = :supplier,
                 category = :category,
                 weight_kg = :weight_kg,
+                shipping_on_request = :shipping_on_request,
                 article_number = :article_number,
                 updated_at = CURRENT_TIMESTAMP
                 WHERE id = :id";
@@ -211,6 +215,7 @@ try {
             ':supplier' => trim($supplier),
             ':category' => $category,
             ':weight_kg' => floatval($weight_kg),
+            ':shipping_on_request' => $shipping_on_request,
             ':article_number' => $article_number !== '' ? $article_number : null,
         ]);
         

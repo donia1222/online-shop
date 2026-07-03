@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import ContactModal from "@/components/contact-modal"
 import { UserProfile } from "./user-profile"
 import { StripePayment } from "./stripe-payment"
 import { StripeTwintPayment } from "./stripe-twint-payment"
@@ -51,6 +52,7 @@ interface Product {
   badge?: string
   origin?: string
   weight_kg?: number
+  shipping_on_request?: number
 }
 
 interface CartItem extends Product {
@@ -123,6 +125,7 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
   const [orderDetails, setOrderDetails] = useState<any>(null)
   const [formErrors, setFormErrors] = useState<Partial<CustomerInfo>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [contactOpen, setContactOpen] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<"paypal" | "invoice" | "stripe" | "twint" | "twint_stripe" | "pickup">("invoice")
 
   // Billing address states
@@ -291,7 +294,10 @@ export function CheckoutPage({ cart, onBackToStore, onClearCart, onAddToCart, on
     // Gift cards (item_type === "gutschein") have no shipping cost
     const onlyGutscheine = cart.every(item => (item as any).item_type === "gutschein")
     if (onlyGutscheine) { setShippingCost(0); setShippingInfo({ zone: "", range: "" }); return }
-    const totalWeight = cart.reduce((sum, item) => sum + (item.weight_kg ?? 0.5) * item.quantity, 0)
+    // Productos "Versand auf Anfrage": no suman envío. Si TODO el carrito es así, envío 0.
+    const onlyOnRequest = cart.length > 0 && cart.every(item => item.shipping_on_request)
+    if (onlyOnRequest) { setShippingCost(0); setShippingInfo({ zone: "", range: "" }); return }
+    const totalWeight = cart.reduce((sum, item) => sum + (item.shipping_on_request ? 0 : (item.weight_kg ?? 0.5)) * item.quantity, 0)
     fetch(`${API_BASE_URL}/calculate_shipping.php`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2240,6 +2246,19 @@ const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ?
                       {shippingInfo.zone} · {shippingInfo.range}
                     </div>
                   )}
+                  {paymentMethod !== "pickup" && cart.some(item => item.shipping_on_request) && (
+                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2">
+                      <p className="mb-2">Für einzelne Artikel (Versand auf Anfrage) wird der Versand separat vereinbart.</p>
+                      <button
+                        type="button"
+                        onClick={() => setContactOpen(true)}
+                        className="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                      >
+                        Kontaktieren
+                      </button>
+                    </div>
+                  )}
+                  <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} subject="Versand-/Abholanfrage" />
                   <Separator />
                   <div className="flex justify-between text-xl font-black">
                     <span>Gesamt:</span>

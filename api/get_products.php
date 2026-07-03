@@ -99,7 +99,8 @@ try {
         $product['heat_level'] = intval($product['heat_level']);
         $product['rating'] = floatval($product['rating']);
         $product['weight_kg'] = floatval($product['weight_kg'] ?? 0.5);
-        
+        $product['shipping_on_request'] = intval($product['shipping_on_request'] ?? 0);
+
         echo json_encode([
             'success' => true,
             'product' => $product
@@ -247,7 +248,8 @@ try {
             $product['heat_level'] = intval($product['heat_level']);
             $product['rating'] = floatval($product['rating']);
             $product['weight_kg'] = floatval($product['weight_kg'] ?? 0.5);
-            
+            $product['shipping_on_request'] = intval($product['shipping_on_request'] ?? 0);
+
             // Asegurar que category no sea null
             if (empty($product['category'])) {
                 $product['category'] = 'hot-sauce';

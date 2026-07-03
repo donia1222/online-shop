@@ -23,6 +23,7 @@ function slim(p: any) {
     origin: p.origin,
     supplier: p.supplier,
     weight_kg: p.weight_kg,
+    shipping_on_request: p.shipping_on_request,
     article_number: p.article_number,
     description: typeof p.description === "string" ? p.description.slice(0, 150) : "",
     image_urls: Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean).slice(0, 2) : [],
