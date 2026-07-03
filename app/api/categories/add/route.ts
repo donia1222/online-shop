@@ -5,14 +5,12 @@ const PHP_URL = process.env.NEXT_PUBLIC_API_BASE_URL + "/add_category.php"
 
 export async function POST(req: NextRequest) {
   try {
+    // Reenviar como multipart (conserva la imagen si la hay)
     const formData = await req.formData()
-    const params = new URLSearchParams()
-    formData.forEach((value, key) => params.append(key, value.toString()))
 
     const res = await fetch(PHP_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params.toString(),
+      body: formData,
     })
     const text = await res.text()
     const data = JSON.parse(text)

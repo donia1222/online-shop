@@ -157,9 +157,11 @@ interface ProductStats {
 interface Category {
   id: number
   parent_id: number | null
+  is_haupt?: number
   slug: string
   name: string
   description: string
+  image?: string | null
 }
 
 interface AdminProps {
@@ -261,6 +263,10 @@ export function Admin({ onClose }: AdminProps) {
   const [categories, setCategories] = useState<Category[]>([])
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  // true = el modal crea una Hauptkategorie (nivel superior, sin padre); oculta el selector de padre
+  const [forceHaupt, setForceHaupt] = useState(false)
+  // Estado interactivo del modal: si esta categoría es (o se convierte en) Hauptkategorie
+  const [catIsHaupt, setCatIsHaupt] = useState(false)
 
   // Excel Import State
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -2585,20 +2591,36 @@ export function Admin({ onClose }: AdminProps) {
             <div className="mb-6">
               <h2 className="text-xl font-black text-gray-900 tracking-tight">Kategorieverwaltung</h2>
               <p className="text-xs text-gray-400 mt-0.5 mb-3">Kategorien verwalten</p>
-              <button
-                onClick={() => { setEditingCategory(null); setIsCategoryModalOpen(true) }}
-                className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 p-5 text-left shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 w-full sm:w-auto sm:min-w-[220px]"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-6 -translate-x-4" />
-                <div className="relative">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
-                    <Plus className="w-5 h-5 text-white" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Botón 1: crear Hauptkategorie (nivel superior, sin padre) */}
+                <button
+                  onClick={() => { setEditingCategory(null); setForceHaupt(true); setCatIsHaupt(true); setIsCategoryModalOpen(true) }}
+                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 p-5 text-left shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                      <Plus className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-white font-bold text-base leading-tight">Neue Hauptkategorie</p>
+                    <p className="text-blue-100 text-xs mt-1">Oberste Ebene erstellen</p>
                   </div>
-                  <p className="text-white font-bold text-base leading-tight">Neue Kategorie</p>
-                  <p className="text-blue-100 text-xs mt-1">Kategorie erstellen</p>
-                </div>
-              </button>
+                </button>
+                {/* Botón 2: crear categoría/subcategoría dentro de otra (con selector de padre) */}
+                <button
+                  onClick={() => { setEditingCategory(null); setForceHaupt(false); setCatIsHaupt(false); setIsCategoryModalOpen(true) }}
+                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 to-sky-400 hover:from-sky-600 hover:to-sky-500 p-5 text-left shadow-md shadow-sky-500/20 hover:shadow-lg hover:shadow-sky-500/30 transition-all duration-200"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                      <Plus className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-white font-bold text-base leading-tight">Kategorie erstellen</p>
+                    <p className="text-sky-50 text-xs mt-1">Neue Kategorie erstellen</p>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* Categories List */}
@@ -2613,39 +2635,63 @@ export function Admin({ onClose }: AdminProps) {
                 { bg: "bg-red-100", dot: "bg-red-500", border: "border-red-300 hover:border-red-400", icon: "from-red-500 to-red-400 shadow-red-300/20", label: "text-red-600", activeBtn: "bg-red-600 text-white", ring: "border-red-400 ring-2 ring-red-200", header: "text-red-400" },
                 { bg: "bg-indigo-100", dot: "bg-indigo-500", border: "border-indigo-300 hover:border-indigo-400", icon: "from-indigo-500 to-indigo-400 shadow-indigo-300/20", label: "text-indigo-600", activeBtn: "bg-indigo-600 text-white", ring: "border-indigo-400 ring-2 ring-indigo-200", header: "text-indigo-400" },
               ]
-              const mainCats = categories.filter(c => c.parent_id === null)
-              const subCats = categories.filter(c => c.parent_id !== null)
-              const renderCatCard = (cat: Category, cs?: typeof SUB_COLORS[0]) => {
+              // Hauptkategorie = marcada con is_haupt · Kategorie = cuelga de nada o de una Haupt · Subkategorie = cuelga de una Kategorie
+              const haupts = categories.filter(c => c.is_haupt)
+              const isHauptId = (id: number | null) => id != null && haupts.some(h => h.id === id)
+              const kats = categories.filter(c => !c.is_haupt && (c.parent_id === null || isHauptId(c.parent_id)))
+              const subs = categories.filter(c => !c.is_haupt && c.parent_id != null && !isHauptId(c.parent_id))
+              const renderGroup = (parent: Category, kids: Category[], cs: typeof SUB_COLORS[0]) => (
+                <div key={parent.id}>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${cs.dot}`} />
+                    <h4 className={`text-sm font-bold ${cs.label}`}>{parent.name}</h4>
+                    <span className="text-[11px] text-gray-400 font-medium">{kids.length} Kat.</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {kids.map(cat => renderCatCard(cat, cs, true))}
+                  </div>
+                </div>
+              )
+              const renderCatCard = (cat: Category, cs?: typeof SUB_COLORS[0], hideParent = false) => {
                 const productCount = products.filter((p) => p.category === cat.slug).length
-                const parentName = cat.parent_id ? categories.find(c => c.id === cat.parent_id)?.name : null
+                // Una Hauptkategorie contiene categorías, no productos: contar categorías asignadas
+                const assignedCats = cat.is_haupt ? categories.filter(c => c.parent_id === cat.id).length : 0
+                const parentCat = cat.parent_id != null ? categories.find(c => c.id === cat.parent_id) : null
+                const parentName = parentCat?.name ?? null
+                // Subkategorie = cuelga de una Kategorie (padre que NO es Haupt). Solo estas muestran "Ansehen".
+                const isSub = !cat.is_haupt && !!parentCat && !parentCat.is_haupt
                 const isSelected = productFilters.category === cat.slug
                 return (
                   <div key={cat.slug} className={`flex flex-col rounded-2xl border shadow-sm hover:shadow-md transition-all overflow-hidden bg-white ${isSelected ? "border-blue-400 ring-2 ring-blue-200" : "border-gray-100 hover:border-gray-200"}`}>
                     <div className="flex items-center gap-2.5 px-3.5 pt-3 pb-2">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-gradient-to-br ${cat.parent_id ? (cs?.icon ?? "from-blue-400 to-blue-300 shadow-blue-300/20") : "from-blue-600 to-blue-500 shadow-blue-500/20"}`}>
-                        <Flame className="w-4 h-4 text-white" />
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 overflow-hidden shadow-sm ${cat.image ? "bg-gray-100" : `bg-gradient-to-br ${cat.parent_id ? (cs?.icon ?? "from-blue-400 to-blue-300 shadow-blue-300/20") : "from-blue-600 to-blue-500 shadow-blue-500/20"}`}`}>
+                        {cat.image ? <img src={cat.image} alt="" className="w-full h-full object-cover" /> : <Flame className="w-4 h-4 text-white" />}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-gray-900 text-sm truncate">{cat.name}</p>
-                        {parentName && <p className={`text-xs font-bold truncate ${cs?.label ?? "text-blue-500"}`}>↳ {parentName}</p>}
-                        <p className="text-[11px] text-gray-400 font-medium">{productCount} Produkt{productCount !== 1 ? "e" : ""}</p>
+                        {parentName && !hideParent && <p className={`text-xs font-bold truncate ${cs?.label ?? "text-blue-500"}`}>↳ {parentName}</p>}
+                        <p className="text-[11px] text-gray-400 font-medium">{cat.is_haupt ? `${assignedCats} Kategorie${assignedCats !== 1 ? "n" : ""}` : `${productCount} Produkt${productCount !== 1 ? "e" : ""}`}</p>
                       </div>
                     </div>
                     <div className="flex border-t border-gray-100 mt-1">
+                      {isSub && (
+                        <>
+                          <button
+                            onClick={() => {
+                              const isActive = productFilters.category === cat.slug
+                              setProductFilters(prev => ({ ...prev, category: isActive ? "" : cat.slug }))
+                              if (!isActive) setTimeout(() => productsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
+                            }}
+                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold transition-colors ${isSelected ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-50"}`}
+                          >
+                            <Eye className="w-3 h-3" />
+                            Ansehen
+                          </button>
+                          <div className="w-px bg-gray-100" />
+                        </>
+                      )}
                       <button
-                        onClick={() => {
-                          const isActive = productFilters.category === cat.slug
-                          setProductFilters(prev => ({ ...prev, category: isActive ? "" : cat.slug }))
-                          if (!isActive) setTimeout(() => productsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
-                        }}
-                        className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold transition-colors ${isSelected ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-50"}`}
-                      >
-                        <Eye className="w-3 h-3" />
-                        Ansehen
-                      </button>
-                      <div className="w-px bg-gray-100" />
-                      <button
-                        onClick={() => { setEditingCategory(cat); setIsCategoryModalOpen(true) }}
+                        onClick={() => { setEditingCategory(cat); setForceHaupt(false); setCatIsHaupt(!!cat.is_haupt); setIsCategoryModalOpen(true) }}
                         className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-green-700 hover:bg-green-50 transition-colors"
                       >
                         <Edit className="w-3 h-3" />
@@ -2665,22 +2711,67 @@ export function Admin({ onClose }: AdminProps) {
               }
               return (
                 <>
-                  {mainCats.length > 0 && (
+                  {/* NIVEL 1 — Hauptkategorien (solo las marcadas con is_haupt) */}
+                  {haupts.length > 0 && (
                     <div className="mb-6">
-                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Kategorien</h3>
+                      <div className="flex items-center gap-3 mb-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-md shadow-blue-500/20">
+                        <Flame className="w-6 h-6 text-white shrink-0" />
+                        <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wide">Hauptkategorien</h3>
+                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {mainCats.map((cat, i) => renderCatCard(cat, SUB_COLORS[i % SUB_COLORS.length]))}
+                        {haupts.map((cat, i) => renderCatCard(cat, SUB_COLORS[i % SUB_COLORS.length]))}
                       </div>
                     </div>
                   )}
-                  {subCats.length > 0 && (
+                  {/* NIVEL 2 — Kategorien (agrupadas bajo su Hauptkategorie; las sueltas aparte) */}
+                  {kats.length > 0 && (
                     <div className="mb-6">
-                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Subkategorien</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {subCats.map(cat => {
-                          const parentIdx = mainCats.findIndex(c => c.id === cat.parent_id)
-                          const cs = SUB_COLORS[parentIdx % SUB_COLORS.length]
-                          return renderCatCard(cat, cs)
+                      <div className="flex items-center gap-3 mb-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-md shadow-emerald-500/20">
+                        <span className="w-3 h-3 rounded-full bg-white shrink-0" />
+                        <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wide">Kategorien</h3>
+                      </div>
+                      <div className="space-y-6">
+                        {haupts.map((parent, i) => {
+                          const kids = kats.filter(c => c.parent_id === parent.id)
+                          if (kids.length === 0) return null
+                          return renderGroup(parent, kids, SUB_COLORS[i % SUB_COLORS.length])
+                        })}
+                        {(() => {
+                          const loose = kats.filter(c => c.parent_id === null)
+                          if (loose.length === 0) return null
+                          const grid = (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                              {loose.map((cat, i) => renderCatCard(cat, SUB_COLORS[i % SUB_COLORS.length]))}
+                            </div>
+                          )
+                          // Sin ninguna Haupt aún: lista plana sin encabezado de grupo
+                          if (haupts.length === 0) return grid
+                          return (
+                            <div>
+                              <div className="flex items-center gap-2 mb-2.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                <h4 className="text-sm font-bold text-gray-500">Ohne Hauptkategorie</h4>
+                                <span className="text-[11px] text-gray-400 font-medium">{loose.length} Kat.</span>
+                              </div>
+                              {grid}
+                            </div>
+                          )
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                  {/* NIVEL 3 — Subkategorien (agrupadas bajo su Kategorie) */}
+                  {subs.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-3 mb-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 shadow-md shadow-amber-500/20">
+                        <span className="w-3 h-3 rounded-full bg-white shrink-0" />
+                        <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wide">Subkategorien</h3>
+                      </div>
+                      <div className="space-y-6">
+                        {kats.map((parent, i) => {
+                          const kids = subs.filter(c => c.parent_id === parent.id)
+                          if (kids.length === 0) return null
+                          return renderGroup(parent, kids, SUB_COLORS[i % SUB_COLORS.length])
                         })}
                       </div>
                     </div>
@@ -2709,37 +2800,7 @@ export function Admin({ onClose }: AdminProps) {
                   </div>
                 </button>
 
-                {/* Banner: Excel Import */}
-                <button
-                  onClick={() => setShowExcelImport(v => !v)}
-                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 p-5 text-left shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-200"
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
-                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-6 -translate-x-4" />
-                  <div className="relative">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
-                      <FileSpreadsheet className="w-5 h-5 text-white" />
-                    </div>
-                    <p className="text-white font-bold text-base leading-tight">Excel importieren</p>
-                    <p className="text-emerald-100 text-xs mt-1">{showExcelImport ? "Formular schließen" : "Produkte per Excel synchronisieren"}</p>
-                  </div>
-                </button>
-                
-      <button
-                  onClick={() => setShowBrandsModal(true)}
-                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 p-5 text-left shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200"
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
-                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-6 -translate-x-4" />
-                  <div className="relative">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
-                      <Edit className="w-5 h-5 text-white" />
-                    </div>
-                    <p className="text-white font-bold text-base leading-tight">Hersteller verwalten</p>
-                    <p className="text-indigo-100 text-xs mt-1">Markennamen umbenennen</p>
-                  </div>
-                </button>
-
+                {/* Excel-Import und Hersteller verwalten ausgeblendet */}
               </div>
             </div>
 
@@ -4465,10 +4526,10 @@ export function Admin({ onClose }: AdminProps) {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isCategoryModalOpen} onOpenChange={(open) => { setIsCategoryModalOpen(open); if (!open) setEditingCategory(null) }}>
+        <Dialog open={isCategoryModalOpen} onOpenChange={(open) => { setIsCategoryModalOpen(open); if (!open) { setEditingCategory(null); setForceHaupt(false); setCatIsHaupt(false) } }}>
           <DialogContent className="left-0 top-0 translate-x-0 translate-y-0 w-full max-w-full h-full max-h-full rounded-none flex flex-col overflow-hidden p-0 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-md sm:h-auto sm:max-h-[80vh] sm:rounded-lg bg-white">
             <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">
-              <DialogTitle>{editingCategory ? "Kategorie bearbeiten" : "Neue Kategorie erstellen"}</DialogTitle>
+              <DialogTitle>{editingCategory ? (editingCategory.is_haupt ? "Hauptkategorie bearbeiten" : "Kategorie bearbeiten") : (forceHaupt ? "Neue Hauptkategorie" : "Neue Kategorie erstellen")}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCategorySubmit} className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -4490,6 +4551,34 @@ export function Admin({ onClose }: AdminProps) {
                     <p className="text-xs text-gray-400 mt-1">Slug: <span className="font-mono">{editingCategory.slug}</span> (wird nicht geändert)</p>
                   )}
                 </div>
+                <input type="hidden" name="is_haupt" value={catIsHaupt ? "1" : "0"} />
+                {/* Convertir entre Kategorie y Hauptkategorie */}
+                <label className="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={catIsHaupt}
+                    onChange={e => setCatIsHaupt(e.target.checked)}
+                    className="w-4 h-4 accent-blue-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Als Hauptkategorie (oberste Ebene)</span>
+                </label>
+                {catIsHaupt && (
+                  <div>
+                    <Label htmlFor="cat-image" className="text-sm font-medium">Bild (optional)</Label>
+                    {editingCategory?.image && (
+                      <img src={editingCategory.image} alt="" className="mt-2 w-full h-32 object-cover rounded-lg border border-gray-200" />
+                    )}
+                    <input
+                      id="cat-image"
+                      type="file"
+                      name="image"
+                      accept="image/*"
+                      className="mt-2 block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {editingCategory?.image && <p className="text-xs text-gray-400 mt-1">Neues Bild wählen, um das aktuelle zu ersetzen.</p>}
+                  </div>
+                )}
+                {!catIsHaupt && (
                 <div>
                   <Label htmlFor="cat-parent" className="text-sm font-medium">Übergeordnete Kategorie</Label>
                   <select
@@ -4499,15 +4588,39 @@ export function Admin({ onClose }: AdminProps) {
                     key={(editingCategory?.id ?? "new") + "-parent"}
                     className="w-full mt-1 h-12 sm:h-10 px-3 text-base sm:text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2C5F2E]"
                   >
-                    <option value="">— Keine (Hauptkategorie) —</option>
-                    {categories
-                      .filter(c => c.parent_id === null && c.id !== editingCategory?.id)
-                      .map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))
-                    }
+                    <option value="">— Keine (lose Kategorie) —</option>
+                    {(() => {
+                      // No se puede elegir como padre: la propia categoría ni sus descendientes (evita bucles)
+                      const blocked = new Set<number>()
+                      if (editingCategory) {
+                        blocked.add(editingCategory.id)
+                        for (let added = true; added;) {
+                          added = false
+                          for (const c of categories)
+                            if (c.parent_id != null && blocked.has(c.parent_id) && !blocked.has(c.id)) { blocked.add(c.id); added = true }
+                        }
+                      }
+                      const isHauptId = (id: number | null) => id != null && categories.some(h => h.is_haupt && h.id === id)
+                      const hauptList = categories.filter(c => c.is_haupt && !blocked.has(c.id))
+                      const katList = categories.filter(c => !c.is_haupt && (c.parent_id === null || isHauptId(c.parent_id)) && !blocked.has(c.id))
+                      return (
+                        <>
+                          {hauptList.length > 0 && (
+                            <optgroup label="In Hauptkategorie (→ wird Kategorie)">
+                              {hauptList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </optgroup>
+                          )}
+                          {katList.length > 0 && (
+                            <optgroup label="In Kategorie (→ wird Subkategorie)">
+                              {katList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </optgroup>
+                          )}
+                        </>
+                      )
+                    })()}
                   </select>
                 </div>
+                )}
                 <div>
                   <Label htmlFor="cat-description" className="text-sm font-medium">Beschreibung</Label>
                   <Textarea

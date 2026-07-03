@@ -20,7 +20,9 @@ try {
 
     $name        = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
-    $parent_id   = isset($_POST['parent_id']) && intval($_POST['parent_id']) > 0 ? intval($_POST['parent_id']) : null;
+    $is_haupt    = !empty($_POST['is_haupt']) && $_POST['is_haupt'] != '0' ? 1 : 0;
+    // Una Hauptkategorie es siempre nivel superior (sin padre)
+    $parent_id   = $is_haupt ? null : (isset($_POST['parent_id']) && intval($_POST['parent_id']) > 0 ? intval($_POST['parent_id']) : null);
 
     if (empty($name)) {
         throw new Exception('El nombre de la categoría es requerido');
@@ -48,12 +50,27 @@ try {
         throw new Exception('Ya existe una categoría con ese nombre');
     }
 
-    $stmt = $pdo->prepare("INSERT INTO categories (parent_id, slug, name, description) VALUES (:parent_id, :slug, :name, :description)");
+    // Imagen opcional (sobre todo para Hauptkategorien)
+    $image_name = null;
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $upload_dir = 'upload/';
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+        $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!in_array($ext, $allowed)) throw new Exception('Bildformat nicht erlaubt. Erlaubt: ' . implode(', ', $allowed));
+        if ($_FILES['image']['size'] > 5 * 1024 * 1024) throw new Exception('Bild zu groß. Maximal 5MB');
+        $image_name = uniqid() . '_' . time() . '.' . $ext;
+        if (!move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $image_name)) throw new Exception('Fehler beim Hochladen des Bildes');
+    }
+
+    $stmt = $pdo->prepare("INSERT INTO categories (parent_id, is_haupt, slug, name, description, image) VALUES (:parent_id, :is_haupt, :slug, :name, :description, :image)");
     $stmt->execute([
         ':parent_id'   => $parent_id,
+        ':is_haupt'    => $is_haupt,
         ':slug'        => $slug,
         ':name'        => $name,
-        ':description' => $description
+        ':description' => $description,
+        ':image'       => $image_name
     ]);
 
     $new_id = intval($pdo->lastInsertId());
@@ -64,9 +81,11 @@ try {
         'category' => [
             'id'          => $new_id,
             'parent_id'   => $parent_id,
+            'is_haupt'    => $is_haupt,
             'slug'        => $slug,
             'name'        => $name,
-            'description' => $description
+            'description' => $description,
+            'image'       => $image_name ? getUploadBaseUrl() . $image_name : null
         ]
     ]);
 

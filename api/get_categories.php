@@ -18,12 +18,14 @@ if (!in_array($_SERVER['REQUEST_METHOD'], ['GET', 'POST'])) {
 try {
     $pdo = getDBConnection();
 
-    $stmt = $pdo->query("SELECT id, parent_id, slug, name, description, created_at FROM categories ORDER BY parent_id ASC, id ASC");
+    $stmt = $pdo->query("SELECT id, parent_id, is_haupt, slug, name, description, image, created_at FROM categories ORDER BY parent_id ASC, id ASC");
     $categories = $stmt->fetchAll();
 
     foreach ($categories as &$cat) {
         $cat['id'] = intval($cat['id']);
         $cat['parent_id'] = $cat['parent_id'] !== null ? intval($cat['parent_id']) : null;
+        $cat['is_haupt'] = intval($cat['is_haupt']);
+        $cat['image'] = !empty($cat['image']) ? getUploadBaseUrl() . $cat['image'] : null;
     }
 
     echo json_encode([

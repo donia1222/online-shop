@@ -31,7 +31,7 @@ interface CartItem {
   description: string; heatLevel: number; rating: number; weight_kg?: number
   badge?: string; origin?: string; quantity: number
 }
-interface Category { id: number; parent_id: number | null; slug: string; name: string }
+interface Category { id: number; parent_id: number | null; slug: string; name: string; is_haupt?: number; image?: string | null }
 
 
 // ─── Standalone helpers ────────────────────────────────────────────────────────
@@ -543,14 +543,24 @@ export default function ShopGrid() {
     return ORIGIN_ALIASES[n] ?? n
   }
 
-  const activeCatSubSlugs = (() => {
+  // Slugs de una categoría + TODOS sus descendientes (Haupt → Kategorien → Subkategorien)
+  const branchSlugs = (catId: number): Set<string> => {
+    const ids = new Set<number>([catId])
+    for (let added = true; added;) {
+      added = false
+      for (const c of categories)
+        if (c.parent_id != null && ids.has(c.parent_id) && !ids.has(c.id)) { ids.add(c.id); added = true }
+    }
+    return new Set(categories.filter(c => ids.has(c.id)).map(c => c.slug))
+  }
+
+  const activeBranchSlugs = (() => {
     const activeCat = categories.find(c => c.slug === activeCategory)
-    if (!activeCat) return new Set<string>()
-    return new Set(categories.filter(c => c.parent_id === activeCat.id).map(c => c.slug))
+    return activeCat ? branchSlugs(activeCat.id) : new Set<string>()
   })()
 
   const matchesActiveCategory = (p: Product) =>
-    activeCategory === "all" || p.category === activeCategory || activeCatSubSlugs.has(p.category ?? "")
+    activeCategory === "all" || activeBranchSlugs.has(p.category ?? "")
 
   const suppliers = products.length > 0
     ? Array.from(new Set(
@@ -904,8 +914,8 @@ export default function ShopGrid() {
                     return (aHasSubs === bHasSubs) ? 0 : aHasSubs ? -1 : 1
                   }).map(parent => {
                     const subs = categories.filter(c => c.parent_id === parent.id)
-                    const subSlugs = subs.map(c => c.slug)
-                    const count = products.filter(p => p.category === parent.slug || subSlugs.includes(p.category ?? "")).length
+                    const bs = branchSlugs(parent.id)
+                    const count = products.filter(p => bs.has(p.category ?? "")).length
                     const isActive = activeCategory === parent.slug
                     const isExpanded = expandedCats.has(parent.slug)
                     const hasSubs = subs.length > 0
@@ -931,7 +941,7 @@ export default function ShopGrid() {
                         {hasSubs && isExpanded && (
                           <ul className="mt-1 space-y-0.5 pl-3 border-l-2 border-[#B6D9B7] ml-3">
                             {subs.map(sub => {
-                              const subCount = products.filter(p => p.category === sub.slug).length
+                              const subCount = products.filter(p => branchSlugs(sub.id).has(p.category ?? "")).length
                               const isSubActive = activeCategory === sub.slug
                               return (
                                 <li key={sub.slug}>
@@ -1062,16 +1072,16 @@ export default function ShopGrid() {
                 </div>
               </button>
               {categories.filter(cat => cat.parent_id === null).map(cat => {
-                const catSubSlugs = categories.filter(c => c.parent_id === cat.id).map(c => c.slug)
-                const catProds = products.filter(p =>
-                  p.category === cat.slug || p.category === cat.name || catSubSlugs.includes(p.category ?? "")
-                )
+                const branch = branchSlugs(cat.id)
+                const catProds = products.filter(p => branch.has(p.category ?? "") || p.category === cat.name)
                 const isActive = activeCategory === cat.slug
                 const displayName = cat.name.replace(/\s*\d{4}$/, "")
+                // Hauptkategorie: su imagen de la BD manda como fondo; los productos quedan de fallback
+                const srcs = cat.image ? [cat.image, ...catImageSrcWithFallback(catProds, cat.name)] : catImageSrcWithFallback(catProds, cat.name)
                 return (
                   <CatCard
                     key={cat.slug}
-                    srcs={catImageSrcWithFallback(catProds, cat.name)}
+                    srcs={srcs}
                     displayName={displayName}
                     isActive={isActive}
                     onClick={() => setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug)}
@@ -1106,15 +1116,16 @@ export default function ShopGrid() {
                   </div>
                 </button>
                 {categories.filter(cat => cat.parent_id === null).map(cat => {
-                  const catSubSlugs2 = categories.filter(c => c.parent_id === cat.id).map(c => c.slug)
-                  const catProds = products.filter(p => p.category === cat.slug || p.category === cat.name || catSubSlugs2.includes(p.category ?? ""))
-                  const isActive = activeCategory === cat.slug || catSubSlugs2.includes(activeCategory)
+                  const branch = branchSlugs(cat.id)
+                  const catProds = products.filter(p => branch.has(p.category ?? "") || p.category === cat.name)
+                  const isActive = activeCategory === cat.slug || branch.has(activeCategory)
                   const displayName = cat.name.replace(/\s*\d{4}$/, "")
+                  const srcs = cat.image ? [cat.image, ...catImageSrcWithFallback(catProds, cat.name)] : catImageSrcWithFallback(catProds, cat.name)
                   return (
                     <MobileCatCard
                       key={cat.slug}
                       id={`mobile-cat-${cat.slug}`}
-                      srcs={catImageSrcWithFallback(catProds, cat.name)}
+                      srcs={srcs}
                       displayName={displayName}
                       isActive={isActive}
                       onClick={() => { setActiveCategory(prev => prev === cat.slug ? "all" : cat.slug); setExpandedCats(prev => { const n = new Set(prev); n.add(cat.slug); return n }) }}
@@ -1127,19 +1138,21 @@ export default function ShopGrid() {
             {/* ── Subcategory bar — visible when active category has subcategories ── */}
             {(() => {
               const activeCat = categories.find(c => c.slug === activeCategory)
-              // Si la categoría activa es una sub, busca el padre
-              const parentCat = activeCat?.parent_id
-                ? categories.find(c => c.id === activeCat.parent_id)
-                : activeCat
-              const subs = parentCat ? categories.filter(c => c.parent_id === parentCat.id) : []
-              if (subs.length === 0) return null
+              // Drill-down: si la activa tiene hijos, muestra sus hijos; si es hoja, muestra sus hermanos
+              const ownChildren = activeCat ? categories.filter(c => c.parent_id === activeCat.id) : []
+              const shownParent = ownChildren.length > 0
+                ? activeCat
+                : (activeCat?.parent_id ? categories.find(c => c.id === activeCat.parent_id) : undefined)
+              const subs = shownParent ? categories.filter(c => c.parent_id === shownParent.id) : []
+              if (!shownParent || subs.length === 0) return null
+              const barTitle = shownParent.is_haupt ? "Kategorien" : "Subkategorien"
               return (
                 <div className="border-t border-[#E0E0E0] mt-6 pt-6">
                   <div className="flex items-start gap-2.5 mb-2.5">
                     <div className="w-0.5 self-stretch bg-[#2C5F2E] rounded-full flex-shrink-0" />
                     <div>
-                      <p className="font-black text-[#2C5F2E] text-xl lg:text-2xl leading-tight">Subkategorien</p>
-                      <p className="text-sm text-[#888] mt-1">{parentCat?.name.replace(/\s*\d{4}$/, "")}</p>
+                      <p className="font-black text-[#2C5F2E] text-xl lg:text-2xl leading-tight">{barTitle}</p>
+                      <p className="text-sm text-[#888] mt-1">{shownParent.name.replace(/\s*\d{4}$/, "")}</p>
                     </div>
                   </div>
                   <div className="overflow-x-auto mb-3 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -1149,7 +1162,7 @@ export default function ShopGrid() {
                         return (
                           <button
                             key={sub.slug}
-                            onClick={() => setActiveCategory(prev => prev === sub.slug ? parentCat!.slug : sub.slug)}
+                            onClick={() => setActiveCategory(prev => prev === sub.slug ? shownParent.slug : sub.slug)}
                             className="px-2.5 py-1 rounded-full border transition-all whitespace-nowrap text-[11px] font-black uppercase tracking-wider"
                             style={isSubActive
                               ? { backgroundColor: "#2C5F2E", color: "#fff", borderColor: "#2C5F2E" }
