@@ -879,7 +879,7 @@ export default function ShopGrid() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex gap-6">
 
           {/* ── Sidebar ── */}
-          <aside className={`${sidebarOpen ? "block" : "hidden"} lg:block w-full lg:w-52 xl:w-60 flex-shrink-0 lg:sticky lg:top-20 lg:self-start`}>
+          <aside className={`${sidebarOpen ? "block" : "hidden"} lg:block w-full lg:w-72 xl:w-80 flex-shrink-0 lg:self-start`}>
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#EBEBEB] space-y-5">
 
               <div>
