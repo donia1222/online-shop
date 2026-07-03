@@ -1146,7 +1146,7 @@ export default function ShopGrid() {
                 : (activeCat?.parent_id ? categories.find(c => c.id === activeCat.parent_id) : undefined)
               const subs = shownParent ? categories.filter(c => c.parent_id === shownParent.id) : []
               if (!shownParent || subs.length === 0) return null
-              const barTitle = "Subkategorien"
+              const barTitle = shownParent.is_haupt ? "Hauptkategorie" : "Subkategorien"
               return (
                 <div className="border-t border-[#E0E0E0] mt-6 pt-6">
                   <div className="flex items-start gap-2.5 mb-2.5">
