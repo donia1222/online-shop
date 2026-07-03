@@ -942,19 +942,49 @@ export default function ShopGrid() {
                         {hasSubs && isExpanded && (
                           <ul className="mt-1 space-y-0.5 pl-3 border-l-2 border-[#B6D9B7] ml-3">
                             {subs.map(sub => {
+                              const subSubs = categories.filter(c => c.parent_id === sub.id)
+                              const hasSubSubs = subSubs.length > 0
                               const subCount = products.filter(p => branchSlugs(sub.id).has(p.category ?? "")).length
                               const isSubActive = activeCategory === sub.slug
+                              const isSubExpanded = expandedCats.has(sub.slug)
                               return (
                                 <li key={sub.slug}>
-                                  <button
-                                    onClick={() => { setShowWishlist(false); setActiveCategory(prev => prev === sub.slug ? parent.slug : sub.slug); setSidebarOpen(false) }}
-                                    className={`w-full text-left flex items-center justify-between text-sm px-3 py-1.5 rounded-lg transition-all font-medium ${
-                                      isSubActive ? "bg-[#2C5F2E] text-white shadow-sm" : "text-[#555] hover:bg-[#F5F5F5] hover:text-[#1A1A1A]"
-                                    }`}
-                                  >
-                                    <span className="truncate">{sub.name.replace(/\s*\d{4}$/, "")}</span>
-                                    <span className={`text-[10px] font-bold ml-2 px-1.5 py-0.5 rounded-full flex-shrink-0 ${isSubActive ? "bg-white/25 text-white" : "bg-[#F0F0F0] text-[#888]"}`}>{subCount}</span>
-                                  </button>
+                                  <div className={`flex items-center rounded-lg overflow-hidden transition-all ${isSubActive ? "bg-[#2C5F2E] shadow-sm" : "hover:bg-[#F5F5F5]"}`}>
+                                    <button
+                                      onClick={() => { setShowWishlist(false); const selecting = activeCategory !== sub.slug; setActiveCategory(selecting ? sub.slug : parent.slug); if (hasSubSubs) setExpandedCats(prev => { const n = new Set(prev); selecting ? n.add(sub.slug) : n.delete(sub.slug); return n }); setSidebarOpen(false) }}
+                                      className="flex-1 text-left flex items-center justify-between gap-2 px-3 py-1.5 min-w-0"
+                                    >
+                                      <span className={`text-sm font-medium truncate ${isSubActive ? "text-white" : "text-[#555]"}`}>{sub.name.replace(/\s*\d{4}$/, "")}</span>
+                                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${isSubActive ? "bg-white/25 text-white" : "bg-[#F0F0F0] text-[#888]"}`}>{subCount}</span>
+                                    </button>
+                                    {hasSubSubs && (
+                                      <button
+                                        onClick={() => setExpandedCats(prev => { const n = new Set(prev); n.has(sub.slug) ? n.delete(sub.slug) : n.add(sub.slug); return n })}
+                                        className={`px-2 py-1.5 flex-shrink-0 font-black text-sm border-l transition-colors ${isSubActive ? "border-white/20 text-white hover:bg-white/10" : "border-[#E5E5E5] text-[#2C5F2E] hover:bg-[#E5E5E5]"}`}
+                                      >
+                                        {isSubExpanded ? "−" : "+"}
+                                      </button>
+                                    )}
+                                  </div>
+                                  {hasSubSubs && isSubExpanded && (
+                                    <ul className="mt-1 space-y-0.5 pl-3 border-l-2 border-[#E0E0E0] ml-3">
+                                      {subSubs.map(ss => {
+                                        const ssCount = products.filter(p => branchSlugs(ss.id).has(p.category ?? "")).length
+                                        const isSsActive = activeCategory === ss.slug
+                                        return (
+                                          <li key={ss.slug}>
+                                            <button
+                                              onClick={() => { setShowWishlist(false); setActiveCategory(prev => prev === ss.slug ? sub.slug : ss.slug); setSidebarOpen(false) }}
+                                              className={`w-full text-left flex items-center justify-between text-sm px-3 py-1.5 rounded-lg transition-all font-medium ${isSsActive ? "bg-[#2C5F2E] text-white shadow-sm" : "text-[#777] hover:bg-[#F5F5F5] hover:text-[#1A1A1A]"}`}
+                                            >
+                                              <span className="truncate">{ss.name.replace(/\s*\d{4}$/, "")}</span>
+                                              <span className={`text-[10px] font-bold ml-2 px-1.5 py-0.5 rounded-full flex-shrink-0 ${isSsActive ? "bg-white/25 text-white" : "bg-[#F0F0F0] text-[#888]"}`}>{ssCount}</span>
+                                            </button>
+                                          </li>
+                                        )
+                                      })}
+                                    </ul>
+                                  )}
                                 </li>
                               )
                             })}
