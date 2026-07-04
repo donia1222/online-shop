@@ -270,6 +270,8 @@ export function Admin({ onClose }: AdminProps) {
   const [forceHaupt, setForceHaupt] = useState(false)
   // Estado interactivo del modal: si esta categoría es (o se convierte en) Hauptkategorie
   const [catIsHaupt, setCatIsHaupt] = useState(false)
+  // Modo de creación: "kategorie" (padre = Haupts) | "subkategorie" (padre = Kategorien, sin casilla Haupt) | null (editar/Haupt)
+  const [catCreateKind, setCatCreateKind] = useState<"kategorie" | "subkategorie" | null>(null)
 
   // Excel Import State
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -2596,10 +2598,10 @@ export function Admin({ onClose }: AdminProps) {
             <div className="mb-6">
               <h2 className="text-xl font-black text-gray-900 tracking-tight">Kategorieverwaltung</h2>
               <p className="text-xs text-gray-400 mt-0.5 mb-3">Kategorien verwalten</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Botón 1: crear Hauptkategorie (nivel superior, sin padre) */}
                 <button
-                  onClick={() => { setEditingCategory(null); setForceHaupt(true); setCatIsHaupt(true); setIsCategoryModalOpen(true) }}
+                  onClick={() => { setEditingCategory(null); setForceHaupt(true); setCatIsHaupt(true); setCatCreateKind(null); setIsCategoryModalOpen(true) }}
                   className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 p-5 text-left shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200"
                 >
                   <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
@@ -2611,9 +2613,9 @@ export function Admin({ onClose }: AdminProps) {
                     <p className="text-blue-100 text-xs mt-1">Oberste Ebene erstellen</p>
                   </div>
                 </button>
-                {/* Botón 2: crear categoría/subcategoría dentro de otra (con selector de padre) */}
+                {/* Botón 2: crear Kategorie (padre = una Hauptkategorie) */}
                 <button
-                  onClick={() => { setEditingCategory(null); setForceHaupt(false); setCatIsHaupt(false); setIsCategoryModalOpen(true) }}
+                  onClick={() => { setEditingCategory(null); setForceHaupt(false); setCatIsHaupt(false); setCatCreateKind("kategorie"); setIsCategoryModalOpen(true) }}
                   className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 to-sky-400 hover:from-sky-600 hover:to-sky-500 p-5 text-left shadow-md shadow-sky-500/20 hover:shadow-lg hover:shadow-sky-500/30 transition-all duration-200"
                 >
                   <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
@@ -2621,8 +2623,22 @@ export function Admin({ onClose }: AdminProps) {
                     <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
                       <Plus className="w-5 h-5 text-white" />
                     </div>
-                    <p className="text-white font-bold text-base leading-tight">Kategorie/Subkategorie erstellen</p>
-                    <p className="text-sky-50 text-xs mt-1">Neue Kategorie oder Subkategorie</p>
+                    <p className="text-white font-bold text-base leading-tight">Kategorie erstellen</p>
+                    <p className="text-sky-50 text-xs mt-1">In eine Hauptkategorie</p>
+                  </div>
+                </button>
+                {/* Botón 3: crear Subkategorie (padre = una Kategorie) */}
+                <button
+                  onClick={() => { setEditingCategory(null); setForceHaupt(false); setCatIsHaupt(false); setCatCreateKind("subkategorie"); setIsCategoryModalOpen(true) }}
+                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-500 to-teal-400 hover:from-teal-600 hover:to-teal-500 p-5 text-left shadow-md shadow-teal-500/20 hover:shadow-lg hover:shadow-teal-500/30 transition-all duration-200"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                      <Plus className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-white font-bold text-base leading-tight">Subkategorie erstellen</p>
+                    <p className="text-teal-50 text-xs mt-1">In eine Kategorie</p>
                   </div>
                 </button>
               </div>
@@ -2696,7 +2712,7 @@ export function Admin({ onClose }: AdminProps) {
                         </>
                       )}
                       <button
-                        onClick={() => { setEditingCategory(cat); setForceHaupt(false); setCatIsHaupt(!!cat.is_haupt); setIsCategoryModalOpen(true) }}
+                        onClick={() => { setEditingCategory(cat); setForceHaupt(false); setCatIsHaupt(!!cat.is_haupt); setCatCreateKind(null); setIsCategoryModalOpen(true) }}
                         className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-green-700 hover:bg-green-50 transition-colors"
                       >
                         <Edit className="w-3 h-3" />
@@ -4546,10 +4562,10 @@ export function Admin({ onClose }: AdminProps) {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isCategoryModalOpen} onOpenChange={(open) => { setIsCategoryModalOpen(open); if (!open) { setEditingCategory(null); setForceHaupt(false); setCatIsHaupt(false) } }}>
+        <Dialog open={isCategoryModalOpen} onOpenChange={(open) => { setIsCategoryModalOpen(open); if (!open) { setEditingCategory(null); setForceHaupt(false); setCatIsHaupt(false); setCatCreateKind(null) } }}>
           <DialogContent className="left-0 top-0 translate-x-0 translate-y-0 w-full max-w-full h-full max-h-full rounded-none flex flex-col overflow-hidden p-0 sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-md sm:h-auto sm:max-h-[80vh] sm:rounded-lg bg-white">
             <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">
-              <DialogTitle>{editingCategory ? (editingCategory.is_haupt ? "Hauptkategorie bearbeiten" : "Kategorie bearbeiten") : (forceHaupt ? "Neue Hauptkategorie" : "Neue Kategorie erstellen")}</DialogTitle>
+              <DialogTitle>{editingCategory ? (editingCategory.is_haupt ? "Hauptkategorie bearbeiten" : "Kategorie bearbeiten") : (forceHaupt ? "Neue Hauptkategorie" : catCreateKind === "subkategorie" ? "Neue Subkategorie" : "Neue Kategorie")}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCategorySubmit} className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -4572,7 +4588,8 @@ export function Admin({ onClose }: AdminProps) {
                   )}
                 </div>
                 <input type="hidden" name="is_haupt" value={catIsHaupt ? "1" : "0"} />
-                {/* Convertir entre Kategorie y Hauptkategorie */}
+                {/* Convertir entre Kategorie y Hauptkategorie (oculto al crear una Subkategorie) */}
+                {catCreateKind !== "subkategorie" && (
                 <label className="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -4582,6 +4599,7 @@ export function Admin({ onClose }: AdminProps) {
                   />
                   <span className="text-sm font-medium text-gray-700">Als Hauptkategorie (oberste Ebene)</span>
                 </label>
+                )}
                 {catIsHaupt && (
                   <div>
                     <Label htmlFor="cat-image" className="text-sm font-medium">Bild (optional)</Label>
@@ -4623,14 +4641,17 @@ export function Admin({ onClose }: AdminProps) {
                       const isHauptId = (id: number | null) => id != null && categories.some(h => h.is_haupt && h.id === id)
                       const hauptList = categories.filter(c => c.is_haupt && !blocked.has(c.id))
                       const katList = categories.filter(c => !c.is_haupt && (c.parent_id === null || isHauptId(c.parent_id)) && !blocked.has(c.id))
+                      // Kategorie erstellen → solo Haupts · Subkategorie erstellen → solo Kategorien · editar → ambas
+                      const showHaupt = catCreateKind !== "subkategorie"
+                      const showKat = catCreateKind !== "kategorie"
                       return (
                         <>
-                          {hauptList.length > 0 && (
+                          {showHaupt && hauptList.length > 0 && (
                             <optgroup label="In Hauptkategorie (→ wird Kategorie)">
                               {hauptList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </optgroup>
                           )}
-                          {katList.length > 0 && (
+                          {showKat && katList.length > 0 && (
                             <optgroup label="In Kategorie (→ wird Subkategorie)">
                               {katList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </optgroup>
