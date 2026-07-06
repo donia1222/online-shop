@@ -5,6 +5,12 @@ import { phpFetch } from "@/lib/php-queue"
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "")
 const TTL = 600_000 // 10 min
 
+// Token servidor-a-servidor para guardar ajustes de pago. Se ejecuta SOLO en el
+// servidor (Vercel), nunca llega al navegador. Debe coincidir con
+// 'shop_admin_token' en secure_config/almacen.php. Se puede sobreescribir con
+// la variable de entorno SHOP_ADMIN_TOKEN en Vercel.
+const SHOP_ADMIN_TOKEN = process.env.SHOP_ADMIN_TOKEN || "d621582296ee0f274eedfa1cde94bf2b7c5d078bee1d846d"
+
 declare global {
   var __payCache: { data: unknown; at: number } | null | undefined
   var __payInflight: Promise<unknown> | null | undefined
@@ -63,7 +69,7 @@ export async function POST(req: NextRequest) {
     const res = await fetch(`${BASE}/save_payment_settings.php`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, admin_token: SHOP_ADMIN_TOKEN }),
     })
     if (!res.ok) throw new Error(`${res.status}`)
     const data = await res.json()
