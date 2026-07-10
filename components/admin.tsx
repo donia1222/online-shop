@@ -1224,6 +1224,7 @@ export function Admin({ onClose }: AdminProps) {
           (product.description ?? "").toLowerCase().includes(searchTerm) ||
           (product.badge && product.badge.toLowerCase().includes(searchTerm)) ||
           (product.origin && product.origin.toLowerCase().includes(searchTerm)) ||
+          (product.supplier && product.supplier.toLowerCase().includes(searchTerm)) ||
           matchesReference(product, searchTerm),
       )
     }
