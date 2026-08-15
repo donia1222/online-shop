@@ -923,7 +923,18 @@ export default function ShopGrid() {
                     return (
                       <li key={val}>
                         <button
-                          onClick={() => { setShowWishlist(false); setStockFilter(val); setSidebarOpen(false) }}
+                          onClick={() => {
+                            setShowWishlist(false); setStockFilter(val); setSidebarOpen(false)
+                            // "Alle" = volver al estado inicial: cierra la categoría abierta
+                            // y muestra de nuevo todos los productos.
+                            if (val === "all") {
+                              setActiveCategory("all")
+                              setExpandedCats(new Set())
+                              setActiveSupplier("all")
+                              setSearch("")
+                              setCurrentPage(0)
+                            }
+                          }}
                           className={`w-full text-left flex items-center justify-between text-sm px-3 py-2 rounded-xl transition-all font-medium ${
                             isActive ? "bg-[#2C5F2E] text-white shadow-sm" : "text-[#555] hover:bg-[#F5F5F5] hover:text-[#1A1A1A]"
                           }`}
