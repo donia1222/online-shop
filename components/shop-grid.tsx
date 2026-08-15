@@ -403,16 +403,43 @@ export default function ShopGrid() {
   useEffect(() => { setCurrentPage(0) }, [search, activeCategory, activeSupplier, stockFilter, sortBy])
 
   // Set default category to first root category once categories load
+  // Acepta ?cat=<slug> (usado al volver desde el detalle de producto) o ?cat=<nombre>
   useEffect(() => {
     if (categories.length === 0) return
     const catParam = searchParams.get("cat")
     if (catParam) {
-      const matched = categories.find((c) =>
-        c.name.toLowerCase().includes(catParam.toLowerCase())
-      )
-      if (matched) { setActiveCategory(matched.slug); return }
+      const matched =
+        categories.find((c) => c.slug.toLowerCase() === catParam.toLowerCase()) ??
+        categories.find((c) => c.name.toLowerCase().includes(catParam.toLowerCase()))
+      if (matched) {
+        setActiveCategory(matched.slug)
+        // Abrir en el sidebar toda la rama de padres de la categoría restaurada
+        const ancestors = new Set<string>()
+        let parentId = matched.parent_id
+        let guard = 0
+        while (parentId != null && guard++ < 10) {
+          const parent = categories.find((c) => c.id === parentId)
+          if (!parent) break
+          ancestors.add(parent.slug)
+          parentId = parent.parent_id
+        }
+        if (ancestors.size) setExpandedCats(prev => new Set([...prev, ...ancestors]))
+        return
+      }
     }
   }, [categories])
+
+  // Mantener la categoría activa en la URL para que al volver desde el detalle
+  // de producto (router.back) se recupere la misma sección y no "todos".
+  useEffect(() => {
+    if (loading) return
+    const url = new URL(window.location.href)
+    if (activeCategory === "all") url.searchParams.delete("cat")
+    else url.searchParams.set("cat", activeCategory)
+    if (url.toString() !== window.location.href) {
+      window.history.replaceState(window.history.state, "", url.toString())
+    }
+  }, [activeCategory, loading])
 
   // Scroll horizontal automático al card de categoría activa en móvil
   useEffect(() => {
@@ -608,7 +635,11 @@ export default function ShopGrid() {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
   const pagedProducts = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE)
 
-  const handleSelect    = useCallback((p: Product) => router.push(`/product/${p.id}`), [])
+  const handleSelect    = useCallback((p: Product) => {
+    // Llevamos la sección actual para que el botón "Zurück" del detalle vuelva a ella
+    const back = activeCategory === "all" ? "shop" : `shop?cat=${encodeURIComponent(activeCategory)}`
+    router.push(`/product/${p.id}?back=${encodeURIComponent(back)}`)
+  }, [activeCategory]) // eslint-disable-line react-hooks/exhaustive-deps
   const handleAddToCart = useCallback((p: Product) => addToCart(p), [addedIds, cart]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Views ────────────────────────────────────────────────────────────────
