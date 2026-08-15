@@ -26,6 +26,7 @@ import {
   Store,
   LogOut,
   Trash2,
+  Phone,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -1261,7 +1262,7 @@ const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ?
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#2C5F2E] mb-5 shadow-lg">
               {isTwint
-                ? <img src="/twint-logo.svg" alt="TWINT" className="h-8 w-auto object-contain" />
+                ? <Phone className="w-9 h-9 text-white" />
                 : <CheckCircle className="w-10 h-10 text-white" />
               }
             </div>
@@ -1270,7 +1271,7 @@ const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ?
             </h1>
             <p className="text-[#666] text-base max-w-md mx-auto">
               {isTwint
-                ? "Bitte schließen Sie die Zahlung via TWINT ab, um Ihre Bestellung zu bestätigen."
+                ? "Bitte kontaktieren Sie uns telefonisch, um die Zahlung zu vereinbaren und Ihre Bestellung zu bestätigen."
                 : isInvoice
                 ? "Vielen Dank! Wir senden Ihnen die Rechnung per E-Mail."
                 : isPickup
@@ -1314,22 +1315,22 @@ const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ?
             </div>
           </div>
 
-          {/* TWINT Instructions */}
+          {/* Zahlung per Telefon */}
           {isTwint && (
             <div className="bg-white rounded-2xl shadow-sm border border-[#EBEBEB] overflow-hidden mb-5">
               <div className="bg-black px-6 py-4 flex items-center justify-between">
-                <span className="text-sm font-bold text-white tracking-wide uppercase">Jetzt via TWINT bezahlen</span>
-                <img src="/twint-logo.svg" alt="TWINT" className="h-5 w-auto" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                <span className="text-sm font-bold text-white tracking-wide uppercase">Jetzt per Telefon bezahlen</span>
+                <Phone className="h-5 w-5 text-white" />
               </div>
               <div className="px-6 py-5 space-y-4">
                 <div className="flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
-                  <p className="text-sm text-[#444]">Öffnen Sie Ihre <strong>TWINT-App</strong></p>
+                  <p className="text-sm text-[#444]">Kontaktieren Sie uns unter der folgenden Nummer – wir vereinbaren die Zahlung direkt mit Ihnen (z.B. <strong>TWINT</strong> oder andere App)</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
                   <div className="flex-1">
-                    <p className="text-sm text-[#444] mb-2">Überweisen Sie <strong>{orderDetails?.total?.toFixed(2)} CHF</strong> an diese Nummer:</p>
+                    <p className="text-sm text-[#444] mb-2">Betrag <strong>{orderDetails?.total?.toFixed(2)} CHF</strong> – unsere Telefonnummer:</p>
                     <div className="bg-[#F5F5F5] rounded-xl px-5 py-3 text-center border border-[#E0E0E0]">
                       <p className="text-2xl font-black text-[#1A1A1A] tracking-wider">{orderDetails?.twintPhone}</p>
                     </div>
@@ -2353,7 +2354,7 @@ const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ?
                         <p className="font-semibold text-sm text-gray-900">TWINT <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded ml-1">QR-Code</span></p>
                         <p className="text-xs text-gray-500">QR-Code scannen oder App-Weiterleitung – via Stripe</p>
                       </div>
-                      <img src="/twint-logo.svg" alt="TWINT" className="h-7 w-auto object-contain flex-shrink-0" />
+                      <img src="/twint-logo-original.svg" alt="TWINT" className="h-7 w-auto object-contain flex-shrink-0" />
                     </div>
                   )}
 
@@ -2367,10 +2368,10 @@ const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ?
                         {paymentMethod === "twint" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-900">TWINT <span className="text-[10px] bg-gray-100 text-gray-500 font-bold px-1.5 py-0.5 rounded ml-1">Manuell</span></p>
-                        <p className="text-xs text-gray-500">Bestellbestätigung erhalten, dann manuell überweisen</p>
+                        <p className="font-semibold text-sm text-gray-900">Per Telefon <span className="text-[10px] bg-gray-100 text-gray-500 font-bold px-1.5 py-0.5 rounded ml-1">z.B. TWINT oder andere App</span></p>
+                        <p className="text-xs text-gray-500">Sie erhalten unsere Telefonnummer – Zahlung nach Absprache</p>
                       </div>
-                      <img src="/twint-logo.svg" alt="TWINT" className="h-7 w-auto object-contain flex-shrink-0" />
+                      <img src="/twint-logo.svg" alt="Telefon" className="h-7 w-auto object-contain flex-shrink-0" />
                     </div>
                   )}
 
@@ -2518,7 +2519,7 @@ const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ?
                   <>
                     <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
                       <p className="text-sm text-orange-700">
-                        Nach der Bestellung erhalten Sie die Zahlungsanweisungen für TWINT.
+                        Nach der Bestellung erhalten Sie unsere Telefonnummer – die Zahlung vereinbaren wir direkt mit Ihnen (z.B. TWINT oder andere App).
                         {paySettings.twint_phone && <><br/>Nummer: <strong>{paySettings.twint_phone}</strong></>}
                       </p>
                     </div>
@@ -2529,7 +2530,7 @@ const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ?
                     >
                       {STORE_UNDER_MAINTENANCE ? "Shop wird gerade überarbeitet" : isSubmitting
                         ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Verarbeitung...</>
-                        : <span className="flex flex-col items-center leading-tight"><span>Bestellen &amp; via TWINT bezahlen</span><span className="text-sm font-semibold opacity-90">{getFinalTotal().toFixed(2)} CHF</span></span>
+                        : <span className="flex flex-col items-center leading-tight"><span>Bestellen &amp; per Telefon bezahlen</span><span className="text-sm font-semibold opacity-90">{getFinalTotal().toFixed(2)} CHF</span></span>
                       }
                     </Button>
                   </>
@@ -2697,7 +2698,7 @@ const getFinalTotal = () => (isOnlyGutscheine() || paymentMethod === "pickup") ?
               )}
               {paySettings.enable_twint && (
                 <div className="h-9 px-3 rounded-lg bg-black flex items-center shadow-sm">
-                  <img src="/twint-logo.svg" alt="TWINT" className="h-7 w-auto" />
+                  <img src="/twint-logo.svg" alt="Telefon" className="h-7 w-auto" />
                 </div>
               )}
               {paySettings.enable_stripe && (

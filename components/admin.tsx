@@ -3752,7 +3752,7 @@ export function Admin({ onClose }: AdminProps) {
                   <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-purple-50/40 to-transparent">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-xl bg-black flex items-center justify-center overflow-hidden px-1">
-                        <img src="/twint-logo.svg" alt="TWINT" className="w-8 h-auto object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
+                        <img src="/twint-logo.svg" alt="Telefon" className="w-8 h-auto object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
                       </div>
                       <div>
                         <p className="font-bold text-gray-900">TWINT</p>

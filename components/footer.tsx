@@ -107,7 +107,7 @@ Das Angebot in unserem Online-Shop stellt eine unverbindliche Einladung zur Best
 Unser Sortiment umfasst Artikel aus den Bereichen Jagd, Angeln und Outdoor, insbesondere: Messer, Armbrüste, Pfeilbogen, Beile, Sicherheitsprodukte, Lampen, Schleudern, Blasrohre sowie Grill- und Räucherzubehör. Alle Produkte werden in Übereinstimmung mit den geltenden Schweizer Gesetzen angeboten. Für bestimmte Artikel (z. B. Messer, Armbrüste) gelten gesetzliche Altersbeschränkungen. Mit der Bestellung bestätigen Sie, das gesetzlich vorgeschriebene Mindestalter erreicht zu haben.
 
 4. PREISE UND ZAHLUNG
-Alle Preise verstehen sich in Schweizer Franken (CHF) inklusive der gesetzlichen Mehrwertsteuer (MwSt.). Versandkosten werden im Bestellprozess separat ausgewiesen. Wir akzeptieren folgende Zahlungsmittel: TWINT, PostFinance, VISA, Mastercard, American Express sowie PayPal. Der Kaufpreis ist mit Abschluss der Bestellung fällig.
+Alle Preise verstehen sich in Schweizer Franken (CHF) inklusive der gesetzlichen Mehrwertsteuer (MwSt.). Versandkosten werden im Bestellprozess separat ausgewiesen. Wir akzeptieren folgende Zahlungsmittel: Zahlung per Telefon (nach Absprache, z. B. über eine Bezahl-App), PostFinance, VISA, Mastercard, American Express sowie PayPal. Der Kaufpreis ist mit Abschluss der Bestellung fällig.
 
 5. LIEFERUNG
 Wir liefern ausschliesslich innerhalb der Schweiz. Die Lieferzeit beträgt in der Regel 1–3 Werktage nach Zahlungseingang. Bei Lieferverzögerungen informieren wir Sie unverzüglich. Das Versandrisiko geht mit Übergabe an den Paketdienstleister auf den Käufer über.
@@ -149,7 +149,7 @@ Wir verwenden Ihre Daten ausschliesslich für folgende Zwecke: Abwicklung und Be
 Die Verarbeitung Ihrer Daten erfolgt zur Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO), zur Erfüllung rechtlicher Verpflichtungen (Art. 6 Abs. 1 lit. c DSGVO) sowie auf Basis unseres berechtigten Interesses an einem sicheren und effizienten Shopbetrieb (Art. 6 Abs. 1 lit. f DSGVO).
 
 5. WEITERGABE VON DATEN
-Ihre Daten werden nur an Dritte weitergegeben, soweit dies für die Vertragsabwicklung notwendig ist (z. B. Paketdienstleister für die Lieferung, Zahlungsanbieter wie PayPal, TWINT oder PostFinance). Eine Weitergabe zu Werbezwecken an Dritte findet nicht statt.
+Ihre Daten werden nur an Dritte weitergegeben, soweit dies für die Vertragsabwicklung notwendig ist (z. B. Paketdienstleister für die Lieferung, Zahlungsanbieter wie PayPal oder PostFinance). Eine Weitergabe zu Werbezwecken an Dritte findet nicht statt.
 
 6. DATENSICHERHEIT
 Wir setzen technische und organisatorische Sicherheitsmassnahmen ein, um Ihre Daten vor Verlust, Manipulation und unberechtigtem Zugriff zu schützen. Unser Online-Shop ist durch SSL/TLS-Verschlüsselung gesichert.
@@ -170,8 +170,8 @@ Wir behalten uns vor, diese Datenschutzerklärung bei Bedarf anzupassen. Stand: 
       title: "Zahlungsarten",
       content: `US – Fishing & Huntingshop akzeptiert folgende Zahlungsmittel:
 
-TWINT
-Bezahlen Sie schnell und sicher direkt per Smartphone-App. TWINT ist die meistgenutzte Schweizer Bezahl-App und funktioniert ohne Kreditkarte. Der Betrag wird sofort von Ihrem Konto abgebucht.
+Per Telefon
+Käufer und Verkäufer tauschen ihre Telefonnummern aus und vereinbaren die Zahlung direkt miteinander. So können Sie den Betrag bequem über eine Bezahl-App wie TWINT oder eine ähnliche Anwendung begleichen.
 
 PostFinance
 Bezahlen Sie bequem über Ihr PostFinance-Konto (E-Finance oder PostFinance Card). Ideal für alle PostFinance-Kunden in der Schweiz.
@@ -308,7 +308,7 @@ Bahnhofstrasse 2
 Die Rücksendekosten trägt der Käufer. Wir empfehlen, die Sendung versichert zu verschicken.
 
 6. ERSTATTUNG
-Nach Erhalt und Prüfung der zurückgesandten Ware erstatten wir den Kaufpreis innerhalb von 14 Tagen auf dem ursprünglichen Zahlungsweg. Bei TWINT, PayPal, PostFinance sowie Kredit- und Debitkarten erfolgt die Gutschrift direkt auf das verwendete Konto.
+Nach Erhalt und Prüfung der zurückgesandten Ware erstatten wir den Kaufpreis innerhalb von 14 Tagen auf dem ursprünglichen Zahlungsweg. Bei PayPal, PostFinance sowie Kredit- und Debitkarten erfolgt die Gutschrift direkt auf das verwendete Konto; bei Zahlung per Telefon erfolgt die Rückerstattung nach Absprache mit Ihnen.
 
 7. BESCHÄDIGTE ODER FALSCHE LIEFERUNG
 Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bitte umgehend an uns. Wir übernehmen in diesem Fall die Rücksendekosten und liefern Ihnen die korrekte Ware auf dem schnellsten Weg zu.`,
@@ -349,7 +349,7 @@ Falls Sie eine beschädigte oder falsche Ware erhalten haben, wenden Sie sich bi
               {/* TWINT */}
               {paySettings.enable_twint && (
                 <div className="h-7 px-2.5 rounded-md bg-black flex items-center shadow-sm">
-                  <img src="/twint-logo.svg" alt="TWINT" className="h-5 w-auto" />
+                  <img src="/twint-logo.svg" alt="Telefon" className="h-5 w-auto" />
                 </div>
               )}
               {/* Stripe → Visa + Mastercard */}

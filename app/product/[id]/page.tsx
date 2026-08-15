@@ -604,7 +604,7 @@ export default function ProductPage() {
           )}
           {paySettings.enable_twint && (
             <div className="h-8 px-3 rounded-lg bg-black flex items-center shadow-sm">
-              <img src="/twint-logo.svg" alt="TWINT" className="h-5 w-auto" />
+              <img src="/twint-logo.svg" alt="Telefon" className="h-5 w-auto" />
             </div>
           )}
           {paySettings.enable_stripe && (
