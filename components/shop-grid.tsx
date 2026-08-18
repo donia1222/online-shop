@@ -113,11 +113,6 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
           </>
         )}
 
-        {!inStock && (
-          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-            <span className="bg-[#1A1A1A]/80 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Im Moment nicht im Lager</span>
-          </div>
-        )}
         {product.badge && (
           <span className="absolute top-2.5 left-2.5 bg-[#2C5F2E] text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide shadow-sm">
             {product.badge}
@@ -125,7 +120,14 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
         )}
 
         {/* Stock indicator */}
-        <div className={`absolute top-2.5 left-2.5 w-2.5 h-2.5 rounded-full shadow ${inStock ? "bg-emerald-500" : "bg-red-500"}`} />
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
+          <div className={`w-2.5 h-2.5 rounded-full shadow ${inStock ? "bg-emerald-500" : "bg-red-500"}`} />
+          {!inStock && (
+            <span className="text-[9px] font-bold text-red-600 bg-white/85 backdrop-blur-sm px-1.5 py-0.5 rounded-full shadow-sm leading-none">
+              Fragen
+            </span>
+          )}
+        </div>
 
         {/* Wishlist heart */}
         <button
@@ -169,9 +171,10 @@ const ProductCard = memo(function ProductCard({ product, addedIds, wishlist, onS
             <a
               href={`mailto:info@usfh.ch?subject=Verfügbarkeitsanfrage: ${encodeURIComponent(product.name)}&body=Guten Tag,%0A%0Aich würde gerne wissen, ob der folgende Artikel wieder verfügbar ist:%0A%0AArtikel: ${encodeURIComponent(product.name)}%0AArtikel-Nr.: ${product.id}%0A%0AVielen Dank!`}
               onClick={e => e.stopPropagation()}
-              className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-semibold px-2.5 py-1.5 rounded-full border border-blue-200 transition-colors"
+              title="Fragen"
+              className="flex items-center justify-center w-9 h-9 rounded-full bg-[#2C5F2E] hover:bg-[#1A4520] text-white transition-all duration-200 hover:shadow-md active:scale-95"
             >
-              Anfragen
+              <ShoppingCart className="w-4 h-4" />
             </a>
           )}
         </div>
