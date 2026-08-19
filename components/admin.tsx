@@ -1601,6 +1601,153 @@ export function Admin({ onClose }: AdminProps) {
     }
   }
 
+  // ─── PDF de categorías ──────────────────────────────────────────────────────
+  // Slugs de una categoría + todos sus descendientes: una Hauptkategorie no tiene
+  // productos propios, cuelgan de sus Kategorien/Subkategorien.
+  const catBranchSlugs = (catId: number): string[] => {
+    const ids = new Set<number>([catId])
+    for (let added = true; added;) {
+      added = false
+      for (const c of categories)
+        if (c.parent_id != null && ids.has(c.parent_id) && !ids.has(c.id)) { ids.add(c.id); added = true }
+    }
+    return categories.filter(c => ids.has(c.id)).map(c => c.slug)
+  }
+
+  const catProducts = (cat: Category): Product[] => {
+    const slugs = new Set(catBranchSlugs(cat.id))
+    return products
+      .filter(p => slugs.has(p.category))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  const pdfFileName = (name: string) =>
+    name.replace(/ä/gi, "ae").replace(/ö/gi, "oe").replace(/ü/gi, "ue").replace(/ß/g, "ss")
+        .replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "")
+
+  // Construye el PDF: cabecera de empresa + una o varias categorías con su tabla
+  const buildCategoryPDF = async (title: string, cats: Category[]) => {
+    const { jsPDF } = await import("jspdf")
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
+    const pageW = doc.internal.pageSize.getWidth()
+    const pageH = doc.internal.pageSize.getHeight()
+    const M = 14
+    // Columnas
+    const X_NR = M, X_NAME = M + 24, X_SUP = 124, X_PRICE = 176, X_STOCK = pageW - M
+
+    const fit = (t: any, w: number) => {
+      let str = String(t ?? "")
+      if (doc.getTextWidth(str) <= w) return str
+      while (str.length > 1 && doc.getTextWidth(str + "...") > w) str = str.slice(0, -1)
+      return str + "..."
+    }
+
+    let y = 0
+    const drawPageHeader = () => {
+      doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(44, 95, 46)
+      doc.text("US - Fishing & Huntingshop", M, 16)
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120)
+      doc.text("JAGD · ANGELN · OUTDOOR · Bahnhofstrasse 2, 9475 Sevelen · info@usfh.ch", M, 21)
+      doc.setFontSize(8); doc.setTextColor(120, 120, 120)
+      doc.text(new Date().toLocaleDateString("de-CH"), pageW - M, 16, { align: "right" })
+      doc.setDrawColor(44, 95, 46); doc.setLineWidth(0.4)
+      doc.line(M, 25, pageW - M, 25)
+      y = 33
+    }
+
+    const ensureSpace = (needed: number) => {
+      if (y + needed > pageH - 16) { doc.addPage(); drawPageHeader() }
+    }
+
+    const drawTableHead = () => {
+      doc.setFillColor(240, 245, 240)
+      doc.rect(M, y - 4.5, pageW - 2 * M, 6.5, "F")
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(60, 60, 60)
+      doc.text("ART.-NR.", X_NR, y)
+      doc.text("BEZEICHNUNG", X_NAME, y)
+      doc.text("LIEFERANT", X_SUP, y)
+      doc.text("PREIS", X_PRICE, y, { align: "right" })
+      doc.text("LAGER", X_STOCK, y, { align: "right" })
+      y += 6
+    }
+
+    drawPageHeader()
+    doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.setTextColor(30, 30, 30)
+    doc.text(fit(title, pageW - 2 * M), M, y); y += 9
+
+    cats.forEach((cat, ci) => {
+      const list = catProducts(cat)
+      ensureSpace(24)
+      if (ci > 0) y += 4
+      // Título de la categoría
+      const parent = cat.parent_id != null ? categories.find(c => c.id === cat.parent_id) : null
+      doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(44, 95, 46)
+      doc.text(fit(parent ? `${parent.name} / ${cat.name}` : cat.name, 140), M, y)
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(120, 120, 120)
+      doc.text(`${list.length} Produkt${list.length !== 1 ? "e" : ""}`, pageW - M, y, { align: "right" })
+      y += 7
+
+      if (list.length === 0) {
+        doc.setFont("helvetica", "italic"); doc.setFontSize(8.5); doc.setTextColor(150, 150, 150)
+        doc.text("Keine Produkte in dieser Kategorie.", M, y); y += 7
+        return
+      }
+
+      drawTableHead()
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8)
+      list.forEach((p, i) => {
+        if (y + 5 > pageH - 16) { doc.addPage(); drawPageHeader(); drawTableHead(); doc.setFont("helvetica", "normal"); doc.setFontSize(8) }
+        if (i % 2 === 1) { doc.setFillColor(249, 249, 249); doc.rect(M, y - 3.4, pageW - 2 * M, 5, "F") }
+        doc.setTextColor(60, 60, 60)
+        doc.text(fit(p.article_number || String(p.id), 22), X_NR, y)
+        doc.setTextColor(30, 30, 30)
+        doc.text(fit(p.name, X_SUP - X_NAME - 3), X_NAME, y)
+        doc.setTextColor(120, 120, 120)
+        doc.text(fit(p.supplier || p.origin || "-", 44), X_SUP, y)
+        doc.setTextColor(30, 30, 30)
+        doc.text(`CHF ${Number(p.price).toFixed(2)}`, X_PRICE, y, { align: "right" })
+        const st = Number(p.stock ?? 0)
+        if (st > 0) doc.setTextColor(40, 130, 60); else doc.setTextColor(200, 60, 60)
+        doc.text(String(st), X_STOCK, y, { align: "right" })
+        y += 5
+      })
+      // Total de la categoría
+      doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2)
+      doc.line(M, y - 1, pageW - M, y - 1)
+      doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(60, 60, 60)
+      doc.text(`Total: ${list.length} Artikel`, pageW - M, y + 3.5, { align: "right" })
+      y += 8
+    })
+
+    // Numeración de páginas
+    const total = doc.getNumberOfPages()
+    for (let i = 1; i <= total; i++) {
+      doc.setPage(i)
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(150, 150, 150)
+      doc.text(`Seite ${i} / ${total}`, pageW - M, pageH - 8, { align: "right" })
+    }
+    return doc
+  }
+
+  const downloadCategoryPDF = async (cat: Category) => {
+    try {
+      const doc = await buildCategoryPDF(cat.name, [cat])
+      doc.save(`${pdfFileName(cat.name)}.pdf`)
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e?.message || "PDF konnte nicht erstellt werden", variant: "destructive" })
+    }
+  }
+
+  const downloadLevelPDF = async (label: string, cats: Category[]) => {
+    if (cats.length === 0) return
+    try {
+      const doc = await buildCategoryPDF(label, cats)
+      doc.save(`${pdfFileName(label)}.pdf`)
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e?.message || "PDF konnte nicht erstellt werden", variant: "destructive" })
+    }
+  }
+
   // Utility Functions
   const downloadInvoicePDF = async (order: Order) => {
     const { jsPDF } = await import("jspdf")
@@ -2727,6 +2874,15 @@ export function Admin({ onClose }: AdminProps) {
                         <Trash2 className="w-3 h-3" />
                         Löschen
                       </button>
+                      <div className="w-px bg-gray-100" />
+                      <button
+                        onClick={() => downloadCategoryPDF(cat)}
+                        title="Diese Kategorie als PDF herunterladen"
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        PDF
+                      </button>
                     </div>
                   </div>
                 )
@@ -2739,6 +2895,14 @@ export function Admin({ onClose }: AdminProps) {
                       <div className="flex items-center gap-3 mb-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-md shadow-blue-500/20">
                         <Flame className="w-6 h-6 text-white shrink-0" />
                         <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wide">Hauptkategorien</h3>
+                        <button
+                          onClick={() => downloadLevelPDF("Hauptkategorien", haupts)}
+                          title="Ganzen Bereich als PDF herunterladen"
+                          className="ml-auto shrink-0 inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-[11px] sm:text-xs font-bold px-3 py-1.5 rounded-full transition-colors backdrop-blur-sm"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          PDF
+                        </button>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                         {haupts.map((cat, i) => renderCatCard(cat, SUB_COLORS[i % SUB_COLORS.length]))}
@@ -2751,6 +2915,14 @@ export function Admin({ onClose }: AdminProps) {
                       <div className="flex items-center gap-3 mb-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-md shadow-emerald-500/20">
                         <span className="w-3 h-3 rounded-full bg-white shrink-0" />
                         <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wide">Kategorien</h3>
+                        <button
+                          onClick={() => downloadLevelPDF("Kategorien", kats)}
+                          title="Ganzen Bereich als PDF herunterladen"
+                          className="ml-auto shrink-0 inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-[11px] sm:text-xs font-bold px-3 py-1.5 rounded-full transition-colors backdrop-blur-sm"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          PDF
+                        </button>
                       </div>
                       <div className="space-y-6">
                         {haupts.map((parent, i) => {
@@ -2788,6 +2960,14 @@ export function Admin({ onClose }: AdminProps) {
                       <div className="flex items-center gap-3 mb-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 shadow-md shadow-amber-500/20">
                         <span className="w-3 h-3 rounded-full bg-white shrink-0" />
                         <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wide">Subkategorien</h3>
+                        <button
+                          onClick={() => downloadLevelPDF("Subkategorien", subs)}
+                          title="Ganzen Bereich als PDF herunterladen"
+                          className="ml-auto shrink-0 inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-[11px] sm:text-xs font-bold px-3 py-1.5 rounded-full transition-colors backdrop-blur-sm"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          PDF
+                        </button>
                       </div>
                       <div className="space-y-6">
                         {kats.map((parent, i) => {
